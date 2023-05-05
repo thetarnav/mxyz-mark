@@ -1,0 +1,26 @@
+{
+  "name": "mxyz-mark-solid-web",
+  "type": "module",
+  "scripts": {
+    "dev": "solid-start dev",
+    "build": "solid-start build",
+    "start": "solid-start start"
+  },
+  "dependencies": {
+    "@solidjs/meta": "^0.28.4",
+    "@solidjs/router": "^0.8.2",
+    "solid-js": "^1.7.4",
+    "solid-start": "^0.2.26",
+    "undici": "^5.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.17.18",
+    "solid-start-node": "^0.2.26",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
