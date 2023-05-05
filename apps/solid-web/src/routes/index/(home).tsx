@@ -58,8 +58,8 @@ function generateNoise(width: number, height: number) {
 function generateMaze(width: number, height: number) {
   const length = width * height
   const result = Array.from({ length }, () => ({
-    right: false,
-    down: false,
+    right: true,
+    down: true,
   }))
 
   for (let i = 0; i < length; i++) {
@@ -67,7 +67,21 @@ function generateMaze(width: number, height: number) {
     const x = i % width
     const y = Math.floor(i / width)
 
-    console.log(x, y)
+    const options: VoidFunction[] = []
+
+    if (x < width - 1) {
+      options.push(() => (cell.right = false))
+    }
+    if (y < height - 1) {
+      options.push(() => (cell.down = false))
+    }
+    if (i % width !== 0 && result[i - 1] && result[i - 1].right) {
+      options.push(() => (result[i - 1].right = false))
+    }
+
+    if (options.length) {
+      options[randomInt(options.length)]()
+    }
   }
 
   return result
@@ -94,7 +108,7 @@ export default function Home() {
                 'grid-template-rows': `repeat(${H}, 1fr)`,
                 width: `${W * 2}rem`,
                 height: `${H * 2}rem`,
-                border: '1px solid #fff',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
               }}
             >
               <Index each={(track(), generateNoise(W, H))}>
@@ -131,7 +145,7 @@ export default function Home() {
                 'grid-template-rows': `repeat(${H}, 1fr)`,
                 width: `${W * 2}rem`,
                 height: `${H * 2}rem`,
-                border: '1px solid #fff',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
               }}
             >
               <Index each={(track(), generateMaze(W, H))}>
@@ -142,9 +156,8 @@ export default function Home() {
                       display: 'flex',
                       'align-items': 'center',
                       'justify-content': 'center',
-                      border: '0 solid #fff',
-                      'border-right-width': cell().right ? '1px' : '0',
-                      'border-bottom-width': cell().down ? '1px' : '0',
+                      'border-right': cell().right ? '1px solid white' : '1px solid transparent',
+                      'border-bottom': cell().down ? '1px solid white' : '1px solid transparent',
                     }}
                   >
                     {i}
