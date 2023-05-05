@@ -1,5 +1,12 @@
 {
   "compilerOptions": {
+    "strict": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "target": "ESNext",
@@ -7,11 +14,10 @@
     "moduleResolution": "node",
     "jsxImportSource": "solid-js",
     "jsx": "preserve",
-    "strict": true,
-    "types": ["solid-start/env"],
+    "types": ["@total-typescript/ts-reset", "solid-start/env"],
     "baseUrl": "./",
     "paths": {
-      "~/*": ["./src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

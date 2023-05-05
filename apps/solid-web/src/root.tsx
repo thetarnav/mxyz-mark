@@ -1,20 +1,33 @@
 // @refresh reload
-import { Suspense } from "solid-js";
+import { Suspense, lazy } from 'solid-js'
 import {
-  A,
   Body,
   ErrorBoundary,
-  FileRoutes,
   Head,
   Html,
   Meta,
   Routes,
   Scripts,
   Title,
-} from "solid-start";
-import "./root.css";
+  useRoutes,
+} from 'solid-start'
+
+import './root.css'
+
+const routes = [
+  {
+    path: '/',
+    component: lazy(() => import('@/routes/index/(home)')),
+  },
+  {
+    path: '/*all',
+    component: lazy(() => import('@/routes/404')),
+  },
+] satisfies Parameters<typeof useRoutes>[0]
 
 export default function Root() {
+  const ConfigRoutes = useRoutes(routes)
+
   return (
     <Html lang="en">
       <Head>
@@ -25,15 +38,13 @@ export default function Root() {
       <Body>
         <Suspense>
           <ErrorBoundary>
-            <A href="/">Index</A>
-            <A href="/about">About</A>
             <Routes>
-              <FileRoutes />
+              <ConfigRoutes />
             </Routes>
           </ErrorBoundary>
         </Suspense>
         <Scripts />
       </Body>
     </Html>
-  );
+  )
 }
