@@ -1,5 +1,3 @@
-import { Title } from 'solid-start'
-
 const randomInt = (max: number) => Math.floor(Math.random() * max)
 
 const DIRECTIONS = [
@@ -8,6 +6,15 @@ const DIRECTIONS = [
   [0, 1],
   [0, -1],
 ] as const
+
+const CORNERS = [
+  [1, 1],
+  [-1, 1],
+  [1, -1],
+  [-1, -1],
+] as const
+
+const DIRECTIONS_WITH_CORNERS = [...DIRECTIONS, ...CORNERS] as const
 
 function* randomIterate<T>(arr: readonly T[]) {
   const copy = arr.slice()
@@ -33,7 +40,7 @@ function generateNoise(width: number, height: number) {
     // Skip spreading on the edges
     if (x === 0 || x === width - 1 || y === 0 || y === height - 1) continue
 
-    for (const [dx, dy] of randomIterate(DIRECTIONS)) {
+    for (const [dx, dy] of randomIterate(DIRECTIONS_WITH_CORNERS)) {
       const j = x + dx + (y + dy) * width
 
       if (j < 0 || j >= length || result[j]) continue
@@ -51,8 +58,7 @@ export default function Home() {
   const H = 10
   return (
     <main>
-      <Title>Hello World</Title>
-      <h1>Hello World</h1>
+      <h4>Noise</h4>
       <div
         style={{
           display: 'grid',
