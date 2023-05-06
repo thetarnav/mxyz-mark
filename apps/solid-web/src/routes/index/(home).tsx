@@ -1,6 +1,7 @@
 import { Component, Index, ParentComponent, createSignal, untrack } from 'solid-js'
 
 const randomInt = (max: number) => Math.floor(Math.random() * max)
+const randomIntFromTo = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min
 
 const DIRECTIONS = [
   [1, 0],
@@ -130,20 +131,21 @@ export default function Home() {
             down: true,
           }))
 
-          const visited = new Set<number>([0])
-          const stack = [1, width]
+          const stack = [0]
           const neighbors: number[] = []
-          const add = (j: number) => (visited.has(j) ? neighbors : stack).push(j)
+          const add = (j: number) => {
+            const index = stack.indexOf(j)
+            if (index === -1) stack.push(j)
+            else if (index < stackIndex) neighbors.push(j)
+          }
 
-          let runs = 0
+          let stackIndex = 0
 
-          while (stack.length > 0) {
-            runs++
-
-            const i = stack.splice(randomInt(stack.length), 1)[0]
-
-            if (visited.has(i)) continue
-            visited.add(i)
+          for (; stackIndex < length; stackIndex++) {
+            const swap = randomIntFromTo(stackIndex, stack.length)
+            const i = stack[swap]
+            stack[swap] = stack[stackIndex]
+            stack[stackIndex] = i
 
             // up
             if (i >= width) add(i - width)
@@ -158,24 +160,22 @@ export default function Home() {
 
             const j = neighbors[randomInt(neighbors.length)]
             switch (j - i) {
-              case -1:
-                result[i - 1].right = false
-                break
-              case -width:
+              case -width: // up
                 result[i - width].down = false
                 break
-              case 1:
-                result[i].right = false
+              case -1: // left
+                result[i - 1].right = false
                 break
-              case width:
+              case width: // down
                 result[i].down = false
+                break
+              case 1: // right
+                result[i].right = false
                 break
             }
 
             neighbors.length = 0
           }
-
-          console.log('runs', runs)
 
           return result
         }
