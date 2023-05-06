@@ -1,6 +1,9 @@
 lockfileVersion: '6.0'
 
 dependencies:
+  '@solid-primitives/keyboard':
+    specifier: ^1.2.0
+    version: 1.2.0(solid-js@1.7.4)
   '@solidjs/meta':
     specifier: ^0.28.4
     version: 0.28.4(solid-js@1.7.4)
@@ -1462,6 +1465,43 @@ packages:
 
   /@sideway/pinpoint@2.0.0:
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
+
+  /@solid-primitives/event-listener@2.2.10(solid-js@1.7.4):
+    resolution: {integrity: sha512-rWBCeF1NRAmLJtVo2wpY9vF3IAQ8VAxGnFDOUqROSdYhUfiCeM7Hw3PKkGCELwNQzZK1W1z+MjzB7fctpjX4Sg==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.1.0(solid-js@1.7.4)
+      solid-js: 1.7.4
+    dev: false
+
+  /@solid-primitives/keyboard@1.2.0(solid-js@1.7.4):
+    resolution: {integrity: sha512-R8jTDxzWkuvww1MsT9mOCY2Sb85uBCwlz1gXyCxQilgsH5OACt/W0RLHP4DVVpUEEj2zUx+Bau+EhoQRRK1vkg==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/event-listener': 2.2.10(solid-js@1.7.4)
+      '@solid-primitives/rootless': 1.3.2(solid-js@1.7.4)
+      '@solid-primitives/utils': 6.1.0(solid-js@1.7.4)
+      solid-js: 1.7.4
+    dev: false
+
+  /@solid-primitives/rootless@1.3.2(solid-js@1.7.4):
+    resolution: {integrity: sha512-R1rncXOUcB/i3PyvKhSWcsocPRe1n3HsMIO717RpWFd2knUF8+b0cGgRDEoneGaV/a5kq4cqH3csa66klxuM3A==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.1.0(solid-js@1.7.4)
+      solid-js: 1.7.4
+    dev: false
+
+  /@solid-primitives/utils@6.1.0(solid-js@1.7.4):
+    resolution: {integrity: sha512-uTikKFrq33UO+MnKt2WzZr9WYbQe5YX58ytGkL+29DL6o0pZs1wrICbd4ymzSm8azqzMcQqEQOL3HLWjuv9tLw==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.7.4
+    dev: false
 
   /@solidjs/meta@0.28.4(solid-js@1.7.4):
     resolution: {integrity: sha512-1USElsQuGVcJnmZ6CxPfUVmKvCsVdBQoGrUyMxLtFw36Ytt90dPs/qLyXLvPR/ZPD16/qauWqg6APEkbrDOLcA==}

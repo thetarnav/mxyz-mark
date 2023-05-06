@@ -7,6 +7,7 @@
     "start": "solid-start start"
   },
   "dependencies": {
+    "@solid-primitives/keyboard": "^1.2.0",
     "@solidjs/meta": "^0.28.4",
     "@solidjs/router": "^0.8.2",
     "solid-js": "^1.7.4",

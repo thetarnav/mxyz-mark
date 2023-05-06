@@ -1,4 +1,5 @@
-import { Component, Index, ParentComponent, createSignal, untrack } from 'solid-js'
+import { createShortcut } from '@solid-primitives/keyboard'
+import { Component, Index, ParentComponent, createSelector, createSignal, untrack } from 'solid-js'
 
 const randomInt = (max: number) => Math.floor(Math.random() * max)
 const randomIntFromTo = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min
@@ -125,19 +126,18 @@ export default function Home() {
         const [track, trigger] = createSignal(undefined, { equals: false })
 
         function generateMaze(width: number, height: number): { right: boolean; down: boolean }[] {
-          const length = width * height
-          const result = Array.from({ length }, () => ({
-            right: true,
-            down: true,
-          }))
-
-          const stack = [0]
-          const neighbors: number[] = []
-          const add = (j: number) => {
-            const index = stack.indexOf(j)
-            if (index === -1) stack.push(j)
-            else if (index < stackIndex) neighbors.push(j)
-          }
+          const length = width * height,
+            result = Array.from({ length }, () => ({
+              right: true,
+              down: true,
+            })),
+            stack = [0],
+            neighbors: number[] = [],
+            add = (j: number) => {
+              const index = stack.indexOf(j)
+              if (index === -1) stack.push(j)
+              else if (index < stackIndex) neighbors.push(j)
+            }
 
           let stackIndex = 0
 
@@ -190,6 +190,36 @@ export default function Home() {
                 {(cell, i) => (
                   <Cell borderRight={cell().right} borderBottom={cell().down} index={i} />
                 )}
+              </Index>
+            </Grid>
+          </>
+        )
+      })}
+      <h4>Movement</h4>
+      {untrack(() => {
+        const [position, setPosition] = createSignal([0, 0], {
+          equals: ([x1, y1], [x2, y2]) => x1 === x2 && y1 === y2,
+        })
+
+        const isPlayer = createSelector(position, (i: number, [x, y]) => i === x + y * W)
+
+        const move = (dx: number, dy: number) => {
+          setPosition(([x, y]) => [
+            Math.max(0, Math.min(W - 1, x + dx)),
+            Math.max(0, Math.min(H - 1, y + dy)),
+          ])
+        }
+
+        createShortcut(['ArrowUp'], () => move(0, -1))
+        createShortcut(['ArrowRight'], () => move(1, 0))
+        createShortcut(['ArrowDown'], () => move(0, 1))
+        createShortcut(['ArrowLeft'], () => move(-1, 0))
+
+        return (
+          <>
+            <Grid>
+              <Index each={Array.from({ length: W * H }, (_, i) => i)}>
+                {(cell, i) => <Cell fill={isPlayer(i)} index={i} />}
               </Index>
             </Grid>
           </>
