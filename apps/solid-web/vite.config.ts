@@ -1,15 +1,15 @@
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import solid from 'solid-start/vite'
 import { defineConfig } from 'vite'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import solidStyled from 'vite-plugin-solid-styled'
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  plugins: [solid({ ssr: false })],
+  plugins: [
+    solid({ ssr: false }),
+    solidStyled({
+      filter: {
+        include: 'src/**/*.{ts,js,tsx,jsx}',
+        exclude: 'node_modules/**/*',
+      },
+    }),
+  ],
 })

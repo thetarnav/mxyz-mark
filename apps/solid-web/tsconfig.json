@@ -14,9 +14,6 @@
     "jsxImportSource": "solid-js",
     "jsx": "preserve",
     "types": ["@total-typescript/ts-reset", "solid-start/env"],
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "baseUrl": "./"
   }
 }

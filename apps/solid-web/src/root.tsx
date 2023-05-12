@@ -1,36 +1,49 @@
 // @refresh reload
-import { Suspense, lazy } from 'solid-js'
-import { Body, ErrorBoundary, Head, Html, Meta, Scripts, Title, useRoutes } from 'solid-start'
+import { Suspense } from 'solid-js'
+import {
+  Body,
+  ErrorBoundary,
+  Head,
+  Html,
+  Meta,
+  Routes,
+  Scripts,
+  Title,
+  useRoutes,
+} from 'solid-start'
+import NotFound from './views/404'
+import Home from './views/index/(home)'
 
+import { StyleRegistry } from 'solid-styled'
 import './root.css'
 
 const routes: Parameters<typeof useRoutes>[0] = [
   {
     path: '/',
-    component: lazy(() => import('@/routes/index/(home)')),
+    component: () => <Home />,
   },
   {
     path: '/*all',
-    component: lazy(() => import('@/routes/404')),
+    component: () => <NotFound />,
   },
 ]
 
 export default function Root() {
-  const Routes = useRoutes(routes)
-
   return (
     <Html lang="en">
       <Head>
-        <Title>SolidStart - Bare</Title>
+        <Title>mxyz mark</Title>
         <Meta charset="utf-8" />
         <Meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Body>
-        <Suspense>
-          <ErrorBoundary>
-            <Routes />
-          </ErrorBoundary>
-        </Suspense>
+        <StyleRegistry>
+          <Suspense>
+            <ErrorBoundary>
+              <Routes>{routes as any}</Routes>
+            </ErrorBoundary>
+          </Suspense>
+        </StyleRegistry>
         <Scripts />
       </Body>
     </Html>
