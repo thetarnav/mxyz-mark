@@ -1,24 +1,56 @@
-import { createShortcut } from '@solid-primitives/keyboard'
-import { Component, Index, ParentComponent, createSelector, createSignal, untrack } from 'solid-js'
+import { createEventListenerMap } from '@solid-primitives/event-listener'
+import { createStaticStore } from '@solid-primitives/static-store'
+import clsx from 'clsx'
+import {
+  Component,
+  Index,
+  ParentComponent,
+  createEffect,
+  createMemo,
+  createSelector,
+  createSignal,
+  untrack,
+} from 'solid-js'
+import { css } from 'solid-styled'
+import './playground.css'
 
 const randomInt = (max: number) => Math.floor(Math.random() * max)
 const randomIntFromTo = (min: number, max: number) => Math.floor(Math.random() * (max - min)) + min
 
-const DIRECTIONS = [
+const DIRECTION_POINTS = [
   [1, 0],
   [-1, 0],
   [0, 1],
   [0, -1],
 ] as const
 
-const CORNERS = [
+const CORNER_POINTS = [
   [1, 1],
   [-1, 1],
   [1, -1],
   [-1, -1],
 ] as const
 
-const DIRECTIONS_WITH_CORNERS = [...DIRECTIONS, ...CORNERS] as const
+const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINTS] as const
+
+// const DIRECTIONS = ['RIGHT', 'LEFT', 'DOWN', 'UP'] as const
+
+enum Direction {
+  Right = 'RIGHT',
+  Left = 'LEFT',
+  Down = 'DOWN',
+  Up = 'UP',
+}
+
+const DIRECTIONS_H_V = [Direction.Right, Direction.Left, Direction.Down, Direction.Up] as const
+const DIRECTIONS_V_H = [Direction.Down, Direction.Up, Direction.Right, Direction.Left] as const
+
+const OPPOSITE_DIRECTION = {
+  [Direction.Right]: Direction.Left,
+  [Direction.Left]: Direction.Right,
+  [Direction.Down]: Direction.Up,
+  [Direction.Up]: Direction.Down,
+}
 
 const W = 20
 const H = 10
@@ -34,20 +66,18 @@ function* randomIterate<T>(arr: readonly T[]) {
 const getXY = (width: number, i: number): [number, number] => [i % width, Math.floor(i / width)]
 
 const Grid: ParentComponent = props => {
-  return (
-    <div
-      style={{
-        display: 'grid',
-        'grid-template-columns': `repeat(${W}, 1fr)`,
-        'grid-template-rows': `repeat(${H}, 1fr)`,
-        width: `${W * 2}rem`,
-        height: `${H * 2}rem`,
-        border: '2px solid rgba(255, 255, 255, 0.2)',
-      }}
-    >
-      {props.children}
-    </div>
-  )
+  css`
+    div {
+      display: grid;
+      grid-template-columns: repeat(${W + ''}, 1fr);
+      grid-template-rows: repeat(${H + ''}, 1fr);
+      width: ${W * 2 + 'rem'};
+      height: ${H * 2 + 'rem'};
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+  `
+
+  return <div>{props.children}</div>
 }
 
 const Cell: Component<{
@@ -56,21 +86,19 @@ const Cell: Component<{
   fill?: boolean
   index: number
 }> = props => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'border-right': props.borderRight ? '2px solid white' : '2px solid transparent',
-        'border-bottom': props.borderBottom ? '2px solid white' : '2px solid transparent',
-        background: props.fill ? '#DE311B' : 'transparent',
-        color: props.fill ? 'black' : 'lightgray',
-      }}
-    >
-      {props.index}
-    </div>
-  )
+  css`
+    div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: ${props.borderRight ? '2px solid white' : '2px solid transparent'};
+      border-bottom: ${props.borderBottom ? '2px solid white' : '2px solid transparent'};
+      background: ${props.fill ? '#DE311B' : 'transparent'};
+      color: ${props.fill ? 'black' : 'lightgray'};
+    }
+  `
+
+  return <div>{props.index}</div>
 }
 
 export default function Home() {
@@ -95,7 +123,7 @@ export default function Home() {
             // Skip spreading on the edges
             if (x === 0 || x === width - 1 || y === 0 || y === height - 1) continue
 
-            for (const [dx, dy] of randomIterate(DIRECTIONS_WITH_CORNERS)) {
+            for (const [dx, dy] of randomIterate(DIRECTION_AND_CORNER_POINTS)) {
               const j = x + dx + (y + dy) * width
 
               if (j < 0 || j >= length || result[j]) continue
@@ -210,17 +238,135 @@ export default function Home() {
           ])
         }
 
-        createShortcut(['ArrowUp'], () => move(0, -1))
-        createShortcut(['ArrowRight'], () => move(1, 0))
-        createShortcut(['ArrowDown'], () => move(0, 1))
-        createShortcut(['ArrowLeft'], () => move(-1, 0))
+        const defaultHeldDirectionsState = {
+          [Direction.Up]: false,
+          [Direction.Right]: false,
+          [Direction.Down]: false,
+          [Direction.Left]: false,
+        } as const satisfies Record<Direction, boolean>
+
+        const [heldDirections, setHeldDirections] = createStaticStore<Record<Direction, boolean>>(
+          defaultHeldDirectionsState,
+        )
+
+        const keyToDirectionMap: Record<string, Direction> = {
+          ArrowUp: Direction.Up,
+          w: Direction.Up,
+          ArrowRight: Direction.Right,
+          d: Direction.Right,
+          ArrowDown: Direction.Down,
+          s: Direction.Down,
+          ArrowLeft: Direction.Left,
+          a: Direction.Left,
+        }
+
+        let lastDirection = Direction.Up
+        createEventListenerMap(window, {
+          keydown(e) {
+            const direction = keyToDirectionMap[e.key]
+            if (direction) {
+              setHeldDirections((lastDirection = direction), true)
+              e.preventDefault()
+            }
+          },
+          keyup(e) {
+            const direction = keyToDirectionMap[e.key]
+            if (direction) setHeldDirections(direction, false)
+          },
+          blur(e) {
+            setHeldDirections(defaultHeldDirectionsState)
+          },
+          contextmenu(e) {
+            setHeldDirections(defaultHeldDirectionsState)
+          },
+        })
+
+        const currentDirection = createMemo(() => {
+          const directions = { ...heldDirections }
+          // prefer last direction
+          const order =
+            lastDirection === Direction.Up || lastDirection === Direction.Down
+              ? DIRECTIONS_V_H
+              : DIRECTIONS_H_V
+
+          // only allow one direction at a time
+          for (const direction of order) {
+            if (directions[direction] && !directions[OPPOSITE_DIRECTION[direction]]) {
+              return direction
+            }
+          }
+        })
+
+        const directionToOffsetMap: Record<Direction, [number, number]> = {
+          [Direction.Up]: [0, -1],
+          [Direction.Right]: [1, 0],
+          [Direction.Down]: [0, 1],
+          [Direction.Left]: [-1, 0],
+        }
+
+        const [track, trigger] = createSignal(undefined, { equals: false })
+        let timeoutId: ReturnType<typeof setTimeout> | undefined
+        let newTickTimestamp = 0
+        const throttle = 400
+
+        createEffect(() => {
+          track()
+          const direction = currentDirection()
+          if (!direction) return clearTimeout(timeoutId)
+
+          const now = Date.now()
+          timeoutId = setTimeout(trigger)
+          if (newTickTimestamp > now) return
+          newTickTimestamp = now + throttle
+
+          move(...directionToOffsetMap[direction])
+        })
+
+        const DirectionKey = (props: { direction: Direction }) => {
+          css`
+            div {
+              width: 3rem;
+              height: 3rem;
+              border: 1px solid #eee;
+              border-radius: 0.5rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.8rem;
+              margin: 0.5rem;
+            }
+            .held {
+              background: #de311b;
+            }
+          `
+          return (
+            <div class={clsx(heldDirections[props.direction] && 'held')}>{props.direction}</div>
+          )
+        }
+
+        css`
+          .held-directions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1rem;
+          }
+        `
 
         return (
           <>
+            <div class="held-directions">
+              <DirectionKey direction={Direction.Up} />
+              <div class="row">
+                <DirectionKey direction={Direction.Left} />
+                <DirectionKey direction={Direction.Down} />
+                <DirectionKey direction={Direction.Right} />
+              </div>
+            </div>
             <Grid>
-              <Index each={Array.from({ length: W * H }, (_, i) => i)}>
-                {(cell, i) => <Cell fill={isPlayer(i)} index={i} />}
-              </Index>
+              {Array.from({ length: W * H }, (_, i) => (
+                <Cell fill={isPlayer(i)} index={i} />
+              ))}
             </Grid>
           </>
         )
