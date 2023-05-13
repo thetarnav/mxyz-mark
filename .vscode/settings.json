@@ -1,5 +1,8 @@
 {
-  "cSpell.words": [
-    "Mxyz"
-  ]
+  "cSpell.words": ["Mxyz"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": false
+  },
+  /* For allowing @apply and @tailwind custom rules in CSS files */
+  "css.lint.unknownAtRules": "ignore"
 }

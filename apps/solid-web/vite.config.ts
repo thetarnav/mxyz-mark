@@ -1,4 +1,5 @@
 import solid from 'solid-start/vite'
+import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vite'
 import solidStyled from 'vite-plugin-solid-styled'
 
@@ -8,8 +9,9 @@ export default defineConfig({
     solidStyled({
       filter: {
         include: 'src/**/*.{ts,js,tsx,jsx}',
-        exclude: 'node_modules/**/*',
       },
     }),
+    // config in ../uno.config.ts
+    UnoCSS(),
   ],
 })

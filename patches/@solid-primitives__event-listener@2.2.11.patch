@@ -1,12 +1,14 @@
 diff --git a/dist/index.d.ts b/dist/index.d.ts
-index d680a54d725d462ee3141bcf913d8d5bb5fc0912..917c960d9cebc898372ddb3d0a95073fa14d9c7e 100644
+index d680a54d725d462ee3141bcf913d8d5bb5fc0912..70075f8d4b4a62cc25c5948fbee11068ea437989 100644
 --- a/dist/index.d.ts
 +++ b/dist/index.d.ts
-@@ -102,8 +102,8 @@ type EventHandlersMap<EventMap> = {
+@@ -101,9 +101,9 @@ type EventHandlersMap<EventMap> = {
+  *   mouseenter: e => {},
   *   touchend: touchHandler
   * });
-  */
+- */
 -declare function createEventListenerMap<EventMap extends Record<string, Event>, UsedEvents extends keyof EventMap = keyof EventMap>(target: MaybeAccessor<Many<EventTarget>>, handlersMap: Partial<Pick<EventHandlersMap<EventMap>, UsedEvents>>, options?: EventListenerOptions): void;
++*/
  declare function createEventListenerMap<Target extends TargetWithEventMap, EventMap extends EventMapOf<Target>, HandlersMap extends Partial<EventHandlersMap<EventMap>>>(target: MaybeAccessor<Many<Target>>, handlersMap: HandlersMap, options?: EventListenerOptions): void;
 +declare function createEventListenerMap<EventMap extends Record<string, Event>, UsedEvents extends keyof EventMap = keyof EventMap>(target: MaybeAccessor<Many<EventTarget>>, handlersMap: Partial<Pick<EventHandlersMap<EventMap>, UsedEvents>>, options?: EventListenerOptions): void;
  

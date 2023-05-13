@@ -11,10 +11,13 @@ import {
   Title,
   useRoutes,
 } from 'solid-start'
+import { StyleRegistry } from 'solid-styled'
 import NotFound from './views/404'
 import Home from './views/index/(home)'
 
-import { StyleRegistry } from 'solid-styled'
+import '@unocss/reset/tailwind-compat.css'
+import 'virtual:uno.css'
+
 import './root.css'
 
 const routes: Parameters<typeof useRoutes>[0] = [

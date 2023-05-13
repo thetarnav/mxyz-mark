@@ -1,0 +1,20 @@
+{
+  "name": "mxyz-mark",
+  "private": true,
+  "type": "module",
+  "scripts": {},
+  "devDependencies": {
+    "@unocss/transformer-directives": "^0.51.12",
+    "typescript": "^5.0.4",
+    "unocss": "^0.51.12",
+    "vite": "^4.3.5"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@solid-primitives/event-listener@2.2.11": "patches/@solid-primitives__event-listener@2.2.11.patch"
+    }
+  }
+}
