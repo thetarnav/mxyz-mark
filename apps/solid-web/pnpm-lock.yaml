@@ -21,6 +21,9 @@ dependencies:
   '@solid-primitives/static-store':
     specifier: ^0.0.3
     version: 0.0.3(solid-js@1.7.4)
+  '@solid-primitives/timer':
+    specifier: ^1.3.7
+    version: 1.3.7(solid-js@1.7.4)
   '@solid-primitives/utils':
     specifier: ^6.1.1
     version: 6.1.1(solid-js@1.7.4)
@@ -1550,6 +1553,14 @@ packages:
       solid-js: ^1.6.12
     dependencies:
       '@solid-primitives/utils': 6.1.1(solid-js@1.7.4)
+      solid-js: 1.7.4
+    dev: false
+
+  /@solid-primitives/timer@1.3.7(solid-js@1.7.4):
+    resolution: {integrity: sha512-zS3qA7WVZYsW7+iTdk2M4W1wpMvRhdcMnO23Tcd+nX3YD7eMvjOnO15Oz2mymyfl/OC2ZgM1L5ec66GayEvPwQ==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
       solid-js: 1.7.4
     dev: false
 

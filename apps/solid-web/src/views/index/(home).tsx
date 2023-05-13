@@ -52,6 +52,13 @@ const OPPOSITE_DIRECTION = {
   [Direction.Up]: Direction.Down,
 }
 
+const DIRECTION_TO_OFFSET_MAP: Record<Direction, [number, number]> = {
+  [Direction.Up]: [0, -1],
+  [Direction.Right]: [1, 0],
+  [Direction.Down]: [0, 1],
+  [Direction.Left]: [-1, 0],
+}
+
 const W = 20
 const H = 10
 
@@ -64,6 +71,25 @@ function* randomIterate<T>(arr: readonly T[]) {
 }
 
 const getXY = (width: number, i: number): [number, number] => [i % width, Math.floor(i / width)]
+
+function createThrottledTrigger(delay: number) {
+  const [track, trigger] = createSignal(undefined, { equals: false })
+  let timeout: ReturnType<typeof setTimeout> | undefined
+
+  return () => {
+    track()
+
+    if (timeout) {
+      return false
+    } else {
+      timeout = setTimeout(() => {
+        timeout = undefined
+        trigger()
+      }, delay)
+      return true
+    }
+  }
+}
 
 const Grid: ParentComponent = props => {
   css`
@@ -225,19 +251,6 @@ export default function Home() {
       })}
       <h4>Movement</h4>
       {untrack(() => {
-        const [position, setPosition] = createSignal([0, 0], {
-          equals: ([x1, y1], [x2, y2]) => x1 === x2 && y1 === y2,
-        })
-
-        const isPlayer = createSelector(position, (i: number, [x, y]) => i === x + y * W)
-
-        const move = (dx: number, dy: number) => {
-          setPosition(([x, y]) => [
-            Math.max(0, Math.min(W - 1, x + dx)),
-            Math.max(0, Math.min(H - 1, y + dy)),
-          ])
-        }
-
         const defaultHeldDirectionsState = {
           [Direction.Up]: false,
           [Direction.Right]: false,
@@ -297,31 +310,25 @@ export default function Home() {
           }
         })
 
-        const directionToOffsetMap: Record<Direction, [number, number]> = {
-          [Direction.Up]: [0, -1],
-          [Direction.Right]: [1, 0],
-          [Direction.Down]: [0, 1],
-          [Direction.Left]: [-1, 0],
+        const [position, setPosition] = createSignal([randomInt(W), randomInt(H)], {
+          equals: ([x1, y1], [x2, y2]) => x1 === x2 && y1 === y2,
+        })
+        const isPlayer = createSelector(position, (i: number, [x, y]) => i === x + y * W)
+
+        const move = (dx: number, dy: number) => {
+          setPosition(([x, y]) => [
+            Math.max(0, Math.min(W - 1, x + dx)),
+            Math.max(0, Math.min(H - 1, y + dy)),
+          ])
         }
 
-        // function create
-
-        const [track, trigger] = createSignal(undefined, { equals: false })
-        let timeoutId: ReturnType<typeof setTimeout> | undefined
-        let newTickTimestamp = 0
-        const throttle = 1000
+        const scheduled = createThrottledTrigger(1000 / 4)
 
         createEffect(() => {
-          track()
           const direction = currentDirection()
-          if (!direction) return
-
-          const now = Date.now()
-          timeoutId = setTimeout(trigger)
-          if (newTickTimestamp > now) return
-          newTickTimestamp = now + throttle
-
-          move(...directionToOffsetMap[direction])
+          if (direction && scheduled()) {
+            move(...DIRECTION_TO_OFFSET_MAP[direction])
+          }
         })
 
         const DirectionKey = (props: { direction: Direction }) => {
