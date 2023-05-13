@@ -304,15 +304,17 @@ export default function Home() {
           [Direction.Left]: [-1, 0],
         }
 
+        // function create
+
         const [track, trigger] = createSignal(undefined, { equals: false })
         let timeoutId: ReturnType<typeof setTimeout> | undefined
         let newTickTimestamp = 0
-        const throttle = 400
+        const throttle = 1000
 
         createEffect(() => {
           track()
           const direction = currentDirection()
-          if (!direction) return clearTimeout(timeoutId)
+          if (!direction) return
 
           const now = Date.now()
           timeoutId = setTimeout(trigger)
