@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "solid-start dev",
     "build": "solid-start build",
-    "start": "solid-start start"
+    "preview": "vite preview --outDir dist/public"
   },
   "dependencies": {
     "@solid-primitives/event-listener": "^2.2.11",
