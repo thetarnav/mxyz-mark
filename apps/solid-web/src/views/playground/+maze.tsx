@@ -1,5 +1,15 @@
 import { Index, JSX, createSignal } from 'solid-js'
-import { Cell, Direction, Grid, H, W, XYMatrix, randomInt, randomIntFromTo } from './shared'
+import {
+  Cell,
+  DIRECTIONS_H_V,
+  Direction,
+  Grid,
+  H,
+  W,
+  XYMatrix,
+  randomInt,
+  randomIntFromTo,
+} from './shared'
 
 export default function Maze(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
@@ -25,10 +35,10 @@ export default function Maze(): JSX.Element {
       stack[swap] = stack[stackIndex]
       stack[stackIndex] = i
 
-      if (result.canGo(i, Direction.Up)) add(result.go(i, Direction.Up))
-      if (result.canGo(i, Direction.Right)) add(result.go(i, Direction.Right))
-      if (result.canGo(i, Direction.Down)) add(result.go(i, Direction.Down))
-      if (result.canGo(i, Direction.Left)) add(result.go(i, Direction.Left))
+      for (const direction of DIRECTIONS_H_V) {
+        const j = result.go(i, direction)
+        if (j !== undefined) add(j)
+      }
 
       if (neighbors.length === 0) continue
 
@@ -64,8 +74,9 @@ export default function Maze(): JSX.Element {
           {(cell, i) => (
             <Cell
               borders={{
-                [Direction.Right]: cell().right && XYMatrix.canGo(W, H, i, Direction.Right),
-                [Direction.Down]: cell().down && XYMatrix.canGo(W, H, i, Direction.Down),
+                [Direction.Right]:
+                  cell().right && XYMatrix.go(W, H, i, Direction.Right) !== undefined,
+                [Direction.Down]: cell().down && XYMatrix.go(W, H, i, Direction.Down) !== undefined,
               }}
               index={i}
             />

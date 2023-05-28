@@ -74,21 +74,6 @@ const directionToMoveTable: Record<Direction, (width: number) => number> = {
   [Direction.Down]: width => +width,
   [Direction.Left]: width => -1,
 }
-const getAtDirectionTable: Record<Direction, (width: number, i: number) => number> = {
-  [Direction.Up]: (width, i) => i - width,
-  [Direction.Right]: (width, i) => i + 1,
-  [Direction.Down]: (width, i) => i + width,
-  [Direction.Left]: (width, i) => i - 1,
-}
-const canMoveToDirectionTable: Record<
-  Direction,
-  (width: number, length: number, i: number) => boolean
-> = {
-  [Direction.Up]: (width, length, i) => i >= width,
-  [Direction.Right]: (width, length, i) => i % width < width - 1,
-  [Direction.Down]: (width, length, i) => i < length - width,
-  [Direction.Left]: (width, length, i) => i % width > 0,
-}
 
 export class XYMatrix<T> {
   readonly length: number
@@ -98,29 +83,26 @@ export class XYMatrix<T> {
     this.values = Array.from({ length: this.length }, (_, i) => fn(this.x(i), this.y(i)))
   }
 
-  i(x: number, y: number) {
-    return x + y * this.width
-  }
   get(i: number): T | undefined {
     return this.values[i]
   }
+  i(x: number, y: number) {
+    return x + y * this.width
+  }
   x(i: number) {
-    return i % this.width
+    return XYMatrix.x(this.width, i)
   }
   y(i: number) {
-    return Math.floor(i / this.width)
+    return XYMatrix.y(this.width, i)
   }
   xy(i: number): [number, number] {
-    return [this.x(i), this.y(i)]
+    return XYMatrix.xy(this.width, i)
   }
-  go(i: number, direction: Direction): number {
-    return XYMatrix.go(this.width, i, direction)
+  go(from: number, by: number | Direction) {
+    return XYMatrix.go(this.width, this.height, from, by)
   }
   goXY(i: number, dx: number, dy: number): number {
     return this.i(this.x(i) + dx, this.y(i) + dy)
-  }
-  canGo(i: number, direction: Direction): boolean {
-    return XYMatrix.canGo(this.width, this.height, i, direction)
   }
 
   rows() {
@@ -139,7 +121,7 @@ export class XYMatrix<T> {
     return i % width
   }
   static y(width: number, i: number) {
-    return Math.floor(i / width)
+    return Math.floor(Math.abs(i / width)) * Math.sign(i)
   }
   static xy(width: number, i: number): [number, number] {
     return [this.x(width, i), this.y(width, i)]
@@ -147,11 +129,16 @@ export class XYMatrix<T> {
   static i(width: number, x: number, y: number) {
     return x + y * width
   }
-  static go(width: number, i: number, direction: Direction): number {
-    return getAtDirectionTable[direction](width, i)
-  }
-  static canGo(width: number, height: number, i: number, direction: Direction): boolean {
-    return canMoveToDirectionTable[direction](width, width * height, i)
+  static go(
+    width: number,
+    height: number,
+    from: number,
+    by: number | Direction,
+  ): number | undefined {
+    if (typeof by !== 'number') by = directionToMoveTable[by](width)
+    const x = this.x(width, from) + this.x(width, by)
+    const y = this.y(width, from) + this.y(width, by)
+    return x >= 0 && x < width && y >= 0 && y < height ? this.i(width, x, y) : undefined
   }
 }
 

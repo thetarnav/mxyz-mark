@@ -85,7 +85,10 @@ export default function Movement(): JSX.Element {
   createEffect(() => {
     const direction = currentDirection()
     if (direction && scheduled()) {
-      setPosition(p => XYMatrix.go(W, p, direction))
+      setPosition(p => {
+        const newPos = XYMatrix.go(W, H, p, direction)
+        return newPos === undefined ? p : newPos
+      })
     }
   })
 
