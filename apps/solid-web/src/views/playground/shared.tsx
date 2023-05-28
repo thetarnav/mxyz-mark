@@ -75,6 +75,18 @@ const directionToMoveTable: Record<Direction, (width: number) => number> = {
   [Direction.Left]: width => -1,
 }
 
+export class Vector extends Array<number> {
+  constructor(x: number, y: number) {
+    super(x, y)
+  }
+  get x() {
+    return this[0]
+  }
+  get y() {
+    return this[1]
+  }
+}
+
 export class XYMatrix<T> {
   readonly length: number
   readonly values: readonly T[]
