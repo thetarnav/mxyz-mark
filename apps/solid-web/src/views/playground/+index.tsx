@@ -8,7 +8,7 @@ export default function Playground(): JSX.Element {
   return (
     <>
       <div class="center-child">
-        <nav class="fixed top-0 flex h-12 items-stretch gap-16 bg-gray-900 px-4">
+        <nav class="fixed top-4 flex h-12 items-stretch gap-16 rounded-md bg-gray-900 px-4">
           <div class="center-child">
             <h1 class="font-bold">mxyz playground</h1>
           </div>

@@ -2,10 +2,11 @@ import { Index, JSX, createSignal } from 'solid-js'
 import {
   Cell,
   DIRECTION_AND_CORNER_POINTS,
+  Direction,
   Grid,
   H,
   W,
-  getXY,
+  XYMatrix,
   randomInt,
   randomIterate,
 } from './shared'
@@ -14,24 +15,28 @@ export default function Noise(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
 
   function generateNoise(width: number, height: number) {
-    const length = width * height
-    const result = Array.from({ length }, () => false)
+    const result = new XYMatrix(width, height, () => ({ fill: false }))
 
-    const stack = Array.from({ length: length * 0.05 }, () => randomInt(length))
+    const stack = Array.from({ length: result.length * 0.05 }, () => randomInt(result.length))
 
     while (stack.length > 0) {
-      const i = stack.pop()!,
-        [x, y] = getXY(width, i)
+      const i = stack.pop()!
 
-      result[i] = true
+      result.get(i)!.fill = true
 
       // Skip spreading on the edges
-      if (x === 0 || x === width - 1 || y === 0 || y === height - 1) continue
+      if (
+        !result.canGo(Direction.Up, i) ||
+        !result.canGo(Direction.Right, i) ||
+        !result.canGo(Direction.Down, i) ||
+        !result.canGo(Direction.Left, i)
+      )
+        continue
 
       for (const [dx, dy] of randomIterate(DIRECTION_AND_CORNER_POINTS)) {
-        const j = x + dx + (y + dy) * width
+        const j = result.goXY(i, dx, dy)
 
-        if (j < 0 || j >= length || result[j]) continue
+        if (result.get(j)!.fill) continue
 
         stack.push(j)
         break
@@ -47,8 +52,8 @@ export default function Noise(): JSX.Element {
       <br />
       <br />
       <Grid>
-        <Index each={(track(), generateNoise(W, H))}>
-          {(cell, i) => <Cell fill={cell()} index={i} />}
+        <Index each={(track(), generateNoise(W, H).values)}>
+          {(cell, i) => <Cell fill={cell().fill} index={i} />}
         </Index>
       </Grid>
     </>

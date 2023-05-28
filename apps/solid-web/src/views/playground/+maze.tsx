@@ -1,12 +1,11 @@
 import { Index, JSX, createSignal } from 'solid-js'
-import { Cell, Grid, H, W, randomInt, randomIntFromTo } from './shared'
+import { Cell, Direction, Grid, H, W, XYMatrix, randomInt, randomIntFromTo } from './shared'
 
 export default function Maze(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
 
-  function generateMaze(width: number, height: number): { right: boolean; down: boolean }[] {
-    const length = width * height,
-      result = Array.from({ length }, () => ({
+  function generateMaze(width: number, height: number) {
+    const result = new XYMatrix(width, height, () => ({
         right: true,
         down: true,
       })),
@@ -20,36 +19,32 @@ export default function Maze(): JSX.Element {
 
     let stackIndex = 0
 
-    for (; stackIndex < length; stackIndex++) {
+    for (; stackIndex < result.length; stackIndex++) {
       const swap = randomIntFromTo(stackIndex, stack.length)
       const i = stack[swap]
       stack[swap] = stack[stackIndex]
       stack[stackIndex] = i
 
-      // up
-      if (i >= width) add(i - width)
-      // right
-      if ((i + 1) % width !== 0) add(i + 1)
-      // down
-      if (i < length - width) add(i + width)
-      // left
-      if (i % width !== 0) add(i - 1)
+      if (result.canGo(Direction.Up, i)) add(result.go(Direction.Up, i))
+      if (result.canGo(Direction.Right, i)) add(result.go(Direction.Right, i))
+      if (result.canGo(Direction.Down, i)) add(result.go(Direction.Down, i))
+      if (result.canGo(Direction.Left, i)) add(result.go(Direction.Left, i))
 
       if (neighbors.length === 0) continue
 
       const j = neighbors[randomInt(neighbors.length)]
       switch (j - i) {
         case -width: // up
-          result[i - width].down = false
+          result.get(i - width)!.down = false
           break
         case -1: // left
-          result[i - 1].right = false
+          result.get(i - 1)!.right = false
           break
         case width: // down
-          result[i].down = false
+          result.get(i)!.down = false
           break
         case 1: // right
-          result[i].right = false
+          result.get(i)!.right = false
           break
       }
 
@@ -65,8 +60,16 @@ export default function Maze(): JSX.Element {
       <br />
       <br />
       <Grid>
-        <Index each={(track(), generateMaze(W, H))}>
-          {(cell, i) => <Cell borderRight={cell().right} borderBottom={cell().down} index={i} />}
+        <Index each={(track(), generateMaze(W, H).values)}>
+          {(cell, i) => (
+            <Cell
+              borders={{
+                [Direction.Right]: cell().right && XYMatrix.canGo(Direction.Right, W, H, i),
+                [Direction.Down]: cell().down && XYMatrix.canGo(Direction.Down, W, H, i),
+              }}
+              index={i}
+            />
+          )}
         </Index>
       </Grid>
     </>

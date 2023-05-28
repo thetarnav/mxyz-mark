@@ -7,12 +7,12 @@ import {
   Cell,
   DIRECTIONS_H_V,
   DIRECTIONS_V_H,
-  DIRECTION_TO_OFFSET_MAP,
   Direction,
   Grid,
   H,
   OPPOSITE_DIRECTION,
   W,
+  XYMatrix,
   createThrottledTrigger,
   randomInt,
 } from './shared'
@@ -77,24 +77,15 @@ export default function Movement(): JSX.Element {
     }
   })
 
-  const [position, setPosition] = createSignal([randomInt(W), randomInt(H)], {
-    equals: ([x1, y1], [x2, y2]) => x1 === x2 && y1 === y2,
-  })
-  const isPlayer = createSelector(position, (i: number, [x, y]) => i === x + y * W)
-
-  const move = (dx: number, dy: number) => {
-    setPosition(([x, y]) => [
-      Math.max(0, Math.min(W - 1, x + dx)),
-      Math.max(0, Math.min(H - 1, y + dy)),
-    ])
-  }
+  const [position, setPosition] = createSignal(randomInt(W * H))
+  const isPlayer = createSelector(position)
 
   const scheduled = createThrottledTrigger(1000 / 4)
 
   createEffect(() => {
     const direction = currentDirection()
     if (direction && scheduled()) {
-      move(...DIRECTION_TO_OFFSET_MAP[direction])
+      setPosition(p => XYMatrix.go(direction, W, p))
     }
   })
 
