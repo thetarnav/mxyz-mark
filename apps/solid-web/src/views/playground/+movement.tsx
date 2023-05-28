@@ -128,7 +128,7 @@ export default function Movement(): JSX.Element {
           <DirectionKey direction={Direction.Right} />
         </div>
       </div>
-      <Grid>
+      <Grid width={W} height={H}>
         {Array.from({ length: W * H }, (_, i) => (
           <Cell fill={isPlayer(i)} index={i} />
         ))}

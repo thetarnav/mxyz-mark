@@ -59,7 +59,7 @@ export default function Maze(): JSX.Element {
       <button onClick={() => trigger()}>Regenerate</button>
       <br />
       <br />
-      <Grid>
+      <Grid width={W} height={H}>
         <Index each={(track(), generateMaze(W, H).values)}>
           {(cell, i) => (
             <Cell

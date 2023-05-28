@@ -68,6 +68,12 @@ export function* randomIterate<T>(arr: readonly T[]) {
   }
 }
 
+const directionToMoveTable: Record<Direction, (width: number) => number> = {
+  [Direction.Up]: width => -width,
+  [Direction.Right]: width => +1,
+  [Direction.Down]: width => +width,
+  [Direction.Left]: width => -1,
+}
 const getAtDirectionTable: Record<Direction, (width: number, i: number) => number> = {
   [Direction.Up]: (width, i) => i - width,
   [Direction.Right]: (width, i) => i + 1,
@@ -85,8 +91,8 @@ const canMoveToDirectionTable: Record<
 }
 
 export class XYMatrix<T> {
-  length: number
-  values: readonly T[]
+  readonly length: number
+  readonly values: readonly T[]
   constructor(public width: number, public height: number, fn: (x: number, y: number) => T) {
     this.length = width * height
     this.values = Array.from({ length: this.length }, (_, i) => fn(this.x(i), this.y(i)))
@@ -129,6 +135,15 @@ export class XYMatrix<T> {
     return this.values[Symbol.iterator]()
   }
 
+  static x(width: number, i: number) {
+    return i % width
+  }
+  static y(width: number, i: number) {
+    return Math.floor(i / width)
+  }
+  static xy(width: number, i: number): [number, number] {
+    return [this.x(width, i), this.y(width, i)]
+  }
   static i(width: number, x: number, y: number) {
     return x + y * width
   }
@@ -158,14 +173,14 @@ export function createThrottledTrigger(delay: number) {
   }
 }
 
-export const Grid: ParentComponent = props => {
+export const Grid: ParentComponent<{ width: number; height: number }> = props => {
   css`
     div {
       display: grid;
-      grid-template-columns: repeat(${W + ''}, 1fr);
-      grid-template-rows: repeat(${H + ''}, 1fr);
-      width: ${W * 2 + 'rem'};
-      height: ${H * 2 + 'rem'};
+      grid-template-columns: repeat(${props.width + ''}, 1fr);
+      grid-template-rows: repeat(${props.height + ''}, 1fr);
+      width: ${props.width * 2 + 'rem'};
+      height: ${props.height * 2 + 'rem'};
       border: 2px solid rgba(255, 255, 255, 0.2);
     }
   `

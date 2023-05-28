@@ -51,7 +51,7 @@ export default function Noise(): JSX.Element {
       <button onClick={() => trigger()}>Regenerate</button>
       <br />
       <br />
-      <Grid>
+      <Grid width={W} height={H}>
         <Index each={(track(), generateNoise(W, H).values)}>
           {(cell, i) => <Cell fill={cell().fill} index={i} />}
         </Index>
