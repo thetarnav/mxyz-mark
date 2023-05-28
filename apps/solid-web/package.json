@@ -8,30 +8,31 @@
     "preview": "vite preview --outDir dist/public"
   },
   "dependencies": {
-    "@solid-primitives/event-listener": "^2.2.11",
-    "@solid-primitives/keyboard": "^1.2.0",
+    "@solid-primitives/event-listener": "^2.2.13",
+    "@solid-primitives/keyboard": "^1.2.3",
     "@solid-primitives/keyed": "^1.2.0",
+    "@solid-primitives/lifecycle": "^0.0.100",
     "@solid-primitives/scheduled": "^1.3.2",
-    "@solid-primitives/static-store": "^0.0.3",
+    "@solid-primitives/static-store": "^0.0.4",
     "@solid-primitives/timer": "^1.3.7",
-    "@solid-primitives/utils": "^6.1.1",
-    "@solidjs/meta": "^0.28.4",
+    "@solid-primitives/utils": "^6.2.0",
+    "@solidjs/meta": "^0.28.5",
     "@solidjs/router": "^0.8.2",
-    "@unocss/reset": "^0.51.12",
+    "@unocss/reset": "^0.52.4",
     "clsx": "^1.2.1",
-    "solid-js": "^1.7.4",
+    "solid-js": "^1.7.5",
     "solid-start": "^0.2.26",
     "solid-styled": "^0.9.0",
-    "undici": "^5.22.0"
+    "undici": "^5.22.1"
   },
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.4.2",
-    "@types/node": "^20.0.0",
-    "esbuild": "^0.17.18",
+    "@types/node": "^20.2.5",
+    "esbuild": "^0.17.19",
     "postcss": "^8.4.23",
-    "prettier-plugin-organize-imports": "^3.2.2",
     "solid-start-node": "^0.2.26",
-    "vite-plugin-solid-styled": "^0.9.0"
+    "solid-start-static": "^0.2.26",
+    "vite-plugin-solid-styled": "^0.9.1"
   },
   "engines": {
     "node": ">=18"

@@ -4,18 +4,14 @@
   "type": "module",
   "scripts": {},
   "devDependencies": {
-    "@unocss/transformer-directives": "^0.51.12",
+    "@unocss/transformer-directives": "^0.52.4",
+    "prettier-plugin-tailwindcss": "^0.3.0",
     "typescript": "^5.0.4",
-    "unocss": "^0.51.12",
-    "vite": "^4.3.5"
+    "unocss": "^0.52.4",
+    "vite": "^4.3.9"
   },
   "packageManager": "pnpm@8.5.0",
   "engines": {
     "node": ">=18"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "@solid-primitives/event-listener@2.2.11": "patches/@solid-primitives__event-listener@2.2.11.patch"
-    }
   }
 }
