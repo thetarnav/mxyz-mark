@@ -113,14 +113,14 @@ export class XYMatrix<T> {
   xy(i: number): [number, number] {
     return [this.x(i), this.y(i)]
   }
-  go(direction: Direction, i: number): number {
-    return XYMatrix.go(direction, this.width, i)
+  go(i: number, direction: Direction): number {
+    return XYMatrix.go(this.width, i, direction)
   }
   goXY(i: number, dx: number, dy: number): number {
     return this.i(this.x(i) + dx, this.y(i) + dy)
   }
-  canGo(direction: Direction, i: number): boolean {
-    return XYMatrix.canGo(direction, this.width, this.height, i)
+  canGo(i: number, direction: Direction): boolean {
+    return XYMatrix.canGo(this.width, this.height, i, direction)
   }
 
   rows() {
@@ -147,10 +147,10 @@ export class XYMatrix<T> {
   static i(width: number, x: number, y: number) {
     return x + y * width
   }
-  static go(direction: Direction, width: number, i: number): number {
+  static go(width: number, i: number, direction: Direction): number {
     return getAtDirectionTable[direction](width, i)
   }
-  static canGo(direction: Direction, width: number, height: number, i: number): boolean {
+  static canGo(width: number, height: number, i: number, direction: Direction): boolean {
     return canMoveToDirectionTable[direction](width, width * height, i)
   }
 }

@@ -25,10 +25,10 @@ export default function Maze(): JSX.Element {
       stack[swap] = stack[stackIndex]
       stack[stackIndex] = i
 
-      if (result.canGo(Direction.Up, i)) add(result.go(Direction.Up, i))
-      if (result.canGo(Direction.Right, i)) add(result.go(Direction.Right, i))
-      if (result.canGo(Direction.Down, i)) add(result.go(Direction.Down, i))
-      if (result.canGo(Direction.Left, i)) add(result.go(Direction.Left, i))
+      if (result.canGo(i, Direction.Up)) add(result.go(i, Direction.Up))
+      if (result.canGo(i, Direction.Right)) add(result.go(i, Direction.Right))
+      if (result.canGo(i, Direction.Down)) add(result.go(i, Direction.Down))
+      if (result.canGo(i, Direction.Left)) add(result.go(i, Direction.Left))
 
       if (neighbors.length === 0) continue
 
@@ -64,8 +64,8 @@ export default function Maze(): JSX.Element {
           {(cell, i) => (
             <Cell
               borders={{
-                [Direction.Right]: cell().right && XYMatrix.canGo(Direction.Right, W, H, i),
-                [Direction.Down]: cell().down && XYMatrix.canGo(Direction.Down, W, H, i),
+                [Direction.Right]: cell().right && XYMatrix.canGo(W, H, i, Direction.Right),
+                [Direction.Down]: cell().down && XYMatrix.canGo(W, H, i, Direction.Down),
               }}
               index={i}
             />

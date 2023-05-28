@@ -26,10 +26,10 @@ export default function Noise(): JSX.Element {
 
       // Skip spreading on the edges
       if (
-        !result.canGo(Direction.Up, i) ||
-        !result.canGo(Direction.Right, i) ||
-        !result.canGo(Direction.Down, i) ||
-        !result.canGo(Direction.Left, i)
+        !result.canGo(i, Direction.Up) ||
+        !result.canGo(i, Direction.Right) ||
+        !result.canGo(i, Direction.Down) ||
+        !result.canGo(i, Direction.Left)
       )
         continue
 
