@@ -1,4 +1,4 @@
-import { Index, JSX, createMemo, createSignal } from 'solid-js'
+import { JSX, createMemo, createSignal } from 'solid-js'
 import {
   Cell,
   DIRECTIONS_H_V,
@@ -41,13 +41,13 @@ function generateMaze(width: number, height: number) {
 
     const j = neighbors[randomInt(neighbors.length)]
     switch (j - i) {
-      case -width: // up
-        result.get(i - width)!.down = false
+      case width: // up
+        result.get(i + width)!.down = false
         break
       case -1: // left
         result.get(i - 1)!.right = false
         break
-      case width: // down
+      case -width: // down
         result.get(i)!.down = false
         break
       case 1: // right
@@ -74,18 +74,16 @@ export default function Maze(): JSX.Element {
       <button onClick={() => trigger()}>Regenerate</button>
       <br />
       <br />
-      <Grid width={W} height={H}>
-        <Index each={maze().values}>
-          {(cell, i) => (
-            <Cell
-              borders={{
-                [Direction.Right]: cell().right && !!maze().go(i, Direction.Right),
-                [Direction.Down]: cell().down && !!maze().go(i, Direction.Down),
-              }}
-              index={i}
-            />
-          )}
-        </Index>
+      <Grid matrix={maze()}>
+        {(cell, i) => (
+          <Cell
+            borders={{
+              [Direction.Right]: cell().right && !!maze().go(i, Direction.Right),
+              [Direction.Down]: cell().down && !!maze().go(i, Direction.Down),
+            }}
+            index={i}
+          />
+        )}
       </Grid>
     </>
   )

@@ -1,4 +1,8 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
 
 importers:
 
@@ -34,6 +38,9 @@ importers:
       '@solid-primitives/lifecycle':
         specifier: ^0.0.100
         version: 0.0.100(solid-js@1.7.5)
+      '@solid-primitives/range':
+        specifier: ^0.1.14
+        version: 0.1.14(solid-js@1.7.5)
       '@solid-primitives/scheduled':
         specifier: ^1.3.2
         version: 1.3.2(solid-js@1.7.5)
@@ -1630,6 +1637,15 @@ packages:
     peerDependencies:
       solid-js: ^1.6.12
     dependencies:
+      solid-js: 1.7.5
+    dev: false
+
+  /@solid-primitives/range@0.1.14(solid-js@1.7.5):
+    resolution: {integrity: sha512-ghjFL7oxVspVkN5D70ycZMAGFUcogot328PxlcIaTYvMglHINpBWOr/SNNXYE8THG5RGpuFw69hraTRiNmnuJQ==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.0(solid-js@1.7.5)
       solid-js: 1.7.5
     dev: false
 

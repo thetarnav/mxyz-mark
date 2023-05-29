@@ -1,4 +1,4 @@
-import { Index, JSX, createSignal } from 'solid-js'
+import { JSX, createSignal } from 'solid-js'
 import {
   Cell,
   DIRECTION_AND_CORNER_POINTS,
@@ -51,10 +51,8 @@ export default function Noise(): JSX.Element {
       <button onClick={() => trigger()}>Regenerate</button>
       <br />
       <br />
-      <Grid width={W} height={H}>
-        <Index each={(track(), generateNoise(W, H).values)}>
-          {(cell, i) => <Cell fill={cell().fill} index={i} />}
-        </Index>
+      <Grid matrix={(track(), generateNoise(W, H))}>
+        {(cell, i) => <Cell fill={cell().fill} index={i} />}
       </Grid>
     </>
   )

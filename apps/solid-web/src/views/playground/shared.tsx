@@ -1,5 +1,14 @@
-import { Component, ParentComponent, createSignal } from 'solid-js'
+import {
+  Accessor,
+  Component,
+  Index,
+  JSX,
+  ParentComponent,
+  createMemo,
+  createSignal,
+} from 'solid-js'
 import { css } from 'solid-styled'
+import { Repeat } from '@solid-primitives/range'
 
 export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFromTo = (min: number, max: number) =>
@@ -60,10 +69,17 @@ export class Vector {
 }
 
 export const DIRECTION_TO_VECTOR: Record<Direction, Vector> = {
-  [Direction.Up]: new Vector(0, -1),
+  [Direction.Up]: new Vector(0, 1),
   [Direction.Right]: new Vector(1, 0),
-  [Direction.Down]: new Vector(0, 1),
+  [Direction.Down]: new Vector(0, -1),
   [Direction.Left]: new Vector(-1, 0),
+}
+
+export const DIRECTION_TO_MOVE: Record<Direction, (width: number) => number> = {
+  [Direction.Up]: width => width,
+  [Direction.Right]: () => 1,
+  [Direction.Down]: width => -width,
+  [Direction.Left]: () => -1,
 }
 
 export const DIRECTION_POINTS = [
@@ -141,19 +157,51 @@ export function createThrottledTrigger(delay: number) {
   }
 }
 
-export const Grid: ParentComponent<{ width: number; height: number }> = props => {
+export const Grid = <T,>(props: {
+  matrix: XYMatrix<T>
+  children: (item: Accessor<T>, index: number) => JSX.Element
+}) => {
+  const reordered = createMemo(() => {
+    const { matrix } = props
+    const { width, length } = matrix
+    const arr: { index: number; item: T }[] = []
+    for (let i = 0; i < length; i++) {
+      // display items in reverse y order
+      // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
+      const index = Math.floor((length - 1 - i) / width) * width + (i % width)
+      arr.push({ index, item: matrix.get(index)! })
+    }
+    return arr
+  })
+
   css`
-    div {
-      display: grid;
-      grid-template-columns: repeat(${props.width + ''}, 1fr);
-      grid-template-rows: repeat(${props.height + ''}, 1fr);
-      width: ${props.width * 2 + 'rem'};
-      height: ${props.height * 2 + 'rem'};
-      border: 2px solid rgba(255, 255, 255, 0.2);
+    .wrapper,
+    .x-axis {
+      grid-template-columns: repeat(${props.matrix.width + ''}, 2.25rem);
+    }
+    .wrapper,
+    .y-axis {
+      grid-template-rows: repeat(${props.matrix.height + ''}, 2.25rem);
     }
   `
 
-  return <div>{props.children}</div>
+  const AxisMark: ParentComponent = props => (
+    <div class="center-child text-gray-5">{props.children}</div>
+  )
+
+  return (
+    <div class="wrapper border-gray-6 relative grid rounded-md border">
+      <Index each={reordered()}>{item => props.children(() => item().item, item().index)}</Index>
+      <div class="x-axis absolute left-0 top-full mt-2 grid w-full">
+        <Repeat times={props.matrix.width}>{x => <AxisMark>{x}</AxisMark>}</Repeat>
+      </div>
+      <div class="y-axis absolute right-full top-0 mr-3 grid h-full">
+        <Repeat times={props.matrix.height}>
+          {y => <AxisMark>{props.matrix.height - 1 - y}</AxisMark>}
+        </Repeat>
+      </div>
+    </div>
+  )
 }
 
 export const Cell: Component<{

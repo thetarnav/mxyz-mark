@@ -133,11 +133,7 @@ export default function Movement(): JSX.Element {
           <DirectionKey direction={Direction.Right} />
         </div>
       </div>
-      <Grid width={W} height={H}>
-        {Array.from({ length: W * H }, (_, i) => (
-          <Cell fill={isPlayer(i)} index={i} />
-        ))}
-      </Grid>
+      <Grid matrix={matrix}>{(_, i) => <Cell fill={isPlayer(i)} index={i} />}</Grid>
     </>
   )
 }
