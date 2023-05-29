@@ -43,13 +43,6 @@ export function* randomIterate<T>(arr: readonly T[]) {
   }
 }
 
-const directionToMoveTable: Record<Direction, (width: number) => number> = {
-  [Direction.Up]: width => -width,
-  [Direction.Right]: width => +1,
-  [Direction.Down]: width => +width,
-  [Direction.Left]: width => -1,
-}
-
 export class Vector {
   #arr: readonly [number, number]
   constructor(x: number, y: number) {
@@ -89,8 +82,6 @@ export const CORNER_POINTS = [
 
 export const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINTS] as const
 
-// export const DIRECTIONS = ['RIGHT', 'LEFT', 'DOWN', 'UP'] as const
-
 export class XYMatrix<T> {
   readonly length: number
   readonly values: readonly T[]
@@ -110,14 +101,6 @@ export class XYMatrix<T> {
   }
   go(from: Vector | number, by: Vector | number | Direction) {
     return XYMatrix.go(this.width, this.height, from, by)
-  }
-
-  rows() {
-    const rows: T[][] = []
-    for (let y = 0; y < this.height; y++) {
-      rows.push(this.values.slice(y * this.width, (y + 1) * this.width))
-    }
-    return rows
   }
 
   static vec(width: number, i: number): Vector {
