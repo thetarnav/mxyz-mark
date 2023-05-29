@@ -8,7 +8,7 @@ export default function Playground(): JSX.Element {
   return (
     <>
       <div class="center-child">
-        <nav class="fixed top-4 flex h-12 items-stretch gap-16 rounded-md bg-gray-900 px-4">
+        <nav class="z-999 fixed top-4 flex h-12 items-stretch gap-16 rounded-md bg-gray-900 px-4">
           <div class="center-child">
             <h1 class="font-bold">mxyz playground</h1>
           </div>
@@ -26,7 +26,7 @@ export default function Playground(): JSX.Element {
       <main class="flex flex-col items-center gap-24 py-24">
         <Title>{playgroundTitle()} — mxyz playground</Title>
         <h1 class="text-4xl font-bold">{playgroundTitle()}</h1>
-        <div>
+        <div class="w-full">
           <Outlet />
         </div>
       </main>

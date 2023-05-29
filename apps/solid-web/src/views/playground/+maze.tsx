@@ -4,8 +4,9 @@ import {
   DIRECTIONS_H_V,
   Direction,
   Grid,
-  H,
-  W,
+  PlaygroundContainer,
+  TriggerButton,
+  Vector,
   XYMatrix,
   randomInt,
   randomIntFromTo,
@@ -34,7 +35,7 @@ function generateMaze(width: number, height: number) {
 
     for (const direction of DIRECTIONS_H_V) {
       const j = result.go(i, direction)
-      if (j !== undefined) add(result.i(j))
+      j && add(result.i(j))
     }
 
     if (neighbors.length === 0) continue
@@ -61,8 +62,31 @@ function generateMaze(width: number, height: number) {
   return result
 }
 
+const mazeToGrid = (maze: ReturnType<typeof generateMaze>): XYMatrix<boolean> => {
+  const width = maze.width * 2 - 1,
+    height = maze.height * 2 - 1
+  const result = new XYMatrix<boolean>(width, height, i => {
+    const vec = XYMatrix.vec(width, i)
+    if (vec.x % 2 === 0 && vec.y % 2 === 0) return false
+    if (vec.x % 2 === 1 && vec.y % 2 === 1) return true
+    if (vec.x % 2 === 0) {
+      const mazeVec = new Vector(vec.x / 2, (vec.y + 1) / 2)
+      const cell = maze.get(maze.i(mazeVec))!
+      return cell.down
+    }
+    const mazeVec = new Vector((vec.x - 1) / 2, vec.y / 2)
+    const cell = maze.get(maze.i(mazeVec))!
+    return cell.right
+  })
+
+  return result
+}
+
 export default function Maze(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
+
+  const W = 13
+  const H = 7
 
   const maze = createMemo(() => {
     track()
@@ -70,10 +94,8 @@ export default function Maze(): JSX.Element {
   })
 
   return (
-    <>
-      <button onClick={() => trigger()}>Regenerate</button>
-      <br />
-      <br />
+    <PlaygroundContainer>
+      <TriggerButton class="mb-8" onTrigger={() => trigger()} text="Regenerate" key="R" />
       <Grid matrix={maze()}>
         {(cell, i) => (
           <Cell
@@ -85,6 +107,9 @@ export default function Maze(): JSX.Element {
           />
         )}
       </Grid>
-    </>
+      <div class="mt-24">
+        <Grid matrix={mazeToGrid(maze())}>{(cell, i) => <Cell fill={cell()} index={i} />}</Grid>
+      </div>
+    </PlaygroundContainer>
   )
 }

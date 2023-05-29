@@ -9,9 +9,8 @@ import {
   DIRECTIONS_V_H,
   Direction,
   Grid,
-  H,
   OPPOSITE_DIRECTION,
-  W,
+  PlaygroundContainer,
   XYMatrix,
   createThrottledTrigger,
   randomInt,
@@ -77,6 +76,8 @@ export default function Movement(): JSX.Element {
     }
   })
 
+  const W = 20
+  const H = 10
   const matrix = new XYMatrix(W, H, i => i)
 
   const [position, setPosition] = createSignal(randomInt(matrix.length))
@@ -124,7 +125,7 @@ export default function Movement(): JSX.Element {
   `
 
   return (
-    <>
+    <PlaygroundContainer>
       <div class="held-directions">
         <DirectionKey direction={Direction.Up} />
         <div class="flex">
@@ -134,6 +135,6 @@ export default function Movement(): JSX.Element {
         </div>
       </div>
       <Grid matrix={matrix}>{(_, i) => <Cell fill={isPlayer(i)} index={i} />}</Grid>
-    </>
+    </PlaygroundContainer>
   )
 }

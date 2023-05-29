@@ -9,6 +9,7 @@ import {
 } from 'solid-js'
 import { css } from 'solid-styled'
 import { Repeat } from '@solid-primitives/range'
+import { createEventListener } from '@solid-primitives/event-listener'
 
 export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFromTo = (min: number, max: number) =>
@@ -41,9 +42,6 @@ export const OPPOSITE_DIRECTION = {
   [Direction.Up]: Direction.Down,
 }
 
-export const W = 20
-export const H = 10
-
 export function* randomIterate<T>(arr: readonly T[]) {
   const copy = arr.slice()
   while (copy.length) {
@@ -65,6 +63,9 @@ export class Vector {
   }
   add(vec: Vector) {
     return new Vector(this.x + vec.x, this.y + vec.y)
+  }
+  toString() {
+    return this.#arr.toString()
   }
 }
 
@@ -100,14 +101,17 @@ export const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINT
 
 export class XYMatrix<T> {
   readonly length: number
-  readonly values: readonly T[]
+  readonly #values: T[]
   constructor(public width: number, public height: number, fn: (i: number) => T) {
     this.length = width * height
-    this.values = Array.from({ length: this.length }, (_, i) => fn(i))
+    this.#values = Array.from({ length: this.length }, (_, i) => fn(i))
   }
 
+  set(i: number, value: T) {
+    this.#values[i] = value
+  }
   get(i: number): T | undefined {
-    return this.values[i]
+    return this.#values[i]
   }
   i(vec: Vector) {
     return XYMatrix.i(this.width, vec)
@@ -155,6 +159,46 @@ export function createThrottledTrigger(delay: number) {
 
     return true
   }
+}
+
+export const PlaygroundContainer = (props: { children: JSX.Element }) => {
+  return <div class="flex flex-col items-center">{props.children}</div>
+}
+
+export const TriggerButton = (props: {
+  onTrigger: () => void
+  text: string
+  key: string
+  class?: string
+}) => {
+  const keyCode = props.key.toLowerCase()
+
+  createEventListener(window, 'keydown', e => {
+    if (e.key.toLowerCase() === keyCode) {
+      props.onTrigger()
+    }
+  })
+
+  const text = createMemo(() => {
+    const index = props.text.toLowerCase().indexOf(keyCode)
+    return index === -1 ? (
+      <>
+        {props.text} <span class="underline">({props.key})</span>
+      </>
+    ) : (
+      <>
+        {props.text.slice(0, index)}
+        <span class="underline">{props.text[index]}</span>
+        {props.text.slice(index + 1, props.text.length)}
+      </>
+    )
+  })
+
+  return (
+    <button class={props.class} onClick={props.onTrigger}>
+      {text()}
+    </button>
+  )
 }
 
 export const Grid = <T,>(props: {

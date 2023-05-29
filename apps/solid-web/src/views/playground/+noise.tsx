@@ -4,8 +4,8 @@ import {
   DIRECTION_AND_CORNER_POINTS,
   Direction,
   Grid,
-  H,
-  W,
+  PlaygroundContainer,
+  TriggerButton,
   XYMatrix,
   randomInt,
   randomIterate,
@@ -15,14 +15,14 @@ export default function Noise(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
 
   function generateNoise(width: number, height: number) {
-    const result = new XYMatrix(width, height, () => ({ fill: false }))
+    const result = new XYMatrix(width, height, () => false)
 
     const stack = Array.from({ length: result.length * 0.05 }, () => randomInt(result.length))
 
     while (stack.length > 0) {
       const i = stack.pop()!
 
-      result.get(i)!.fill = true
+      result.set(i, true)
 
       // Skip spreading on the edges
       if (
@@ -36,7 +36,7 @@ export default function Noise(): JSX.Element {
       for (const d of randomIterate(DIRECTION_AND_CORNER_POINTS)) {
         const j = result.i(result.go(i, d)!)
 
-        if (result.get(j)!.fill) continue
+        if (result.get(j)) continue
 
         stack.push(j)
         break
@@ -46,14 +46,15 @@ export default function Noise(): JSX.Element {
     return result
   }
 
+  const W = 20
+  const H = 10
+
   return (
-    <>
-      <button onClick={() => trigger()}>Regenerate</button>
-      <br />
-      <br />
+    <PlaygroundContainer>
+      <TriggerButton class="mb-8" onTrigger={() => trigger()} key="R" text="Regenerate" />
       <Grid matrix={(track(), generateNoise(W, H))}>
-        {(cell, i) => <Cell fill={cell().fill} index={i} />}
+        {(cell, i) => <Cell fill={cell()} index={i} />}
       </Grid>
-    </>
+    </PlaygroundContainer>
   )
 }
