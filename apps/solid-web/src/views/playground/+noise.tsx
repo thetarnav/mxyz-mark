@@ -26,15 +26,15 @@ export default function Noise(): JSX.Element {
 
       // Skip spreading on the edges
       if (
-        result.go(i, Direction.Up) !== undefined ||
-        result.go(i, Direction.Right) !== undefined ||
-        result.go(i, Direction.Down) !== undefined ||
-        result.go(i, Direction.Left) !== undefined
+        !result.go(i, Direction.Up) ||
+        !result.go(i, Direction.Right) ||
+        !result.go(i, Direction.Down) ||
+        !result.go(i, Direction.Left)
       )
         continue
 
-      for (const [dx, dy] of randomIterate(DIRECTION_AND_CORNER_POINTS)) {
-        const j = result.goXY(i, dx, dy)
+      for (const d of randomIterate(DIRECTION_AND_CORNER_POINTS)) {
+        const j = result.i(result.go(i, d)!)
 
         if (result.get(j)!.fill) continue
 

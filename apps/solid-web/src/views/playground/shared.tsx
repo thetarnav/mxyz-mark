@@ -5,24 +5,6 @@ export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFromTo = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min)) + min
 
-export const DIRECTION_POINTS = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-] as const
-
-export const CORNER_POINTS = [
-  [1, 1],
-  [-1, 1],
-  [1, -1],
-  [-1, -1],
-] as const
-
-export const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINTS] as const
-
-// export const DIRECTIONS = ['RIGHT', 'LEFT', 'DOWN', 'UP'] as const
-
 export const enum Direction {
   Right = 'RIGHT',
   Left = 'LEFT',
@@ -50,13 +32,6 @@ export const OPPOSITE_DIRECTION = {
   [Direction.Up]: Direction.Down,
 }
 
-export const DIRECTION_TO_OFFSET_MAP: Record<Direction, [number, number]> = {
-  [Direction.Up]: [0, -1],
-  [Direction.Right]: [1, 0],
-  [Direction.Down]: [0, 1],
-  [Direction.Left]: [-1, 0],
-}
-
 export const W = 20
 export const H = 10
 
@@ -75,46 +50,66 @@ const directionToMoveTable: Record<Direction, (width: number) => number> = {
   [Direction.Left]: width => -1,
 }
 
-export class Vector extends Array<number> {
+export class Vector {
+  #arr: readonly [number, number]
   constructor(x: number, y: number) {
-    super(x, y)
+    this.#arr = [x, y]
   }
   get x() {
-    return this[0]
+    return this.#arr[0]
   }
   get y() {
-    return this[1]
+    return this.#arr[1]
+  }
+  add(vec: Vector) {
+    return new Vector(this.x + vec.x, this.y + vec.y)
   }
 }
+
+export const DIRECTION_TO_VECTOR: Record<Direction, Vector> = {
+  [Direction.Up]: new Vector(0, -1),
+  [Direction.Right]: new Vector(1, 0),
+  [Direction.Down]: new Vector(0, 1),
+  [Direction.Left]: new Vector(-1, 0),
+}
+
+export const DIRECTION_POINTS = [
+  new Vector(1, 0),
+  new Vector(-1, 0),
+  new Vector(0, 1),
+  new Vector(0, -1),
+] as const
+
+export const CORNER_POINTS = [
+  new Vector(1, 1),
+  new Vector(-1, 1),
+  new Vector(1, -1),
+  new Vector(-1, -1),
+] as const
+
+export const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINTS] as const
+
+// export const DIRECTIONS = ['RIGHT', 'LEFT', 'DOWN', 'UP'] as const
 
 export class XYMatrix<T> {
   readonly length: number
   readonly values: readonly T[]
-  constructor(public width: number, public height: number, fn: (x: number, y: number) => T) {
+  constructor(public width: number, public height: number, fn: (i: number) => T) {
     this.length = width * height
-    this.values = Array.from({ length: this.length }, (_, i) => fn(this.x(i), this.y(i)))
+    this.values = Array.from({ length: this.length }, (_, i) => fn(i))
   }
 
   get(i: number): T | undefined {
     return this.values[i]
   }
-  i(x: number, y: number) {
-    return x + y * this.width
+  i(vec: Vector) {
+    return XYMatrix.i(this.width, vec)
   }
-  x(i: number) {
-    return XYMatrix.x(this.width, i)
+  vec(i: number) {
+    return XYMatrix.vec(this.width, i)
   }
-  y(i: number) {
-    return XYMatrix.y(this.width, i)
-  }
-  xy(i: number): [number, number] {
-    return XYMatrix.xy(this.width, i)
-  }
-  go(from: number, by: number | Direction) {
+  go(from: Vector | number, by: Vector | number | Direction) {
     return XYMatrix.go(this.width, this.height, from, by)
-  }
-  goXY(i: number, dx: number, dy: number): number {
-    return this.i(this.x(i) + dx, this.y(i) + dy)
   }
 
   rows() {
@@ -125,32 +120,23 @@ export class XYMatrix<T> {
     return rows
   }
 
-  [Symbol.iterator]() {
-    return this.values[Symbol.iterator]()
+  static vec(width: number, i: number): Vector {
+    return new Vector(i % width, Math.floor(Math.abs(i / width)) * Math.sign(i))
   }
-
-  static x(width: number, i: number) {
-    return i % width
-  }
-  static y(width: number, i: number) {
-    return Math.floor(Math.abs(i / width)) * Math.sign(i)
-  }
-  static xy(width: number, i: number): [number, number] {
-    return [this.x(width, i), this.y(width, i)]
-  }
-  static i(width: number, x: number, y: number) {
-    return x + y * width
+  static i(width: number, vec: Vector) {
+    return vec.x + vec.y * width
   }
   static go(
     width: number,
     height: number,
-    from: number,
-    by: number | Direction,
-  ): number | undefined {
-    if (typeof by !== 'number') by = directionToMoveTable[by](width)
-    const x = this.x(width, from) + this.x(width, by)
-    const y = this.y(width, from) + this.y(width, by)
-    return x >= 0 && x < width && y >= 0 && y < height ? this.i(width, x, y) : undefined
+    from: Vector | number,
+    by: Vector | number | Direction,
+  ): Vector | undefined {
+    if (!(by instanceof Vector))
+      by = typeof by === 'number' ? this.vec(width, by) : DIRECTION_TO_VECTOR[by]
+    if (!(from instanceof Vector)) from = this.vec(width, from)
+    const sum = from.add(by)
+    return sum.x >= 0 && sum.x < width && sum.y >= 0 && sum.y < height ? sum : undefined
   }
 }
 

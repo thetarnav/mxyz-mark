@@ -77,7 +77,9 @@ export default function Movement(): JSX.Element {
     }
   })
 
-  const [position, setPosition] = createSignal(randomInt(W * H))
+  const matrix = new XYMatrix(W, H, i => i)
+
+  const [position, setPosition] = createSignal(randomInt(matrix.length))
   const isPlayer = createSelector(position)
 
   const scheduled = createThrottledTrigger(1000 / 4)
@@ -86,8 +88,8 @@ export default function Movement(): JSX.Element {
     const direction = currentDirection()
     if (direction && scheduled()) {
       setPosition(p => {
-        const newPos = XYMatrix.go(W, H, p, direction)
-        return newPos === undefined ? p : newPos
+        const newPos = matrix.go(p, direction)
+        return newPos === undefined ? p : matrix.i(newPos)
       })
     }
   })
