@@ -11,6 +11,7 @@ import {
   Grid,
   OPPOSITE_DIRECTION,
   PlaygroundContainer,
+  Vector,
   XYMatrix,
   createThrottledTrigger,
   randomInt,
@@ -96,12 +97,13 @@ function createDirectionMovement(onMove: (direction: Direction) => void) {
 }
 
 const WALLS = [
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 1, 1, 0, 0, 0, 1, 0],
-  [0, 1, 1, 1, 0, 0, 0, 1, 1, 1],
-  [0, 1, 0, 1, 0, 1, 0, 0, 1, 0],
-  [0, 1, 0, 1, 1, 1, 0, 1, 1, 0],
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], // 6
+  [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0], // 5
+  [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], // 4
+  [0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0], // 3
+  [0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0], // 2
+  [0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1], // 1
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 0
 ]
 
 export default function Movement(): JSX.Element {
@@ -168,9 +170,62 @@ export default function Movement(): JSX.Element {
           <DirectionKey direction={Direction.Right} />
         </div>
       </div>
-      <Grid matrix={matrix}>
-        {(isWall, i) => <Cell isPlayer={isPlayer(i)} isWall={isWall()} index={i} />}
-      </Grid>
+
+      <div class="flex items-start gap-12">
+        <Grid matrix={matrix}>
+          {(isWall, i) => (
+            <Cell isPlayer={isPlayer(i)} isWall={isWall()}>
+              {i}
+            </Cell>
+          )}
+        </Grid>
+
+        {untrack(() => {
+          const WINDOW_RECT_SIZE = 3
+
+          const windowRect = createMemo(() => {
+            const player = position()
+            const playerVec = matrix.vec(player)
+
+            const wondowMatrix = new XYMatrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, i => {
+              if (i === (WINDOW_RECT_SIZE * WINDOW_RECT_SIZE - 1) / 2)
+                return {
+                  isPlayer: true,
+                  isWall: false,
+                }
+
+              const vec = XYMatrix.vec(WINDOW_RECT_SIZE, i).add(-1, -1).add(playerVec)
+              let isWall = matrix.get(matrix.i(vec))
+              if (isWall === undefined) isWall = true
+
+              return {
+                isPlayer: false,
+                isWall,
+                // the index is overflowing...
+                i: matrix.i(vec),
+              }
+            })
+
+            const x = playerVec.x
+            const y = playerVec.y
+            return {
+              x,
+              y,
+              wondowMatrix,
+            }
+          })
+
+          return (
+            <Grid matrix={windowRect().wondowMatrix}>
+              {cell => (
+                <Cell isPlayer={cell().isPlayer} isWall={cell().isWall}>
+                  {cell().i}
+                </Cell>
+              )}
+            </Grid>
+          )
+        })}
+      </div>
     </PlaygroundContainer>
   )
 }

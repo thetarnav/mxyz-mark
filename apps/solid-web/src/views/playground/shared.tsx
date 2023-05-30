@@ -62,8 +62,14 @@ export class Vector {
   get y() {
     return this.#arr[1]
   }
-  add(vec: Vector) {
-    return new Vector(this.x + vec.x, this.y + vec.y)
+  add(vec: Vector):Vector
+  add(x: number, y: number):Vector
+  add(
+    vecOrX: Vector | number,
+    y?: number,
+  ):Vector {
+    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX.#arr
+    return new Vector(this.x + dx, this.y + dy)
   }
   toString() {
     return this.#arr.toString()
@@ -253,7 +259,7 @@ export const Cell: Component<{
   borders?: Partial<Record<Direction, boolean>>
   isPlayer?: boolean
   isWall?: boolean
-  index: number
+  children?: JSX.Element
 }> = props => {
   const borders = () => props.borders || {}
 
@@ -272,7 +278,7 @@ export const Cell: Component<{
         },
       )}
     >
-      {props.index}
+      {props.children}
     </div>
   )
 }

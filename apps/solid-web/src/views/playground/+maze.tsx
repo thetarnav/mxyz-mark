@@ -106,14 +106,13 @@ export default function Maze(): JSX.Element {
               [Direction.Right]: cell().right && !!maze().go(i, Direction.Right),
               [Direction.Down]: cell().down && !!maze().go(i, Direction.Down),
             }}
-            index={i}
-          />
+          >
+            {i}
+          </Cell>
         )}
       </Grid>
       <div class="mt-24">
-        <Grid matrix={mazeToGrid(maze(), 2)}>
-          {(cell, i) => <Cell isWall={cell()} index={i} />}
-        </Grid>
+        <Grid matrix={mazeToGrid(maze(), 2)}>{(cell, i) => <Cell isWall={cell()}>{i}</Cell>}</Grid>
       </div>
     </PlaygroundContainer>
   )
