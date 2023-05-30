@@ -53,7 +53,7 @@ export default function Noise(): JSX.Element {
     <PlaygroundContainer>
       <TriggerButton class="mb-8" onTrigger={() => trigger()} key="R" text="Regenerate" />
       <Grid matrix={(track(), generateNoise(W, H))}>
-        {(cell, i) => <Cell fill={cell()} index={i} />}
+        {(cell, i) => <Cell isPlayer={cell()} index={i} />}
       </Grid>
     </PlaygroundContainer>
   )

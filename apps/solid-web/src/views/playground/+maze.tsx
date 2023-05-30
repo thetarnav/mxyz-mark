@@ -111,7 +111,9 @@ export default function Maze(): JSX.Element {
         )}
       </Grid>
       <div class="mt-24">
-        <Grid matrix={mazeToGrid(maze(), 2)}>{(cell, i) => <Cell fill={cell()} index={i} />}</Grid>
+        <Grid matrix={mazeToGrid(maze(), 2)}>
+          {(cell, i) => <Cell isWall={cell()} index={i} />}
+        </Grid>
       </div>
     </PlaygroundContainer>
   )

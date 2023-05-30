@@ -251,7 +251,8 @@ export const Grid = <T,>(props: {
 
 export const Cell: Component<{
   borders?: Partial<Record<Direction, boolean>>
-  fill?: boolean
+  isPlayer?: boolean
+  isWall?: boolean
   index: number
 }> = props => {
   const borders = () => props.borders || {}
@@ -260,7 +261,11 @@ export const Cell: Component<{
     <div
       class={clsx(
         'border-2px flex items-center justify-center border-transparent',
-        props.fill ? 'bg-primary text-dark' : 'text-gray-4 bg-transparent',
+        props.isPlayer
+          ? 'bg-primary text-dark'
+          : props.isWall
+          ? 'text-dark bg-gray-4'
+          : 'text-gray-4 bg-transparent',
         {
           'border-r-light': borders()[Direction.Right],
           'border-b-light': borders()[Direction.Down],
