@@ -16,47 +16,47 @@ import {
   randomInt,
 } from './shared'
 
+const DEFAULT_HELD_DIRECTION_STATE = {
+  [Direction.Up]: false,
+  [Direction.Right]: false,
+  [Direction.Down]: false,
+  [Direction.Left]: false,
+} as const satisfies Record<Direction, boolean>
+
+const KEY_TO_DIRECTION: Record<string, Direction> = {
+  ArrowUp: Direction.Up,
+  w: Direction.Up,
+  ArrowRight: Direction.Right,
+  d: Direction.Right,
+  ArrowDown: Direction.Down,
+  s: Direction.Down,
+  ArrowLeft: Direction.Left,
+  a: Direction.Left,
+}
+
 export default function Movement(): JSX.Element {
-  const defaultHeldDirectionsState = {
-    [Direction.Up]: false,
-    [Direction.Right]: false,
-    [Direction.Down]: false,
-    [Direction.Left]: false,
-  } as const satisfies Record<Direction, boolean>
-
   const [heldDirections, setHeldDirections] = createStaticStore<Record<Direction, boolean>>(
-    defaultHeldDirectionsState,
+    DEFAULT_HELD_DIRECTION_STATE,
   )
-
-  const keyToDirectionMap: Record<string, Direction> = {
-    ArrowUp: Direction.Up,
-    w: Direction.Up,
-    ArrowRight: Direction.Right,
-    d: Direction.Right,
-    ArrowDown: Direction.Down,
-    s: Direction.Down,
-    ArrowLeft: Direction.Left,
-    a: Direction.Left,
-  }
 
   let lastDirection = Direction.Up
   createEventListenerMap(window, {
     keydown(e) {
-      const direction = keyToDirectionMap[e.key]
+      const direction = KEY_TO_DIRECTION[e.key]
       if (direction) {
         setHeldDirections((lastDirection = direction), true)
         e.preventDefault()
       }
     },
     keyup(e) {
-      const direction = keyToDirectionMap[e.key]
+      const direction = KEY_TO_DIRECTION[e.key]
       if (direction) setHeldDirections(direction, false)
     },
     blur(e) {
-      setHeldDirections(defaultHeldDirectionsState)
+      setHeldDirections(DEFAULT_HELD_DIRECTION_STATE)
     },
     contextmenu(e) {
-      setHeldDirections(defaultHeldDirectionsState)
+      setHeldDirections(DEFAULT_HELD_DIRECTION_STATE)
     },
   })
 
