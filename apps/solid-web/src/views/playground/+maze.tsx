@@ -62,31 +62,34 @@ function generateMaze(width: number, height: number) {
   return result
 }
 
-const mazeToGrid = (maze: ReturnType<typeof generateMaze>): XYMatrix<boolean> => {
-  const width = maze.width * 2 - 1,
-    height = maze.height * 2 - 1
-  const result = new XYMatrix<boolean>(width, height, i => {
-    const vec = XYMatrix.vec(width, i)
-    if (vec.x % 2 === 0 && vec.y % 2 === 0) return false
-    if (vec.x % 2 === 1 && vec.y % 2 === 1) return true
-    if (vec.x % 2 === 0) {
-      const mazeVec = new Vector(vec.x / 2, (vec.y + 1) / 2)
-      const cell = maze.get(maze.i(mazeVec))!
-      return cell.down
-    }
-    const mazeVec = new Vector((vec.x - 1) / 2, vec.y / 2)
-    const cell = maze.get(maze.i(mazeVec))!
-    return cell.right
-  })
+const mazeToGrid = (maze: ReturnType<typeof generateMaze>, tileSize: number): XYMatrix<boolean> => {
+  const gridSize = tileSize + 1,
+    width = maze.width * gridSize - 1,
+    height = maze.height * gridSize - 1
 
-  return result
+  return new XYMatrix(width, height, i => {
+    const vec = XYMatrix.vec(width, i)
+    const tileVec = new Vector(vec.x % gridSize, vec.y % gridSize)
+    // tiles
+    if (tileVec.x < tileSize && tileVec.y < tileSize) return false
+    // wall joints
+    if (tileVec.x === tileSize && tileVec.y === tileSize) return true
+    // vertical walls
+    if (tileVec.x === tileSize) {
+      const mazeVec = new Vector((vec.x - tileSize) / gridSize, (vec.y - tileVec.y) / gridSize)
+      return maze.get(maze.i(mazeVec))!.right
+    }
+    // horizontal walls
+    const mazeVec = new Vector((vec.x - tileVec.x) / gridSize, (vec.y - tileSize) / gridSize + 1)
+    return maze.get(maze.i(mazeVec))!.down
+  })
 }
 
 export default function Maze(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
 
-  const W = 13
-  const H = 7
+  const W = 10
+  const H = 6
 
   const maze = createMemo(() => {
     track()
@@ -108,7 +111,7 @@ export default function Maze(): JSX.Element {
         )}
       </Grid>
       <div class="mt-24">
-        <Grid matrix={mazeToGrid(maze())}>{(cell, i) => <Cell fill={cell()} index={i} />}</Grid>
+        <Grid matrix={mazeToGrid(maze(), 2)}>{(cell, i) => <Cell fill={cell()} index={i} />}</Grid>
       </div>
     </PlaygroundContainer>
   )

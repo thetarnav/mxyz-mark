@@ -10,6 +10,7 @@ import {
 import { css } from 'solid-styled'
 import { Repeat } from '@solid-primitives/range'
 import { createEventListener } from '@solid-primitives/event-listener'
+import clsx from 'clsx'
 
 export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFromTo = (min: number, max: number) =>
@@ -221,11 +222,11 @@ export const Grid = <T,>(props: {
   css`
     .wrapper,
     .x-axis {
-      grid-template-columns: repeat(${props.matrix.width + ''}, 2.25rem);
+      grid-template-columns: repeat(${props.matrix.width + ''}, 2rem);
     }
     .wrapper,
     .y-axis {
-      grid-template-rows: repeat(${props.matrix.height + ''}, 2.25rem);
+      grid-template-rows: repeat(${props.matrix.height + ''}, 2rem);
     }
   `
 
@@ -253,19 +254,20 @@ export const Cell: Component<{
   fill?: boolean
   index: number
 }> = props => {
-  const borderTransparent = '2px solid transparent',
-    borderWhite = '2px solid white'
   const borders = () => props.borders || {}
-  css`
-    div {
-      border-right: ${borders()[Direction.Right] ? borderWhite : borderTransparent};
-      border-bottom: ${borders()[Direction.Down] ? borderWhite : borderTransparent};
-      border-left: ${borders()[Direction.Left] ? borderWhite : borderTransparent};
-      border-top: ${borders()[Direction.Up] ? borderWhite : borderTransparent};
-      background: ${props.fill ? '#DE311B' : 'transparent'};
-      color: ${props.fill ? 'black' : 'lightgray'};
-    }
-  `
 
-  return <div class="flex items-center justify-center">{props.index}</div>
+  return (
+    <div
+      class={clsx(
+        'border-2px flex items-center justify-center border-transparent',
+        props.fill ? 'bg-primary text-dark' : 'text-gray-4 bg-transparent',
+        {
+          'border-r-light': borders()[Direction.Right],
+          'border-b-light': borders()[Direction.Down],
+        },
+      )}
+    >
+      {props.index}
+    </div>
+  )
 }
