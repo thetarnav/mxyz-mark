@@ -17,3 +17,6 @@ gitignore
 Thumbs.db
 
 .vercel
+
+# vite config transpiled to js
+vite.config.ts.timestamp-*.mjs
