@@ -189,25 +189,20 @@ export default function Movement(): JSX.Element {
 
             return new XYMatrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
               const vec = new Vector(x, y).add(player)
-              const i = matrix.i(vec)
 
               if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
-                return { isPlayer: true, isWall: false, i }
+                return { isPlayer: true, isWall: false }
 
               let isWall = matrix.get(vec)
               if (isWall === undefined) isWall = true
 
-              return { isPlayer: false, isWall, i }
+              return { isPlayer: false, isWall }
             })
           })
 
           return (
             <Grid matrix={windowRect()} offset={playerCornerVec()}>
-              {cell => (
-                <Cell isPlayer={cell().isPlayer} isWall={cell().isWall}>
-                  {cell().i}
-                </Cell>
-              )}
+              {cell => <Cell isPlayer={cell().isPlayer} isWall={cell().isWall} />}
             </Grid>
           )
         })}
