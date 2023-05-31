@@ -182,12 +182,13 @@ export default function Movement(): JSX.Element {
         {untrack(() => {
           const WINDOW_RECT_SIZE = 3
 
+          const playerCornerVec = createMemo(() => matrix.vec(position()).add(-1, -1))
+
           const windowRect = createMemo(() => {
-            const player = position()
-            const playerVec = matrix.vec(player)
+            const player = playerCornerVec()
 
             return new XYMatrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
-              const vec = new Vector(x, y).add(-1, -1).add(playerVec)
+              const vec = new Vector(x, y).add(player)
               const i = matrix.i(vec)
 
               if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
@@ -201,7 +202,7 @@ export default function Movement(): JSX.Element {
           })
 
           return (
-            <Grid matrix={windowRect()}>
+            <Grid matrix={windowRect()} offset={playerCornerVec()}>
               {cell => (
                 <Cell isPlayer={cell().isPlayer} isWall={cell().isWall}>
                   {cell().i}

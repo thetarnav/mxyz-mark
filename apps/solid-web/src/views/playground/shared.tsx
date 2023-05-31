@@ -8,7 +8,7 @@ import {
   createSignal,
 } from 'solid-js'
 import { css } from 'solid-styled'
-import { Repeat } from '@solid-primitives/range'
+import { Range } from '@solid-primitives/range'
 import { createEventListener } from '@solid-primitives/event-listener'
 import clsx from 'clsx'
 
@@ -72,6 +72,8 @@ export class Vector {
     return this.#arr.toString()
   }
 }
+
+const ZERO_VECTOR = new Vector(0, 0)
 
 export const DIRECTION_TO_VECTOR: Record<Direction, Vector> = {
   [Direction.Up]: new Vector(0, 1),
@@ -219,6 +221,7 @@ export const TriggerButton = (props: {
 export const Grid = <T,>(props: {
   matrix: XYMatrix<T>
   children: (item: Accessor<T>, index: number) => JSX.Element
+  offset?: Vector
 }) => {
   const reordered = createMemo(() => {
     const { matrix } = props
@@ -250,16 +253,20 @@ export const Grid = <T,>(props: {
     <div class="center-child text-gray-5">{props.children}</div>
   )
 
+  const offset = () => props.offset || ZERO_VECTOR
+
   return (
     <div class="wrapper border-gray-6 relative grid rounded-md border">
       <Index each={reordered()}>{item => props.children(() => item().item, item().index)}</Index>
       <div class="x-axis absolute left-0 top-full mt-2 grid w-full">
-        <Repeat times={props.matrix.width}>{x => <AxisMark>{x}</AxisMark>}</Repeat>
+        <Range start={offset().x} to={props.matrix.width + offset().x}>
+          {x => <AxisMark>{x}</AxisMark>}
+        </Range>
       </div>
       <div class="y-axis absolute right-full top-0 mr-3 grid h-full">
-        <Repeat times={props.matrix.height}>
-          {y => <AxisMark>{props.matrix.height - 1 - y}</AxisMark>}
-        </Repeat>
+        <Range start={props.matrix.height + offset().y - 1} to={offset().y - 1}>
+          {y => <AxisMark>{y}</AxisMark>}
+        </Range>
       </div>
     </div>
   )
