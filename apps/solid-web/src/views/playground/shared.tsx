@@ -62,12 +62,9 @@ export class Vector {
   get y() {
     return this.#arr[1]
   }
-  add(vec: Vector):Vector
-  add(x: number, y: number):Vector
-  add(
-    vecOrX: Vector | number,
-    y?: number,
-  ):Vector {
+  add(vec: Vector): Vector
+  add(x: number, y: number): Vector
+  add(vecOrX: Vector | number, y?: number): Vector {
     const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX.#arr
     return new Vector(this.x + dx, this.y + dy)
   }
@@ -108,17 +105,22 @@ export const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINT
 
 export class XYMatrix<T> {
   readonly length: number
-  readonly #values: T[]
-  constructor(public width: number, public height: number, fn: (i: number) => T) {
+  readonly #values: T[][]
+  constructor(public width: number, public height: number, fn: (x: number, y: number) => T) {
     this.length = width * height
-    this.#values = Array.from({ length: this.length }, (_, i) => fn(i))
+    this.#values = Array.from({ length: width }, (_, x) =>
+      Array.from({ length: height }, (_, y) => fn(x, y)),
+    )
   }
 
-  set(i: number, value: T) {
-    this.#values[i] = value
+  set(vec: Vector | number, value: T) {
+    if (typeof vec === 'number') vec = this.vec(vec)
+    if (!this.inBounds(vec)) return
+    this.#values[vec.x][vec.y] = value
   }
-  get(i: number): T | undefined {
-    return this.#values[i]
+  get(vec: Vector | number): T | undefined {
+    if (typeof vec === 'number') vec = this.vec(vec)
+    return this.inBounds(vec) ? this.#values[vec.x][vec.y] : undefined
   }
   i(vec: Vector) {
     return XYMatrix.i(this.width, vec)
@@ -128,6 +130,9 @@ export class XYMatrix<T> {
   }
   go(from: Vector | number, by: Vector | number | Direction) {
     return XYMatrix.go(this.width, this.height, from, by)
+  }
+  inBounds(vec: Vector) {
+    return XYMatrix.inBounds(this.width, this.height, vec)
   }
 
   static vec(width: number, i: number): Vector {
@@ -146,7 +151,10 @@ export class XYMatrix<T> {
       by = typeof by === 'number' ? this.vec(width, by) : DIRECTION_TO_VECTOR[by]
     if (!(from instanceof Vector)) from = this.vec(width, from)
     const sum = from.add(by)
-    return sum.x >= 0 && sum.x < width && sum.y >= 0 && sum.y < height ? sum : undefined
+    return this.inBounds(width, height, sum) ? sum : undefined
+  }
+  static inBounds(width: number, height: number, vec: Vector) {
+    return vec.x >= 0 && vec.x < width && vec.y >= 0 && vec.y < height
   }
 }
 
@@ -214,13 +222,15 @@ export const Grid = <T,>(props: {
 }) => {
   const reordered = createMemo(() => {
     const { matrix } = props
-    const { width, length } = matrix
+    const { width, height } = matrix
     const arr: { index: number; item: T }[] = []
-    for (let i = 0; i < length; i++) {
-      // display items in reverse y order
-      // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
-      const index = Math.floor((length - 1 - i) / width) * width + (i % width)
-      arr.push({ index, item: matrix.get(index)! })
+    // display items in reverse y order
+    // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
+    for (let y = height - 1; y >= 0; y--) {
+      for (let x = 0; x < width; x++) {
+        const vec = new Vector(x, y)
+        arr.push({ index: matrix.i(vec), item: matrix.get(vec)! })
+      }
     }
     return arr
   })

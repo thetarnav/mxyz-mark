@@ -67,8 +67,8 @@ const mazeToGrid = (maze: ReturnType<typeof generateMaze>, tileSize: number): XY
     width = maze.width * gridSize - 1,
     height = maze.height * gridSize - 1
 
-  return new XYMatrix(width, height, i => {
-    const vec = XYMatrix.vec(width, i)
+  return new XYMatrix(width, height, (x, y) => {
+    const vec = new Vector(x, y)
     const tileVec = new Vector(vec.x % gridSize, vec.y % gridSize)
     // tiles
     if (tileVec.x < tileSize && tileVec.y < tileSize) return false
@@ -77,11 +77,11 @@ const mazeToGrid = (maze: ReturnType<typeof generateMaze>, tileSize: number): XY
     // vertical walls
     if (tileVec.x === tileSize) {
       const mazeVec = new Vector((vec.x - tileSize) / gridSize, (vec.y - tileVec.y) / gridSize)
-      return maze.get(maze.i(mazeVec))!.right
+      return maze.get(mazeVec)!.right
     }
     // horizontal walls
     const mazeVec = new Vector((vec.x - tileVec.x) / gridSize, (vec.y - tileSize) / gridSize + 1)
-    return maze.get(maze.i(mazeVec))!.down
+    return maze.get(mazeVec)!.down
   })
 }
 

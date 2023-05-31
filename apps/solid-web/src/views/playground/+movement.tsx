@@ -109,9 +109,8 @@ const WALLS = [
 export default function Movement(): JSX.Element {
   const W = WALLS[0].length
   const H = WALLS.length
-  const matrix = new XYMatrix(W, H, i => {
-    const vec = XYMatrix.vec(W, i)
-    return !!WALLS[H - 1 - vec.y][vec.x]
+  const matrix = new XYMatrix(W, H, (x, y) => {
+    return !!WALLS[H - 1 - y][x]
   })
 
   let initialPosition = randomInt(matrix.length)
@@ -187,36 +186,22 @@ export default function Movement(): JSX.Element {
             const player = position()
             const playerVec = matrix.vec(player)
 
-            const wondowMatrix = new XYMatrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, i => {
-              if (i === (WINDOW_RECT_SIZE * WINDOW_RECT_SIZE - 1) / 2)
-                return {
-                  isPlayer: true,
-                  isWall: false,
-                }
+            return new XYMatrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
+              const vec = new Vector(x, y).add(-1, -1).add(playerVec)
+              const i = matrix.i(vec)
 
-              const vec = XYMatrix.vec(WINDOW_RECT_SIZE, i).add(-1, -1).add(playerVec)
-              let isWall = matrix.get(matrix.i(vec))
+              if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
+                return { isPlayer: true, isWall: false, i }
+
+              let isWall = matrix.get(vec)
               if (isWall === undefined) isWall = true
 
-              return {
-                isPlayer: false,
-                isWall,
-                // the index is overflowing...
-                i: matrix.i(vec),
-              }
+              return { isPlayer: false, isWall, i }
             })
-
-            const x = playerVec.x
-            const y = playerVec.y
-            return {
-              x,
-              y,
-              wondowMatrix,
-            }
           })
 
           return (
-            <Grid matrix={windowRect().wondowMatrix}>
+            <Grid matrix={windowRect()}>
               {cell => (
                 <Cell isPlayer={cell().isPlayer} isWall={cell().isWall}>
                   {cell().i}
