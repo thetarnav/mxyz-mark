@@ -51,7 +51,9 @@ export function* randomIterate<T>(arr: readonly T[]) {
   }
 }
 
-export class Vector {
+export type Pointable = { x: number; y: number }
+
+export class Point implements Pointable {
   #arr: readonly [number, number]
   constructor(x: number, y: number) {
     this.#arr = [x, y]
@@ -62,24 +64,30 @@ export class Vector {
   get y() {
     return this.#arr[1]
   }
-  add(vec: Vector): Vector
-  add(x: number, y: number): Vector
-  add(vecOrX: Vector | number, y?: number): Vector {
+  add(vec: Point): Point
+  add(x: number, y: number): Point
+  add(vecOrX: Point | number, y?: number): Point {
     const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX.#arr
-    return new Vector(this.x + dx, this.y + dy)
+    return new Point(this.x + dx, this.y + dy)
+  }
+  equals(vec: Pointable) {
+    return this.x === vec.x && this.y === vec.y
   }
   toString() {
     return this.#arr.toString()
   }
+  toJSON() {
+    return { x: this.x, y: this.y }
+  }
 }
 
-const ZERO_VECTOR = new Vector(0, 0)
+const ZERO_VECTOR = new Point(0, 0)
 
-export const DIRECTION_TO_VECTOR: Record<Direction, Vector> = {
-  [Direction.Up]: new Vector(0, 1),
-  [Direction.Right]: new Vector(1, 0),
-  [Direction.Down]: new Vector(0, -1),
-  [Direction.Left]: new Vector(-1, 0),
+export const DIRECTION_TO_VECTOR: Record<Direction, Point> = {
+  [Direction.Up]: new Point(0, 1),
+  [Direction.Right]: new Point(1, 0),
+  [Direction.Down]: new Point(0, -1),
+  [Direction.Left]: new Point(-1, 0),
 }
 
 export const DIRECTION_TO_MOVE: Record<Direction, (width: number) => number> = {
@@ -90,22 +98,22 @@ export const DIRECTION_TO_MOVE: Record<Direction, (width: number) => number> = {
 }
 
 export const DIRECTION_POINTS = [
-  new Vector(1, 0),
-  new Vector(-1, 0),
-  new Vector(0, 1),
-  new Vector(0, -1),
+  new Point(1, 0),
+  new Point(-1, 0),
+  new Point(0, 1),
+  new Point(0, -1),
 ] as const
 
 export const CORNER_POINTS = [
-  new Vector(1, 1),
-  new Vector(-1, 1),
-  new Vector(1, -1),
-  new Vector(-1, -1),
+  new Point(1, 1),
+  new Point(-1, 1),
+  new Point(1, -1),
+  new Point(-1, -1),
 ] as const
 
 export const DIRECTION_AND_CORNER_POINTS = [...DIRECTION_POINTS, ...CORNER_POINTS] as const
 
-export class XYMatrix<T> {
+export class Matrix<T> {
   readonly length: number
   readonly #values: T[][]
   constructor(public width: number, public height: number, fn: (x: number, y: number) => T) {
@@ -115,48 +123,52 @@ export class XYMatrix<T> {
     )
   }
 
-  set(vec: Vector | number, value: T) {
-    if (typeof vec === 'number') vec = this.vec(vec)
-    if (!this.inBounds(vec)) return
-    this.#values[vec.x][vec.y] = value
+  set(point: Pointable | number, value: T) {
+    if (typeof point === 'number') point = this.point(point)
+    if (!this.inBounds(point)) return
+    this.#values[point.x][point.y] = value
   }
-  get(vec: Vector | number): T | undefined {
-    if (typeof vec === 'number') vec = this.vec(vec)
-    return this.inBounds(vec) ? this.#values[vec.x][vec.y] : undefined
+  get(point: Pointable | number): T | undefined {
+    if (typeof point === 'number') point = this.point(point)
+    return this.inBounds(point) ? this.#values[point.x][point.y] : undefined
   }
-  i(vec: Vector) {
-    return XYMatrix.i(this.width, vec)
+  i(point: Pointable) {
+    return Matrix.i(this.width, point)
   }
-  vec(i: number) {
-    return XYMatrix.vec(this.width, i)
+  point(i: number) {
+    return Matrix.vec(this.width, i)
   }
-  go(from: Vector | number, by: Vector | number | Direction) {
-    return XYMatrix.go(this.width, this.height, from, by)
+  go(from: Point | number, by: Point | number | Direction) {
+    return Matrix.go(this.width, this.height, from, by)
   }
-  inBounds(vec: Vector) {
-    return XYMatrix.inBounds(this.width, this.height, vec)
+  inBounds(vec: Pointable) {
+    return Matrix.inBounds(this.width, this.height, vec)
   }
 
-  static vec(width: number, i: number): Vector {
-    return new Vector(i % width, Math.floor(Math.abs(i / width)) * Math.sign(i))
+  *[Symbol.iterator]() {
+    for (let i = 0; i < this.length; i++) yield i
   }
-  static i(width: number, vec: Vector) {
-    return vec.x + vec.y * width
+
+  static vec(width: number, i: number): Point {
+    return new Point(i % width, Math.floor(Math.abs(i / width)) * Math.sign(i))
+  }
+  static i(width: number, point: Pointable) {
+    return point.x + point.y * width
   }
   static go(
     width: number,
     height: number,
-    from: Vector | number,
-    by: Vector | number | Direction,
-  ): Vector | undefined {
-    if (!(by instanceof Vector))
+    from: Point | number,
+    by: Point | number | Direction,
+  ): Point | undefined {
+    if (!(by instanceof Point))
       by = typeof by === 'number' ? this.vec(width, by) : DIRECTION_TO_VECTOR[by]
-    if (!(from instanceof Vector)) from = this.vec(width, from)
+    if (!(from instanceof Point)) from = this.vec(width, from)
     const sum = from.add(by)
     return this.inBounds(width, height, sum) ? sum : undefined
   }
-  static inBounds(width: number, height: number, vec: Vector) {
-    return vec.x >= 0 && vec.x < width && vec.y >= 0 && vec.y < height
+  static inBounds(width: number, height: number, p: Pointable) {
+    return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height
   }
 }
 
@@ -219,21 +231,20 @@ export const TriggerButton = (props: {
 }
 
 export const Grid = <T,>(props: {
-  matrix: XYMatrix<T>
+  matrix: Matrix<T>
   children: (item: Accessor<T>, index: number) => JSX.Element
-  offset?: Vector
+  offset?: Point
 }) => {
   const reordered = createMemo(() => {
-    const { matrix } = props
-    const { width, height } = matrix
-    const arr: { index: number; item: T }[] = []
+    const { matrix } = props,
+      { width, height } = matrix,
+      arr: { index: number; item: T }[] = []
     // display items in reverse y order
     // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
-    for (let y = height - 1; y >= 0; y--) {
-      for (let x = 0; x < width; x++) {
-        const vec = new Vector(x, y)
-        arr.push({ index: matrix.i(vec), item: matrix.get(vec)! })
-      }
+    for (const i of matrix) {
+      const point = matrix.point(i)
+      const reorderedI = (height - 1 - point.y) * width + point.x
+      arr.push({ index: reorderedI, item: matrix.get(reorderedI)! })
     }
     return arr
   })

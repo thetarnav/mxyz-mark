@@ -6,7 +6,7 @@ import {
   Grid,
   PlaygroundContainer,
   TriggerButton,
-  XYMatrix,
+  Matrix,
   randomInt,
   randomIterate,
 } from './shared'
@@ -15,7 +15,7 @@ export default function Noise(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
 
   function generateNoise(width: number, height: number) {
-    const result = new XYMatrix(width, height, () => false)
+    const result = new Matrix(width, height, () => false)
 
     const stack = Array.from({ length: result.length * 0.05 }, () => randomInt(result.length))
 

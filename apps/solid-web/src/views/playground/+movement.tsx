@@ -11,8 +11,8 @@ import {
   Grid,
   OPPOSITE_DIRECTION,
   PlaygroundContainer,
-  Vector,
-  XYMatrix,
+  Point,
+  Matrix,
   createThrottledTrigger,
   randomInt,
 } from './shared'
@@ -106,13 +106,46 @@ const WALLS = [
   [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 0
 ]
 
-export default function Movement(): JSX.Element {
-  const W = WALLS[0].length
-  const H = WALLS.length
-  const matrix = new XYMatrix(W, H, (x, y) => {
-    return !!WALLS[H - 1 - y][x]
-  })
+const W = WALLS[0].length
+const H = WALLS.length
 
+const matrix = new Matrix(W, H, (x, y) => !!WALLS[H - 1 - y][x])
+
+const wallLines: [Point, Point][] = []
+
+// find all wall lines
+{
+  const seen = {
+    h: new Set<number>(),
+    v: new Set<number>(),
+  }
+
+  for (const i of matrix) {
+    const point = matrix.point(i)
+
+    let x = point.x,
+      y = point.y,
+      j = i
+
+    while (matrix.get(j) && !seen.h.has(j) && x < W) {
+      seen.h.add(j)
+      x++
+      j++
+    }
+    point.x + 1 < x && wallLines.push([point, new Point(x - 1, point.y)])
+
+    j = i
+
+    while (matrix.get(j) && !seen.v.has(j) && y < H) {
+      seen.v.add(j)
+      y++
+      j += W
+    }
+    point.y + 1 < y && wallLines.push([point, new Point(point.x, y - 1)])
+  }
+}
+
+export default function Movement(): JSX.Element {
   let initialPosition = randomInt(matrix.length)
   while (matrix.get(initialPosition)) {
     initialPosition = randomInt(matrix.length)
@@ -182,13 +215,13 @@ export default function Movement(): JSX.Element {
         {untrack(() => {
           const WINDOW_RECT_SIZE = 3
 
-          const playerCornerVec = createMemo(() => matrix.vec(position()).add(-1, -1))
+          const playerCornerVec = createMemo(() => matrix.point(position()).add(-1, -1))
 
           const windowRect = createMemo(() => {
             const player = playerCornerVec()
 
-            return new XYMatrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
-              const vec = new Vector(x, y).add(player)
+            return new Matrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
+              const vec = new Point(x, y).add(player)
 
               if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
                 return { isPlayer: true, isWall: false }

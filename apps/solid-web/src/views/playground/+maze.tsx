@@ -6,14 +6,14 @@ import {
   Grid,
   PlaygroundContainer,
   TriggerButton,
-  Vector,
-  XYMatrix,
+  Point,
+  Matrix,
   randomInt,
   randomIntFromTo,
 } from './shared'
 
 function generateMaze(width: number, height: number) {
-  const result = new XYMatrix(width, height, () => ({
+  const result = new Matrix(width, height, () => ({
       right: true,
       down: true,
     })),
@@ -62,26 +62,26 @@ function generateMaze(width: number, height: number) {
   return result
 }
 
-const mazeToGrid = (maze: ReturnType<typeof generateMaze>, tileSize: number): XYMatrix<boolean> => {
+const mazeToGrid = (maze: ReturnType<typeof generateMaze>, tileSize: number): Matrix<boolean> => {
   const gridSize = tileSize + 1,
     width = maze.width * gridSize - 1,
     height = maze.height * gridSize - 1
 
-  return new XYMatrix(width, height, (x, y) => {
-    const vec = new Vector(x, y)
-    const tileVec = new Vector(vec.x % gridSize, vec.y % gridSize)
+  return new Matrix(width, height, (x, y) => {
+    const p = new Point(x, y)
+    const tileP = new Point(p.x % gridSize, p.y % gridSize)
     // tiles
-    if (tileVec.x < tileSize && tileVec.y < tileSize) return false
+    if (tileP.x < tileSize && tileP.y < tileSize) return false
     // wall joints
-    if (tileVec.x === tileSize && tileVec.y === tileSize) return true
+    if (tileP.x === tileSize && tileP.y === tileSize) return true
     // vertical walls
-    if (tileVec.x === tileSize) {
-      const mazeVec = new Vector((vec.x - tileSize) / gridSize, (vec.y - tileVec.y) / gridSize)
-      return maze.get(mazeVec)!.right
+    if (tileP.x === tileSize) {
+      const mazeP = new Point((p.x - tileSize) / gridSize, (p.y - tileP.y) / gridSize)
+      return maze.get(mazeP)!.right
     }
     // horizontal walls
-    const mazeVec = new Vector((vec.x - tileVec.x) / gridSize, (vec.y - tileSize) / gridSize + 1)
-    return maze.get(mazeVec)!.down
+    const mazeP = new Point((p.x - tileP.x) / gridSize, (p.y - tileSize) / gridSize + 1)
+    return maze.get(mazeP)!.down
   })
 }
 
