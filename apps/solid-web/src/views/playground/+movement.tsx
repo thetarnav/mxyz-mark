@@ -194,19 +194,68 @@ export default function Movement(): JSX.Element {
           const visiblePoints = createMemo(() => {
             const playerIndex = position()
             const player = matrix.point(playerIndex)
+            const set = new Set<number>([playerIndex])
 
-            const visiblePoints = new Set<number>()
+            const toCheck: t.Point[] = []
+            let radius = 1
+            for (const _ of matrix) {
+              if (!toCheck.length) {
+                toCheck.push.apply(toCheck, t.getRing(matrix, player, radius++))
+              }
 
-            for (const i of matrix) {
-              if (matrix.get(i)) continue
+              const point = toCheck.pop()!
 
-              const tileSeg = new t.Segment(player, matrix.point(i))
+              // walls are not visible
+              if (matrix.get(point)) continue
+
+              /*
+                don't allow for gaps between visible tiles
+              */
+              gaps: {
+                const neighbors: t.Point[] = []
+                if (point.x > player.x) {
+                  /*
+                    X X
+                    X @
+                  */
+                  neighbors.push(point.add(-1, 0))
+                  if (point.y > player.y) neighbors.push(point.add(-1, -1))
+                  if (point.y < player.y) neighbors.push(point.add(-1, 1))
+                } else if (point.x < player.x) {
+                  /*
+                    X @
+                    X X
+                  */
+                  neighbors.push(point.add(1, 0))
+                  if (point.y > player.y) neighbors.push(point.add(1, -1))
+                  if (point.y < player.y) neighbors.push(point.add(1, 1))
+                } else {
+                  /*
+                    X
+                    @
+                    X
+                  */
+                  if (point.y > player.y) neighbors.push(point.add(0, -1))
+                  if (point.y < player.y) neighbors.push(point.add(0, 1))
+                }
+                // at least one neighbor must be visible
+                for (const neighbor of neighbors) {
+                  const i = matrix.i(neighbor)
+                  if (set.has(i)) break gaps
+                }
+                continue
+              }
+
+              /*
+                a tile must not have a wall segment between it and the player
+              */
+              const tileSeg = new t.Segment(player, point)
 
               if (wallSegments.every(wallSeg => !t.segmentsIntersecting(tileSeg, wallSeg)))
-                visiblePoints.add(i)
+                set.add(matrix.i(point))
             }
 
-            return visiblePoints
+            return set
           })
 
           const isVisible = createSelector(visiblePoints, (i: number, set) => set.has(i))

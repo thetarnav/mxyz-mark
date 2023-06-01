@@ -47,9 +47,14 @@ export class Point implements Pointable {
   get 1() {
     return this.y
   }
+
   *[Symbol.iterator]() {
     yield this.x
     yield this.y
+  }
+
+  i(width: number) {
+    return this.y * width + this.x
   }
   add(vec: Point): Point
   add(x: number, y: number): Point
@@ -60,6 +65,7 @@ export class Point implements Pointable {
   equals(vec: Pointable) {
     return this.x === vec.x && this.y === vec.y
   }
+
   toString() {
     return `(${this.x}, ${this.y})`
   }
@@ -279,4 +285,36 @@ export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
     between(seg1.y1, y, seg1.y2) &&
     between(seg2.y1, y, seg2.y2)
   )
+}
+
+/**
+ * Returns the points in the matrix that are within the given radius of the center point.
+ *
+ * Ignores points that are out of bounds.
+ */
+export const getRing = (matrix: Matrix<unknown>, center: Point, radius: number) => {
+  const x1 = center.x - radius,
+    x2 = center.x + radius,
+    y1 = center.y - radius,
+    y2 = center.y + radius,
+    points: Point[] = [],
+    startX = Math.max(x1, 0),
+    endX = Math.min(x2, matrix.width - 1),
+    startY = Math.max(y1, 0),
+    endY = Math.min(y2, matrix.height - 1)
+
+  for (let x = startX; x <= endX; x++) {
+    const bottom = new Point(x, y1)
+    matrix.inBounds(bottom) && points.push(bottom)
+    const top = new Point(x, y2)
+    matrix.inBounds(top) && points.push(top)
+  }
+  for (let y = startY; y <= endY; y++) {
+    const left = new Point(x1, y)
+    matrix.inBounds(left) && points.push(left)
+    const right = new Point(x2, y)
+    matrix.inBounds(right) && points.push(right)
+  }
+
+  return points
 }
