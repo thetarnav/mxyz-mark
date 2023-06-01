@@ -51,33 +51,59 @@ export function* randomIterate<T>(arr: readonly T[]) {
   }
 }
 
-export type Pointable = { x: number; y: number }
+export type Pointable = { get x(): number; get y(): number }
 
 export class Point implements Pointable {
-  #arr: readonly [number, number]
-  constructor(x: number, y: number) {
-    this.#arr = [x, y]
+  constructor(public x: number, public y: number) {}
+  get 0() {
+    return this.x
   }
-  get x() {
-    return this.#arr[0]
+  get 1() {
+    return this.y
   }
-  get y() {
-    return this.#arr[1]
+  *[Symbol.iterator]() {
+    yield this.x
+    yield this.y
   }
   add(vec: Point): Point
   add(x: number, y: number): Point
   add(vecOrX: Point | number, y?: number): Point {
-    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX.#arr
+    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX
     return new Point(this.x + dx, this.y + dy)
   }
   equals(vec: Pointable) {
     return this.x === vec.x && this.y === vec.y
   }
   toString() {
-    return this.#arr.toString()
+    return `(${this.x}, ${this.y})`
   }
   toJSON() {
     return { x: this.x, y: this.y }
+  }
+}
+
+export class Segment {
+  constructor(public start: Point, public end: Point) {}
+  get x1() {
+    return this.start.x
+  }
+  get y1() {
+    return this.start.y
+  }
+  get x2() {
+    return this.end.x
+  }
+  get y2() {
+    return this.end.y
+  }
+
+  *[Symbol.iterator]() {
+    yield this.start
+    yield this.end
+  }
+
+  toString() {
+    return `${this.start} -> ${this.end}`
   }
 }
 
