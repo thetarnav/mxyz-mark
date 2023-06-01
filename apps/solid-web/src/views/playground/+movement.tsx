@@ -3,20 +3,17 @@ import { createStaticStore } from '@solid-primitives/static-store'
 import clsx from 'clsx'
 import { JSX, createEffect, createMemo, createSelector, createSignal, untrack } from 'solid-js'
 import { css } from 'solid-styled'
+import { Cell, Grid, PlaygroundContainer, createThrottledTrigger } from './playground'
 import {
-  Cell,
   DIRECTIONS_H_V,
   DIRECTIONS_V_H,
   Direction,
-  Grid,
-  OPPOSITE_DIRECTION,
-  PlaygroundContainer,
-  Point,
   Matrix,
-  createThrottledTrigger,
-  randomInt,
+  OPPOSITE_DIRECTION,
+  Point,
   Segment,
-} from './shared'
+  randomInt,
+} from './trig'
 
 const DEFAULT_HELD_DIRECTION_STATE = {
   [Direction.Up]: false,

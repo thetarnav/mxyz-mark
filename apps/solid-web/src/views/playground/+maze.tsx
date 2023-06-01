@@ -1,16 +1,6 @@
 import { JSX, createMemo, createSignal } from 'solid-js'
-import {
-  Cell,
-  DIRECTIONS_H_V,
-  Direction,
-  Grid,
-  PlaygroundContainer,
-  TriggerButton,
-  Point,
-  Matrix,
-  randomInt,
-  randomIntFromTo,
-} from './shared'
+import { Cell, Grid, PlaygroundContainer, TriggerButton } from './playground'
+import { Matrix, randomIntFromTo, DIRECTIONS_H_V, randomInt, Point, Direction } from './trig'
 
 function generateMaze(width: number, height: number) {
   const result = new Matrix(width, height, () => ({
