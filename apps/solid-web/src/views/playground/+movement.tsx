@@ -4,41 +4,32 @@ import clsx from 'clsx'
 import { JSX, createEffect, createMemo, createSelector, createSignal, untrack } from 'solid-js'
 import { css } from 'solid-styled'
 import { Cell, Grid, PlaygroundContainer, createThrottledTrigger } from './playground'
-import {
-  DIRECTIONS_H_V,
-  DIRECTIONS_V_H,
-  Direction,
-  Matrix,
-  OPPOSITE_DIRECTION,
-  Point,
-  Segment,
-  randomInt,
-} from './trig'
+import * as t from './trig'
 
 const DEFAULT_HELD_DIRECTION_STATE = {
-  [Direction.Up]: false,
-  [Direction.Right]: false,
-  [Direction.Down]: false,
-  [Direction.Left]: false,
-} as const satisfies Record<Direction, boolean>
+  [t.Direction.Up]: false,
+  [t.Direction.Right]: false,
+  [t.Direction.Down]: false,
+  [t.Direction.Left]: false,
+} as const satisfies Record<t.Direction, boolean>
 
-const KEY_TO_DIRECTION: Record<string, Direction> = {
-  ArrowUp: Direction.Up,
-  w: Direction.Up,
-  ArrowRight: Direction.Right,
-  d: Direction.Right,
-  ArrowDown: Direction.Down,
-  s: Direction.Down,
-  ArrowLeft: Direction.Left,
-  a: Direction.Left,
+const KEY_TO_DIRECTION: Record<string, t.Direction> = {
+  ArrowUp: t.Direction.Up,
+  w: t.Direction.Up,
+  ArrowRight: t.Direction.Right,
+  d: t.Direction.Right,
+  ArrowDown: t.Direction.Down,
+  s: t.Direction.Down,
+  ArrowLeft: t.Direction.Left,
+  a: t.Direction.Left,
 }
 
 function createHeldDirection() {
-  const [heldDirections, setHeldDirections] = createStaticStore<Record<Direction, boolean>>(
+  const [heldDirections, setHeldDirections] = createStaticStore<Record<t.Direction, boolean>>(
     DEFAULT_HELD_DIRECTION_STATE,
   )
 
-  let lastDirection = Direction.Up
+  let lastDirection = t.Direction.Up
   createEventListenerMap(window, {
     keydown(e) {
       const direction = KEY_TO_DIRECTION[e.key]
@@ -63,13 +54,13 @@ function createHeldDirection() {
     const directions = { ...heldDirections }
     // prefer last direction
     const order =
-      lastDirection === Direction.Up || lastDirection === Direction.Down
-        ? DIRECTIONS_V_H
-        : DIRECTIONS_H_V
+      lastDirection === t.Direction.Up || lastDirection === t.Direction.Down
+        ? t.DIRECTIONS_V_H
+        : t.DIRECTIONS_H_V
 
     // only allow one direction at a time
     for (const direction of order) {
-      if (directions[direction] && !directions[OPPOSITE_DIRECTION[direction]]) {
+      if (directions[direction] && !directions[t.OPPOSITE_DIRECTION[direction]]) {
         return direction
       }
     }
@@ -81,7 +72,7 @@ function createHeldDirection() {
   }
 }
 
-function createDirectionMovement(onMove: (direction: Direction) => void) {
+function createDirectionMovement(onMove: (direction: t.Direction) => void) {
   const heldDirections = createHeldDirection()
 
   const scheduled = createThrottledTrigger(1000 / 4)
@@ -107,46 +98,14 @@ const WALLS = [
 const W = WALLS[0].length
 const H = WALLS.length
 
-const matrix = new Matrix(W, H, (x, y) => !!WALLS[H - 1 - y][x])
+const matrix = new t.Matrix(W, H, (x, y) => !!WALLS[H - 1 - y][x])
 
-const wallSegments: Segment[] = []
-
-// find all wall lines
-{
-  const seen = {
-    h: new Set<number>(),
-    v: new Set<number>(),
-  }
-
-  for (const i of matrix) {
-    const point = matrix.point(i)
-
-    let x = point.x,
-      y = point.y,
-      j = i
-
-    while (matrix.get(j) && !seen.h.has(j) && x < W) {
-      seen.h.add(j)
-      x++
-      j++
-    }
-    point.x + 1 < x && wallSegments.push(new Segment(point, new Point(x - 1, point.y)))
-
-    j = i
-
-    while (matrix.get(j) && !seen.v.has(j) && y < H) {
-      seen.v.add(j)
-      y++
-      j += W
-    }
-    point.y + 1 < y && wallSegments.push(new Segment(point, new Point(point.x, y - 1)))
-  }
-}
+const wallSegments = t.findWallSegments(matrix)
 
 export default function Movement(): JSX.Element {
-  let initialPosition = randomInt(matrix.length)
+  let initialPosition = t.randomInt(matrix.length)
   while (matrix.get(initialPosition)) {
-    initialPosition = randomInt(matrix.length)
+    initialPosition = t.randomInt(matrix.length)
   }
 
   const [position, setPosition] = createSignal(initialPosition)
@@ -161,7 +120,7 @@ export default function Movement(): JSX.Element {
     })
   })
 
-  const DirectionKey = (props: { direction: Direction }) => {
+  const DirectionKey = (props: { direction: t.Direction }) => {
     css`
       div {
         width: 3rem;
@@ -184,11 +143,11 @@ export default function Movement(): JSX.Element {
   return (
     <PlaygroundContainer>
       <div class="mb-8 flex flex-col items-center">
-        <DirectionKey direction={Direction.Up} />
+        <DirectionKey direction={t.Direction.Up} />
         <div class="flex">
-          <DirectionKey direction={Direction.Left} />
-          <DirectionKey direction={Direction.Down} />
-          <DirectionKey direction={Direction.Right} />
+          <DirectionKey direction={t.Direction.Left} />
+          <DirectionKey direction={t.Direction.Down} />
+          <DirectionKey direction={t.Direction.Right} />
         </div>
       </div>
 
@@ -209,8 +168,8 @@ export default function Movement(): JSX.Element {
           const windowRect = createMemo(() => {
             const player = playerCornerVec()
 
-            return new Matrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
-              const vec = new Point(x, y).add(player)
+            return new t.Matrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
+              const vec = new t.Point(x, y).add(player)
 
               if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
                 return { isPlayer: true, isWall: false }
@@ -232,109 +191,6 @@ export default function Movement(): JSX.Element {
 
       <div class="mt-16">
         {untrack(() => {
-          const between = (a: number, b: number, c: number): boolean => {
-            if (a > c) [a, c] = [c, a]
-            return a - Number.EPSILON <= b && b <= c + Number.EPSILON
-          }
-
-          const rangesIntersecting = (a1: number, b1: number, a2: number, b2: number) => {
-            if (a1 > b1) [a1, b1] = [b1, a1]
-            if (a2 > b2) [a2, b2] = [b2, a2]
-            return a1 <= b2 && a2 <= b1
-          }
-
-          // general form: ax + by + c = 0
-          // slope-intercept form: y = sx + i
-          // -sx + y - i = 0
-          // normal: a = -s, b = 1, c = -i
-          // vertical: a = 1, b = 0, c = -x
-          const segmentToGeneralForm = (seg: Segment): [a: number, b: number, c: number] => {
-            if (seg.x1 === seg.x2) {
-              return [1, 0, -seg.x1]
-            }
-            const s = (seg.y2 - seg.y1) / (seg.x2 - seg.x1)
-            const i = seg.y1 - s * seg.x1
-            return [-s, 1, -i]
-          }
-
-          function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
-            const [a1, b1, c1] = segmentToGeneralForm(seg1)
-            const [a2, b2, c2] = segmentToGeneralForm(seg2)
-
-            // check if parallel
-            if (a1 === a2 && b1 === b2) {
-              // check if on same line
-              if (c1 === c2) {
-                // check if overlapping
-                return (
-                  rangesIntersecting(seg1.x1, seg1.x2, seg2.x1, seg2.x2) &&
-                  rangesIntersecting(seg1.y1, seg1.y2, seg2.y1, seg2.y2)
-                )
-              }
-              return false
-            }
-
-            // https://www.vedantu.com/formula/point-of-intersection-formula
-            const det = a1 * b2 - a2 * b1
-            const x = (b1 * c2 - b2 * c1) / det
-            const y = (a2 * c1 - a1 * c2) / det
-
-            return (
-              between(seg1.x1, x, seg1.x2) &&
-              between(seg2.x1, x, seg2.x2) &&
-              between(seg1.y1, y, seg1.y2) &&
-              between(seg2.y1, y, seg2.y2)
-            )
-          }
-
-          {
-            console.groupCollapsed('segmentsIntersecting')
-            const segments = [
-              // parallel vertical
-              [
-                new Segment(new Point(8, 1), new Point(8, 5)),
-                new Segment(new Point(8, 2), new Point(8, 3)),
-              ],
-              // parallel vertical not intersecting
-              [
-                new Segment(new Point(1, 5), new Point(1, 6)),
-                new Segment(new Point(1, 1), new Point(1, 2)),
-              ],
-              // parallel horizontal
-              [
-                new Segment(new Point(1, 5), new Point(7, 5)),
-                new Segment(new Point(0, 5), new Point(8, 5)),
-              ],
-              // parallel diagonal
-              [
-                new Segment(new Point(1, 1), new Point(4, 4)),
-                new Segment(new Point(2, 2), new Point(3, 3)),
-              ],
-              [
-                new Segment(new Point(1, 5), new Point(1, 7)),
-                new Segment(new Point(2, 5), new Point(0, 6)),
-              ],
-              [
-                new Segment(new Point(1, 5), new Point(1, 7)),
-                new Segment(new Point(2, 2), new Point(0, 6)),
-              ],
-              // around corner
-              [
-                new Segment(new Point(1, 4), new Point(0, 5)),
-                new Segment(new Point(1, 5), new Point(1, 6)),
-              ],
-              // tip
-              [
-                new Segment(new Point(3, 1), new Point(3, 4)),
-                new Segment(new Point(0, 1), new Point(6, 1)),
-              ],
-            ] as const
-            segments.forEach(([seg1, seg2]) => {
-              console.log(`intersecting ${seg1} and ${seg2}: ${segmentsIntersecting(seg1, seg2)}`)
-            })
-            console.groupEnd()
-          }
-
           const visiblePoints = createMemo(() => {
             const playerIndex = position()
             const player = matrix.point(playerIndex)
@@ -344,9 +200,9 @@ export default function Movement(): JSX.Element {
             for (const i of matrix) {
               if (matrix.get(i)) continue
 
-              const tileSeg = new Segment(player, matrix.point(i))
+              const tileSeg = new t.Segment(player, matrix.point(i))
 
-              if (wallSegments.every(wallSeg => !segmentsIntersecting(tileSeg, wallSeg)))
+              if (wallSegments.every(wallSeg => !t.segmentsIntersecting(tileSeg, wallSeg)))
                 visiblePoints.add(i)
             }
 

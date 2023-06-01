@@ -68,6 +68,10 @@ export class Point implements Pointable {
   }
 }
 
+export const point = (x: number, y: number) => new Point(x, y)
+
+export const ZERO_POINT = new Point(0, 0)
+
 export class Segment {
   constructor(public start: Point, public end: Point) {}
   get x1() {
@@ -93,7 +97,7 @@ export class Segment {
   }
 }
 
-export const ZERO_POINT = new Point(0, 0)
+export const segment = (start: Point, end: Point) => new Segment(start, end)
 
 export const DIRECTION_TO_VECTOR: Record<Direction, Point> = {
   [Direction.Up]: new Point(0, 1),
@@ -182,4 +186,97 @@ export class Matrix<T> {
   static inBounds(width: number, height: number, p: Pointable) {
     return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height
   }
+}
+
+export function findWallSegments(matrix: Matrix<boolean>) {
+  const W = matrix.width,
+    H = matrix.height
+
+  const wallSegments: Segment[] = []
+
+  const seen = {
+    h: new Set<number>(),
+    v: new Set<number>(),
+  }
+
+  for (const i of matrix) {
+    const point = matrix.point(i)
+
+    let x = point.x,
+      y = point.y,
+      j = i
+
+    while (matrix.get(j) && !seen.h.has(j) && x < W) {
+      seen.h.add(j)
+      x++
+      j++
+    }
+    point.x + 1 < x && wallSegments.push(new Segment(point, new Point(x - 1, point.y)))
+
+    j = i
+
+    while (matrix.get(j) && !seen.v.has(j) && y < H) {
+      seen.v.add(j)
+      y++
+      j += W
+    }
+    point.y + 1 < y && wallSegments.push(new Segment(point, new Point(point.x, y - 1)))
+  }
+
+  return wallSegments
+}
+
+export const between = (a: number, b: number, c: number): boolean => {
+  if (a > c) [a, c] = [c, a]
+  return a - Number.EPSILON <= b && b <= c + Number.EPSILON
+}
+
+export const rangesIntersecting = (a1: number, b1: number, a2: number, b2: number) => {
+  if (a1 > b1) [a1, b1] = [b1, a1]
+  if (a2 > b2) [a2, b2] = [b2, a2]
+  return a1 <= b2 && a2 <= b1
+}
+
+// general form: ax + by + c = 0
+// slope-intercept form: y = sx + i
+// -sx + y - i = 0
+// normal: a = -s, b = 1, c = -i
+// vertical: a = 1, b = 0, c = -x
+export const segmentToGeneralForm = (seg: Segment): [a: number, b: number, c: number] => {
+  if (seg.x1 === seg.x2) {
+    return [1, 0, -seg.x1]
+  }
+  const s = (seg.y2 - seg.y1) / (seg.x2 - seg.x1)
+  const i = seg.y1 - s * seg.x1
+  return [-s, 1, -i]
+}
+
+export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
+  const [a1, b1, c1] = segmentToGeneralForm(seg1)
+  const [a2, b2, c2] = segmentToGeneralForm(seg2)
+
+  // check if parallel
+  if (a1 === a2 && b1 === b2) {
+    // check if on same line
+    if (c1 === c2) {
+      // check if overlapping
+      return (
+        rangesIntersecting(seg1.x1, seg1.x2, seg2.x1, seg2.x2) &&
+        rangesIntersecting(seg1.y1, seg1.y2, seg2.y1, seg2.y2)
+      )
+    }
+    return false
+  }
+
+  // https://www.vedantu.com/formula/point-of-intersection-formula
+  const det = a1 * b2 - a2 * b1
+  const x = (b1 * c2 - b2 * c1) / det
+  const y = (a2 * c1 - a1 * c2) / det
+
+  return (
+    between(seg1.x1, x, seg1.x2) &&
+    between(seg2.x1, x, seg2.x2) &&
+    between(seg1.y1, y, seg1.y2) &&
+    between(seg2.y1, y, seg2.y2)
+  )
 }

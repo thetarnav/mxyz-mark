@@ -13,7 +13,7 @@
     "moduleResolution": "node",
     "jsxImportSource": "solid-js",
     "jsx": "preserve",
-    "types": ["@total-typescript/ts-reset", "solid-start/env"],
+    "types": ["@total-typescript/ts-reset", "solid-start/env", "vite/client"],
     "baseUrl": "./"
   }
 }

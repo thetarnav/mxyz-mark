@@ -1,6 +1,6 @@
 import solid from 'solid-start/vite'
 import UnoCSS from 'unocss/vite'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import solidStyled from 'vite-plugin-solid-styled'
 // @ts-ignore
 import staticAdapter from 'solid-start-static'
