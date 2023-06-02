@@ -23,7 +23,8 @@ export const PLAYGROUND_ROUTES = [
 export const usePlaygroundTitle = () => {
   const location = useLocation()
   return createMemo(() => {
-    const route = PLAYGROUND_ROUTES.find(({ path }) => path === location.pathname)
+    const page = location.pathname.replace('/playground', '')
+    const route = PLAYGROUND_ROUTES.find(({ path }) => path === page)
     return route ? route.title : 'Playground'
   })
 }
@@ -31,11 +32,15 @@ export const usePlaygroundTitle = () => {
 const ROUTES = [
   {
     path: '/',
+    component: lazy(() => import('./views/+index')),
+  },
+  {
+    path: '/playground',
     component: lazy(() => import('./views/playground/+index')),
     children: [
       {
         path: '/',
-        component: () => <Navigate href="/noise" />,
+        component: () => <Navigate href="/playground/noise" />,
       },
       ...PLAYGROUND_ROUTES.map(data => ({
         path: data.path,

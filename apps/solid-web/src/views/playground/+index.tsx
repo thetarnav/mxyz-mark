@@ -8,15 +8,24 @@ export default function Playground(): JSX.Element {
   return (
     <>
       <div class="center-child">
-        <nav class="z-999 fixed top-4 flex h-12 items-stretch gap-16 rounded-md bg-gray-900 px-4">
+        <nav class="z-999 fixed top-4 flex h-12 items-stretch gap-12 rounded-md bg-gray-900 px-4">
           <div class="center-child">
-            <h1 class="font-bold">mxyz playground</h1>
+            <A href="/" class="underline-dashed font-semibold hover:underline">
+              game
+            </A>
+          </div>
+          <div class="center-child">
+            <h1 class="font-semibold">mxyz playground:</h1>
           </div>
           <ul class="flex items-center gap-4">
-            {PLAYGROUND_ROUTES.map(({ path, title }) => (
+            {PLAYGROUND_ROUTES.map(({ path }) => (
               <li>
-                <A href={path} class="underline-dashed hover:underline" activeClass="text-primary">
-                  {title}
+                <A
+                  href={`/playground${path}`}
+                  class="underline-dashed hover:underline"
+                  activeClass="text-primary"
+                >
+                  {path}
                 </A>
               </li>
             ))}
