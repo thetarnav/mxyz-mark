@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { JSX, createEffect, createMemo, createSelector, createSignal, untrack } from 'solid-js'
 import { css } from 'solid-styled'
 import { Cell, Grid, PlaygroundContainer, createThrottledTrigger } from './playground'
-import * as t from './trig'
+import * as t from '../../lib/trig'
 
 const DEFAULT_HELD_DIRECTION_STATE = {
   [t.Direction.Up]: false,

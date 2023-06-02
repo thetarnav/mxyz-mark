@@ -11,7 +11,7 @@ import { css } from 'solid-styled'
 import { Range } from '@solid-primitives/range'
 import { createEventListener } from '@solid-primitives/event-listener'
 import clsx from 'clsx'
-import { Direction, Matrix, Point, ZERO_POINT } from './trig'
+import { Direction, Matrix, Point, ZERO_POINT } from '../../lib/trig'
 
 export function createThrottledTrigger(delay: number) {
   const [track, trigger] = createSignal(undefined, { equals: false })

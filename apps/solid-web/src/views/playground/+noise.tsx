@@ -1,6 +1,12 @@
 import { JSX, createSignal } from 'solid-js'
 import { Cell, Grid, PlaygroundContainer, TriggerButton } from './playground'
-import { Matrix, randomInt, Direction, randomIterate, DIRECTION_AND_CORNER_POINTS } from './trig'
+import {
+  Matrix,
+  randomInt,
+  Direction,
+  randomIterate,
+  DIRECTION_AND_CORNER_POINTS,
+} from '../../lib/trig'
 
 export default function Noise(): JSX.Element {
   const [track, trigger] = createSignal(undefined, { equals: false })
