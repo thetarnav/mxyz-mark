@@ -215,16 +215,18 @@ export default function Movement(): JSX.Element {
                 const neighbors: t.Point[] = []
                 if (point.x > player.x) {
                   /*
-                    X X
+                    X
                     X @
+                    X
                   */
                   neighbors.push(point.add(-1, 0))
                   if (point.y > player.y) neighbors.push(point.add(-1, -1))
                   if (point.y < player.y) neighbors.push(point.add(-1, 1))
                 } else if (point.x < player.x) {
                   /*
-                    X @
-                    X X
+                      X
+                    @ X
+                      X
                   */
                   neighbors.push(point.add(1, 0))
                   if (point.y > player.y) neighbors.push(point.add(1, -1))
