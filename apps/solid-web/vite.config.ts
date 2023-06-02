@@ -14,7 +14,13 @@ export default defineConfig({
   plugins: [
     solid({
       adapter: staticAdapter(),
-      prerenderRoutes: ['/', '/noise', '/maze', '/movement'],
+      prerenderRoutes: [
+        '/',
+        '/playground/',
+        '/playground/noise',
+        '/playground/maze',
+        '/playground/movement',
+      ],
     }),
     solidStyled({
       filter: {
