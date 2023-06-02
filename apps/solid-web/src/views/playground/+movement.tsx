@@ -194,12 +194,16 @@ export default function Movement(): JSX.Element {
           const visiblePoints = createMemo(() => {
             const playerIndex = position()
             const player = matrix.point(playerIndex)
-            const set = new Set<number>([playerIndex])
+            const visibleSet = new Set<number>([playerIndex])
 
             const toCheck: t.Point[] = []
             let radius = 1
-            for (const _ of matrix) {
+            points: for (const _ of matrix) {
               if (!toCheck.length) {
+                /*
+                  check points closer to the player first
+                  so that we can detect gaps between visible tiles
+                */
                 toCheck.push.apply(toCheck, t.getRing(matrix, player, radius++))
               }
 
@@ -210,54 +214,60 @@ export default function Movement(): JSX.Element {
 
               /*
                 don't allow for gaps between visible tiles
+                at least one neighbor must be visible
               */
               gaps: {
-                const neighbors: t.Point[] = []
+                /*
+                  X @ X
+                */
                 if (point.x > player.x) {
-                  /*
-                    X
-                    X @
-                    X
-                  */
-                  neighbors.push(point.add(-1, 0))
-                  if (point.y > player.y) neighbors.push(point.add(-1, -1))
-                  if (point.y < player.y) neighbors.push(point.add(-1, 1))
+                  if (visibleSet.has(matrix.i(point.add(-1, 0)))) break gaps
                 } else if (point.x < player.x) {
-                  /*
-                      X
-                    @ X
-                      X
-                  */
-                  neighbors.push(point.add(1, 0))
-                  if (point.y > player.y) neighbors.push(point.add(1, -1))
-                  if (point.y < player.y) neighbors.push(point.add(1, 1))
-                } else {
-                  /*
-                    X
+                  if (visibleSet.has(matrix.i(point.add(1, 0)))) break gaps
+                }
+
+                /*
+                  X
+                  @
+                  X
+                */
+                if (point.y > player.y) {
+                  if (visibleSet.has(matrix.i(point.add(0, -1)))) break gaps
+                } else if (point.y < player.y) {
+                  if (visibleSet.has(matrix.i(point.add(0, 1)))) break gaps
+                }
+
+                /*
+                  X   X
                     @
-                    X
-                  */
-                  if (point.y > player.y) neighbors.push(point.add(0, -1))
-                  if (point.y < player.y) neighbors.push(point.add(0, 1))
+                  X   X
+                */
+                if (point.x > player.x && point.y > player.y) {
+                  if (visibleSet.has(matrix.i(point.add(-1, -1)))) break gaps
+                } else if (point.x < player.x && point.y < player.y) {
+                  if (visibleSet.has(matrix.i(point.add(1, 1)))) break gaps
+                } else if (point.x > player.x && point.y < player.y) {
+                  if (visibleSet.has(matrix.i(point.add(-1, 1)))) break gaps
+                } else if (point.x < player.x && point.y > player.y) {
+                  if (visibleSet.has(matrix.i(point.add(1, -1)))) break gaps
                 }
-                // at least one neighbor must be visible
-                for (const neighbor of neighbors) {
-                  const i = matrix.i(neighbor)
-                  if (set.has(i)) break gaps
-                }
+
                 continue
               }
 
               /*
                 a tile must not have a wall segment between it and the player
               */
-              const tileSeg = new t.Segment(player, point)
+              const tileSeg = t.segment(player, point)
 
-              if (wallSegments.every(wallSeg => !t.segmentsIntersecting(tileSeg, wallSeg)))
-                set.add(matrix.i(point))
+              for (const wallSeg of wallSegments) {
+                if (t.segmentsIntersecting(tileSeg, wallSeg)) continue points
+              }
+
+              visibleSet.add(matrix.i(point))
             }
 
-            return set
+            return visibleSet
           })
 
           const isVisible = createSelector(visiblePoints, (i: number, set) => set.has(i))
