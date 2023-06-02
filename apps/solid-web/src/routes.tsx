@@ -53,7 +53,7 @@ const ROUTES = [
   },
   {
     path: '/*all',
-    component: lazy(() => import('./views/404')),
+    component: lazy(() => import('./views/+404')),
   },
 ] satisfies Parameters<typeof useRoutes>[0]
 
