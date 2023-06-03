@@ -25,16 +25,19 @@ export function peak<T>(reactive: Reactive<T>): T {
   return solid.untrack(() => reactive.value)
 }
 
-export function memo<T>(reactive: Reactive<T>): Reactive<T> {
-  return new Reactive(solid.createMemo(() => reactive.value))
+export function memo<T>(source: Reactive<T>): Reactive<T> {
+  return new Reactive(solid.createMemo(() => source.value))
 }
 
 export function map<T, U>(source: Reactive<T>, fn: (value: T) => U): Reactive<U> {
-  return new Reactive(() => fn(source.value))
+  return new Reactive(() => {
+    const value = source.value
+    return solid.untrack(() => fn(value))
+  })
 }
 
-export function join<T>(sources: Reactive<T>[], fn: (values: T[]) => T): Reactive<T> {
-  return new Reactive(() => fn(sources.map(source => source.value)))
+export function join<T>(sources: Reactive<T>[]): Reactive<T[]> {
+  return new Reactive(() => sources.map(source => source.value))
 }
 
 export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
@@ -42,6 +45,18 @@ export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
     const value = source.value
     solid.untrack(() => fn(value))
   })
+}
+
+export function selector<T>(reactive: Reactive<T>): (key: T) => boolean
+export function selector<TSource, TKey>(
+  reactive: Reactive<TSource>,
+  equals: (key: TKey, source: TSource) => boolean,
+): (key: TKey) => boolean
+export function selector<T>(
+  reactive: Reactive<T>,
+  equals?: (key: T, source: T) => boolean,
+): (key: T) => boolean {
+  return solid.createSelector(() => reactive.value, equals)
 }
 
 export class Signal<T> extends Reactive<T> {
@@ -76,7 +91,7 @@ export function readonly<T>(signal: Signal<T>): Reactive<T> {
 if (import.meta.env.MODE === 'test') {
   const count = signal(0)
   const sum = memo(
-    join([count, map(count, value => value * 2)], ([count, double]) => count + double),
+    map(join([count, map(count, value => value * 2)]), ([count, double]) => count + double),
   )
 
   effect(sum, value => console.log(value))

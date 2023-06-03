@@ -82,7 +82,7 @@ export default function Maze(): JSX.Element {
   const W = 10
   const H = 6
 
-  const maze = s.map(trigger, () => generateMaze(W, H))
+  const maze = s.memo(s.map(trigger, () => generateMaze(W, H)))
 
   return (
     <PlaygroundContainer>

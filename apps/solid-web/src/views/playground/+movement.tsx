@@ -1,17 +1,17 @@
 import { createEventListenerMap } from '@solid-primitives/event-listener'
-import { createStaticStore } from '@solid-primitives/static-store'
 import clsx from 'clsx'
-import { JSX, createEffect, createMemo, createSelector, createSignal, untrack } from 'solid-js'
+import { JSX, createEffect, untrack } from 'solid-js'
 import { css } from 'solid-styled'
 import { Cell, Grid, PlaygroundContainer, createThrottledTrigger } from './playground'
-import * as t from '../../lib/trig'
+import * as t from 'src/lib/trig'
+import * as s from 'src/lib/signal'
 
-const DEFAULT_HELD_DIRECTION_STATE = {
+const DEFAULT_HELD_DIRECTION_STATE: Record<t.Direction, boolean> = {
   [t.Direction.Up]: false,
   [t.Direction.Right]: false,
   [t.Direction.Down]: false,
   [t.Direction.Left]: false,
-} as const satisfies Record<t.Direction, boolean>
+}
 
 const KEY_TO_DIRECTION: Record<string, t.Direction> = {
   ArrowUp: t.Direction.Up,
@@ -25,50 +25,49 @@ const KEY_TO_DIRECTION: Record<string, t.Direction> = {
 }
 
 function createHeldDirection() {
-  const [heldDirections, setHeldDirections] = createStaticStore<Record<t.Direction, boolean>>(
-    DEFAULT_HELD_DIRECTION_STATE,
-  )
+  const directions = s.signal(DEFAULT_HELD_DIRECTION_STATE)
 
   let lastDirection = t.Direction.Up
   createEventListenerMap(window, {
     keydown(e) {
       const direction = KEY_TO_DIRECTION[e.key]
       if (direction) {
-        setHeldDirections((lastDirection = direction), true)
+        s.update(directions, p => ({ ...p, [(lastDirection = direction)]: true }))
         e.preventDefault()
       }
     },
     keyup(e) {
       const direction = KEY_TO_DIRECTION[e.key]
-      if (direction) setHeldDirections(direction, false)
+      if (direction) s.update(directions, p => ({ ...p, [direction]: false }))
     },
     blur(e) {
-      setHeldDirections(DEFAULT_HELD_DIRECTION_STATE)
+      s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
     },
     contextmenu(e) {
-      setHeldDirections(DEFAULT_HELD_DIRECTION_STATE)
+      s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
     },
   })
 
-  const current = createMemo(() => {
-    const directions = { ...heldDirections }
-    // prefer last direction
-    const order =
-      lastDirection === t.Direction.Up || lastDirection === t.Direction.Down
-        ? t.DIRECTIONS_V_H
-        : t.DIRECTIONS_H_V
+  const current = s.memo(
+    s.map(directions, directions => {
+      // prefer last direction
+      const order =
+        lastDirection === t.Direction.Up || lastDirection === t.Direction.Down
+          ? t.DIRECTIONS_V_H
+          : t.DIRECTIONS_H_V
 
-    // only allow one direction at a time
-    for (const direction of order) {
-      if (directions[direction] && !directions[t.OPPOSITE_DIRECTION[direction]]) {
-        return direction
+      // only allow one direction at a time
+      for (const direction of order) {
+        if (directions[direction] && !directions[t.OPPOSITE_DIRECTION[direction]]) {
+          return direction
+        }
       }
-    }
-  })
+    }),
+  )
 
   return {
     current,
-    directions: heldDirections,
+    directions,
   }
 }
 
@@ -78,7 +77,7 @@ function createDirectionMovement(onMove: (direction: t.Direction) => void) {
   const scheduled = createThrottledTrigger(1000 / 4)
 
   createEffect(() => {
-    const direction = heldDirections.current()
+    const direction = heldDirections.current.value
     if (direction && scheduled()) untrack(() => onMove(direction))
   })
 
@@ -108,11 +107,11 @@ export default function Movement(): JSX.Element {
     initialPosition = t.randomInt(matrix.length)
   }
 
-  const [position, setPosition] = createSignal(initialPosition)
-  const isPlayer = createSelector<number, number>(position)
+  const position = s.signal(initialPosition)
+  const isPlayer = s.selector(position)
 
   const heldDirections = createDirectionMovement(direction => {
-    setPosition(p => {
+    s.update(position, p => {
       const newPos = matrix.go(p, direction)
       if (!newPos) return p
       const i = matrix.i(newPos)
@@ -137,7 +136,9 @@ export default function Movement(): JSX.Element {
         background: #de311b;
       }
     `
-    return <div class={clsx(heldDirections[props.direction] && 'held')}>{props.direction}</div>
+    return (
+      <div class={clsx(heldDirections.value[props.direction] && 'held')}>{props.direction}</div>
+    )
   }
 
   return (
@@ -163,26 +164,30 @@ export default function Movement(): JSX.Element {
         {untrack(() => {
           const WINDOW_RECT_SIZE = 3
 
-          const playerCornerVec = createMemo(() => matrix.point(position()).add(-1, -1))
+          const playerCornerPoint = s.memo(
+            s.map(position, position => matrix.point(position).add(-1, -1)),
+          )
 
-          const windowRect = createMemo(() => {
-            const player = playerCornerVec()
+          const windowRect = s.memo(
+            s.map(
+              playerCornerPoint,
+              player =>
+                new t.Matrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
+                  const vec = new t.Point(x, y).add(player)
 
-            return new t.Matrix(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, (x, y) => {
-              const vec = new t.Point(x, y).add(player)
+                  if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
+                    return { isPlayer: true, isWall: false }
 
-              if (x === (WINDOW_RECT_SIZE - 1) / 2 && y === (WINDOW_RECT_SIZE - 1) / 2)
-                return { isPlayer: true, isWall: false }
+                  let isWall = matrix.get(vec)
+                  if (isWall === undefined) isWall = true
 
-              let isWall = matrix.get(vec)
-              if (isWall === undefined) isWall = true
-
-              return { isPlayer: false, isWall }
-            })
-          })
+                  return { isPlayer: false, isWall }
+                }),
+            ),
+          )
 
           return (
-            <Grid matrix={windowRect()} offset={playerCornerVec()}>
+            <Grid matrix={windowRect.value} offset={playerCornerPoint.value}>
               {cell => <Cell isPlayer={cell().isPlayer} isWall={cell().isWall} />}
             </Grid>
           )
@@ -191,90 +196,91 @@ export default function Movement(): JSX.Element {
 
       <div class="mt-16">
         {untrack(() => {
-          const visiblePoints = createMemo(() => {
-            const playerIndex = position()
-            const player = matrix.point(playerIndex)
-            const visibleSet = new Set<number>([playerIndex])
+          const visiblePoints = s.memo(
+            s.map(position, playerIndex => {
+              const player = matrix.point(playerIndex)
+              const visibleSet = new Set<number>([playerIndex])
 
-            const toCheck: t.Point[] = []
-            let radius = 1
-            points: for (const _ of matrix) {
-              if (!toCheck.length) {
-                /*
+              const toCheck: t.Point[] = []
+              let radius = 1
+              points: for (const _ of matrix) {
+                if (!toCheck.length) {
+                  /*
                   check points closer to the player first
                   so that we can detect gaps between visible tiles
                 */
-                toCheck.push.apply(toCheck, t.getRing(matrix, player, radius++))
-              }
+                  toCheck.push.apply(toCheck, t.getRing(matrix, player, radius++))
+                }
 
-              const point = toCheck.pop()!
+                const point = toCheck.pop()!
 
-              // walls are not visible
-              if (matrix.get(point)) continue
+                // walls are not visible
+                if (matrix.get(point)) continue
 
-              /*
+                /*
                 don't allow for gaps between visible tiles
                 at least one neighbor must be visible
               */
-              gaps: {
-                /*
+                gaps: {
+                  /*
                   X @ X
                 */
-                if (point.x > player.x) {
-                  if (visibleSet.has(matrix.i(point.add(-1, 0)))) break gaps
-                } else if (point.x < player.x) {
-                  if (visibleSet.has(matrix.i(point.add(1, 0)))) break gaps
-                }
+                  if (point.x > player.x) {
+                    if (visibleSet.has(matrix.i(point.add(-1, 0)))) break gaps
+                  } else if (point.x < player.x) {
+                    if (visibleSet.has(matrix.i(point.add(1, 0)))) break gaps
+                  }
 
-                /*
+                  /*
                   X
                   @
                   X
                 */
-                if (point.y > player.y) {
-                  if (visibleSet.has(matrix.i(point.add(0, -1)))) break gaps
-                } else if (point.y < player.y) {
-                  if (visibleSet.has(matrix.i(point.add(0, 1)))) break gaps
-                }
+                  if (point.y > player.y) {
+                    if (visibleSet.has(matrix.i(point.add(0, -1)))) break gaps
+                  } else if (point.y < player.y) {
+                    if (visibleSet.has(matrix.i(point.add(0, 1)))) break gaps
+                  }
 
-                /*
+                  /*
                   X   X
                     @
                   X   X
                 */
-                if (point.x > player.x && point.y > player.y) {
-                  if (visibleSet.has(matrix.i(point.add(-1, -1)))) break gaps
-                } else if (point.x < player.x && point.y < player.y) {
-                  if (visibleSet.has(matrix.i(point.add(1, 1)))) break gaps
-                } else if (point.x > player.x && point.y < player.y) {
-                  if (visibleSet.has(matrix.i(point.add(-1, 1)))) break gaps
-                } else if (point.x < player.x && point.y > player.y) {
-                  if (visibleSet.has(matrix.i(point.add(1, -1)))) break gaps
+                  if (point.x > player.x && point.y > player.y) {
+                    if (visibleSet.has(matrix.i(point.add(-1, -1)))) break gaps
+                  } else if (point.x < player.x && point.y < player.y) {
+                    if (visibleSet.has(matrix.i(point.add(1, 1)))) break gaps
+                  } else if (point.x > player.x && point.y < player.y) {
+                    if (visibleSet.has(matrix.i(point.add(-1, 1)))) break gaps
+                  } else if (point.x < player.x && point.y > player.y) {
+                    if (visibleSet.has(matrix.i(point.add(1, -1)))) break gaps
+                  }
+
+                  continue
                 }
 
-                continue
-              }
-
-              /*
+                /*
                 a tile must not have a wall segment between it and the player
               */
-              const tileSeg = t.segment(player, point)
+                const tileSeg = t.segment(player, point)
 
-              for (const wallSeg of wallSegments) {
-                if (t.segmentsIntersecting(tileSeg, wallSeg)) continue points
+                for (const wallSeg of wallSegments) {
+                  if (t.segmentsIntersecting(tileSeg, wallSeg)) continue points
+                }
+
+                visibleSet.add(matrix.i(point))
               }
 
-              visibleSet.add(matrix.i(point))
-            }
+              return visibleSet
+            }),
+          )
 
-            return visibleSet
-          })
-
-          const isVisible = createSelector(visiblePoints, (i: number, set) => set.has(i))
+          const isVisible = s.selector(visiblePoints, (i: number, set) => set.has(i))
 
           return (
             <Grid matrix={matrix}>
-              {(isWall, i) => (
+              {(_, i) => (
                 <Cell isPlayer={isPlayer(i)} isWall={!isVisible(i)}>
                   {i}
                 </Cell>
