@@ -17,13 +17,13 @@ const Board = () => {
 
   const wallSegments = t.findWallSegments(wallMatrix)
 
-  const playerPosition = s.signal(t.randomInt(wallMatrix.length) * (TILE_SIZE + 1))
+  const playerPosition = s.signal(t.randomInt(wallMatrix.length))
   const isPlayer = s.selector(playerPosition)
 
   const playerPoint = s.memo(s.map(playerPosition, position => wallMatrix.point(position)))
 
-  const WINDOW_W = 16
-  const WINDOW_H = 12
+  const WINDOW_W = 19
+  const WINDOW_H = 13
 
   const board = s.memo(
     s.map(playerPoint, player => game.getWindowedMaze(WINDOW_W, WINDOW_H, player, wallMatrix)),
@@ -60,12 +60,12 @@ const Board = () => {
   console.log(wallMatrix)
 
   return (
-    <div class="wrapper border-gray-6 relative grid rounded-md border">
+    <div class="wrapper relative grid">
       <Index each={reordered.value}>
         {item => (
           <div
             class={clsx(
-              'border-2px flex items-center justify-center border-transparent',
+              'flex items-center justify-center',
               item().item.isPlayer
                 ? 'bg-primary text-dark'
                 : item().item.isWall
