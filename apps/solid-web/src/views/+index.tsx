@@ -12,21 +12,27 @@ const Board = () => {
   const WALLS_W = 48
   const WALLS_H = 48
   const TILE_SIZE = 3
+  const GRID_SIZE = 4
 
   const wallMatrix = game.mazeToGrid(game.generateMaze(WALLS_W, WALLS_H), TILE_SIZE)
 
   const wallSegments = t.findWallSegments(wallMatrix)
 
-  const playerPosition = s.signal(t.randomInt(wallMatrix.length))
-  const isPlayer = s.selector(playerPosition)
-
-  const playerPoint = s.memo(s.map(playerPosition, position => wallMatrix.point(position)))
+  const playerVec = s.signal(
+    // place player in center of a random tile
+    t.point(
+      t.randomInt(WALLS_W) * GRID_SIZE + (TILE_SIZE - 1) / 2,
+      t.randomInt(WALLS_H) * GRID_SIZE + (TILE_SIZE - 1) / 2,
+    ),
+    { equals: (a, b) => a.equals(b) },
+  )
+  const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
 
   const WINDOW_W = 19
   const WINDOW_H = 13
 
   const board = s.memo(
-    s.map(playerPoint, player => game.getWindowedMaze(WINDOW_W, WINDOW_H, player, wallMatrix)),
+    s.map(playerVec, player => game.getWindowedMaze(WINDOW_W, WINDOW_H, player, wallMatrix)),
   )
 
   const reordered = s.memo(

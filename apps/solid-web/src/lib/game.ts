@@ -82,12 +82,15 @@ export function getWindowedMaze(
   playerPoint: t.Point,
   matrix: t.Matrix<boolean>,
 ) {
-  const player = playerPoint.add(-1, -1)
+  const moveX = (width - 1) / 2,
+    moveY = (height - 1) / 2
+
+  const movedPlayer = playerPoint.add(-moveX, -moveY)
 
   return new t.Matrix(width, height, (x, y) => {
-    const vec = new t.Point(x, y).add(player)
+    const vec = new t.Point(x, y).add(movedPlayer)
 
-    if (x === (width - 1) / 2 && y === (height - 1) / 2) return { isPlayer: true, isWall: false }
+    if (x === moveX && y === moveY) return { isPlayer: true, isWall: false }
 
     let isWall = matrix.get(vec)
     if (isWall === undefined) isWall = true

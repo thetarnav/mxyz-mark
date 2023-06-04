@@ -48,6 +48,10 @@ export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
 }
 
 export function selector<T>(reactive: Reactive<T>): (key: T) => boolean
+export function selector<TSource>(
+  reactive: Reactive<TSource>,
+  equals: (key: TSource, source: TSource) => boolean,
+): (key: TSource) => boolean
 export function selector<TSource, TKey>(
   reactive: Reactive<TSource>,
   equals: (key: TKey, source: TSource) => boolean,
