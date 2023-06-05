@@ -28,11 +28,17 @@ const Board = () => {
   )
   const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
 
-  const WINDOW_W = 19
-  const WINDOW_H = 13
+  game.createDirectionMovement(direction => {
+    s.update(playerVec, p => {
+      const newPos = wallMatrix.go(p, direction)
+      return newPos && !wallMatrix.get(newPos) ? newPos : p
+    })
+  })
+
+  const WINDOW_SIZE = 15
 
   const board = s.memo(
-    s.map(playerVec, player => game.getWindowedMaze(WINDOW_W, WINDOW_H, player, wallMatrix)),
+    s.map(playerVec, player => game.getWindowedMaze(WINDOW_SIZE, player, wallMatrix)),
   )
 
   const reordered = s.memo(
@@ -58,8 +64,8 @@ const Board = () => {
 
   css`
     .wrapper {
-      grid-template-columns: repeat(${WINDOW_W + ''}, 2rem);
-      grid-template-rows: repeat(${WINDOW_H + ''}, 2rem);
+      grid-template-columns: repeat(${WINDOW_SIZE + ''}, 2rem);
+      grid-template-rows: repeat(${WINDOW_SIZE + ''}, 2rem);
     }
   `
 
@@ -78,9 +84,7 @@ const Board = () => {
                 ? 'text-dark bg-gray-4'
                 : 'text-gray-4 bg-transparent',
             )}
-          >
-            {item().index}
-          </div>
+          />
         )}
       </Index>
     </div>

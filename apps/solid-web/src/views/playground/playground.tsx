@@ -1,35 +1,9 @@
-import {
-  Accessor,
-  Component,
-  Index,
-  JSX,
-  ParentComponent,
-  createMemo,
-  createSignal,
-} from 'solid-js'
+import { Accessor, Component, Index, JSX, ParentComponent, createMemo } from 'solid-js'
 import { css } from 'solid-styled'
 import { Range } from '@solid-primitives/range'
 import { createEventListener } from '@solid-primitives/event-listener'
 import clsx from 'clsx'
 import { Direction, Matrix, Point, ZERO_POINT } from '../../lib/trig'
-
-export function createThrottledTrigger(delay: number) {
-  const [track, trigger] = createSignal(undefined, { equals: false })
-  let timeout: ReturnType<typeof setTimeout> | undefined
-
-  return () => {
-    track()
-
-    if (timeout) return false
-
-    timeout = setTimeout(() => {
-      timeout = undefined
-      trigger()
-    }, delay)
-
-    return true
-  }
-}
 
 export const PlaygroundContainer = (props: { children: JSX.Element }) => {
   return <div class="flex flex-col items-center">{props.children}</div>

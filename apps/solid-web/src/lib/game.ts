@@ -1,4 +1,7 @@
+import { createEventListenerMap } from '@solid-primitives/event-listener'
 import * as t from './trig'
+import * as s from './signal'
+import { createEffect, createSignal, untrack } from 'solid-js'
 
 export function generateMaze(width: number, height: number) {
   const walls = new t.Matrix(width, height, () => ({
@@ -76,25 +79,115 @@ export function mazeToGrid(
   })
 }
 
-export function getWindowedMaze(
-  width: number,
-  height: number,
-  playerPoint: t.Point,
-  matrix: t.Matrix<boolean>,
-) {
-  const moveX = (width - 1) / 2,
-    moveY = (height - 1) / 2
+export function getWindowedMaze(size: number, playerPoint: t.Point, matrix: t.Matrix<boolean>) {
+  const move = (size - 1) / 2
 
-  const movedPlayer = playerPoint.add(-moveX, -moveY)
+  const movedPlayer = playerPoint.add(-move, -move)
 
-  return new t.Matrix(width, height, (x, y) => {
+  return new t.Matrix(size, size, (x, y) => {
     const vec = new t.Point(x, y).add(movedPlayer)
 
-    if (x === moveX && y === moveY) return { isPlayer: true, isWall: false }
+    if (x === move && y === move) return { isPlayer: true, isWall: false }
 
     let isWall = matrix.get(vec)
     if (isWall === undefined) isWall = true
 
     return { isPlayer: false, isWall }
   })
+}
+
+export const DEFAULT_HELD_DIRECTION_STATE: Record<t.Direction, boolean> = {
+  [t.Direction.Up]: false,
+  [t.Direction.Right]: false,
+  [t.Direction.Down]: false,
+  [t.Direction.Left]: false,
+}
+
+export const KEY_TO_DIRECTION: Record<string, t.Direction> = {
+  ArrowUp: t.Direction.Up,
+  w: t.Direction.Up,
+  ArrowRight: t.Direction.Right,
+  d: t.Direction.Right,
+  ArrowDown: t.Direction.Down,
+  s: t.Direction.Down,
+  ArrowLeft: t.Direction.Left,
+  a: t.Direction.Left,
+}
+
+export function createHeldDirection() {
+  const directions = s.signal(DEFAULT_HELD_DIRECTION_STATE)
+
+  let lastDirection = t.Direction.Up
+  createEventListenerMap(window, {
+    keydown(e) {
+      const direction = KEY_TO_DIRECTION[e.key]
+      if (direction) {
+        s.update(directions, p => ({ ...p, [(lastDirection = direction)]: true }))
+        e.preventDefault()
+      }
+    },
+    keyup(e) {
+      const direction = KEY_TO_DIRECTION[e.key]
+      if (direction) s.update(directions, p => ({ ...p, [direction]: false }))
+    },
+    blur(e) {
+      s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
+    },
+    contextmenu(e) {
+      s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
+    },
+  })
+
+  const current = s.memo(
+    s.map(directions, directions => {
+      // prefer last direction
+      const order =
+        lastDirection === t.Direction.Up || lastDirection === t.Direction.Down
+          ? t.DIRECTIONS_V_H
+          : t.DIRECTIONS_H_V
+
+      // only allow one direction at a time
+      for (const direction of order) {
+        if (directions[direction] && !directions[t.OPPOSITE_DIRECTION[direction]]) {
+          return direction
+        }
+      }
+    }),
+  )
+
+  return {
+    current,
+    directions,
+  }
+}
+
+export function createThrottledTrigger(delay: number) {
+  const [track, trigger] = createSignal(undefined, { equals: false })
+  let timeout: ReturnType<typeof setTimeout> | undefined
+
+  return () => {
+    track()
+
+    if (timeout) return false
+
+    timeout = setTimeout(() => {
+      timeout = undefined
+      trigger()
+    }, delay)
+
+    return true
+  }
+}
+
+export function createDirectionMovement(onMove: (direction: t.Direction) => void) {
+  const heldDirections = createHeldDirection()
+
+  const scheduled = createThrottledTrigger(1000 / 4)
+
+  createEffect(() => {
+    const direction = heldDirections.current.value
+    if (direction && scheduled()) untrack(() => onMove(direction))
+  })
+
+  return heldDirections.directions
 }

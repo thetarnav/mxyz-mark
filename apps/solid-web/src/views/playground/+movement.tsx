@@ -1,89 +1,10 @@
-import { createEventListenerMap } from '@solid-primitives/event-listener'
 import clsx from 'clsx'
-import { JSX, createEffect, untrack } from 'solid-js'
+import { JSX, untrack } from 'solid-js'
 import { css } from 'solid-styled'
-import { Cell, Grid, PlaygroundContainer, createThrottledTrigger } from './playground'
+import { Cell, Grid, PlaygroundContainer } from './playground'
 import * as t from 'src/lib/trig'
 import * as s from 'src/lib/signal'
 import * as game from 'src/lib/game'
-
-const DEFAULT_HELD_DIRECTION_STATE: Record<t.Direction, boolean> = {
-  [t.Direction.Up]: false,
-  [t.Direction.Right]: false,
-  [t.Direction.Down]: false,
-  [t.Direction.Left]: false,
-}
-
-const KEY_TO_DIRECTION: Record<string, t.Direction> = {
-  ArrowUp: t.Direction.Up,
-  w: t.Direction.Up,
-  ArrowRight: t.Direction.Right,
-  d: t.Direction.Right,
-  ArrowDown: t.Direction.Down,
-  s: t.Direction.Down,
-  ArrowLeft: t.Direction.Left,
-  a: t.Direction.Left,
-}
-
-function createHeldDirection() {
-  const directions = s.signal(DEFAULT_HELD_DIRECTION_STATE)
-
-  let lastDirection = t.Direction.Up
-  createEventListenerMap(window, {
-    keydown(e) {
-      const direction = KEY_TO_DIRECTION[e.key]
-      if (direction) {
-        s.update(directions, p => ({ ...p, [(lastDirection = direction)]: true }))
-        e.preventDefault()
-      }
-    },
-    keyup(e) {
-      const direction = KEY_TO_DIRECTION[e.key]
-      if (direction) s.update(directions, p => ({ ...p, [direction]: false }))
-    },
-    blur(e) {
-      s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
-    },
-    contextmenu(e) {
-      s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
-    },
-  })
-
-  const current = s.memo(
-    s.map(directions, directions => {
-      // prefer last direction
-      const order =
-        lastDirection === t.Direction.Up || lastDirection === t.Direction.Down
-          ? t.DIRECTIONS_V_H
-          : t.DIRECTIONS_H_V
-
-      // only allow one direction at a time
-      for (const direction of order) {
-        if (directions[direction] && !directions[t.OPPOSITE_DIRECTION[direction]]) {
-          return direction
-        }
-      }
-    }),
-  )
-
-  return {
-    current,
-    directions,
-  }
-}
-
-function createDirectionMovement(onMove: (direction: t.Direction) => void) {
-  const heldDirections = createHeldDirection()
-
-  const scheduled = createThrottledTrigger(1000 / 4)
-
-  createEffect(() => {
-    const direction = heldDirections.current.value
-    if (direction && scheduled()) untrack(() => onMove(direction))
-  })
-
-  return heldDirections.directions
-}
 
 const WALLS = [
   [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], // 6
@@ -112,7 +33,7 @@ export default function Movement(): JSX.Element {
   const isPlayer = s.selector(position)
   const playerPoint = s.memo(s.map(position, position => matrix.point(position)))
 
-  const heldDirections = createDirectionMovement(direction => {
+  const heldDirections = game.createDirectionMovement(direction => {
     s.update(position, p => {
       const newPos = matrix.go(p, direction)
       if (!newPos) return p
@@ -171,11 +92,7 @@ export default function Movement(): JSX.Element {
           )
 
           const windowRect = s.memo(
-            s.map(
-              playerPoint,
-              player =>
-                game.getWindowedMaze(WINDOW_RECT_SIZE, WINDOW_RECT_SIZE, player, matrix)
-            ),
+            s.map(playerPoint, player => game.getWindowedMaze(WINDOW_RECT_SIZE, player, matrix)),
           )
 
           return (
