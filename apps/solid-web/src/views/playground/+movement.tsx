@@ -31,7 +31,7 @@ export default function Movement(): JSX.Element {
 
   const position = s.signal(initialPosition)
   const isPlayer = s.selector(position)
-  const playerPoint = s.memo(s.map(position, position => matrix.point(position)))
+  const playerVec = s.memo(s.map(position, position => matrix.point(position)))
 
   const heldDirections = game.createDirectionMovement(direction => {
     s.update(position, p => {
@@ -85,19 +85,15 @@ export default function Movement(): JSX.Element {
         </Grid>
 
         {untrack(() => {
-          const WINDOW_RECT_SIZE = 3
+          const WINDOW_SIZE = 3
 
-          const playerCornerPoint = s.memo(
-            s.map(position, position => matrix.point(position).add(-1, -1)),
-          )
-
-          const windowRect = s.memo(
-            s.map(playerPoint, player => game.getWindowedMaze(WINDOW_RECT_SIZE, player, matrix)),
-          )
+          const windowed = s.memo(s.map(playerVec, player => t.windowedMatrix(WINDOW_SIZE, player)))
 
           return (
-            <Grid matrix={windowRect.value} offset={playerCornerPoint.value}>
-              {cell => <Cell isPlayer={cell().isPlayer} isWall={cell().isWall} />}
+            <Grid matrix={windowed.value} offset={playerVec.value.add(-1, -1)}>
+              {vec => (
+                <Cell isPlayer={isPlayer(matrix.i(vec()))} isWall={matrix.get(vec()) !== false} />
+              )}
             </Grid>
           )
         })}

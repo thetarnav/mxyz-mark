@@ -3,10 +3,9 @@ import * as solid from 'solid-js'
 import * as t from 'src/lib/trig'
 import * as s from 'src/lib/signal'
 import * as game from 'src/lib/game'
-import { css } from 'solid-styled'
-import { Index } from 'solid-js'
 import clsx from 'clsx'
 import { isHydrated } from '@solid-primitives/lifecycle'
+import { MatrixGrid } from 'src/lib/state'
 
 const Board = () => {
   const WALLS_W = 48
@@ -17,6 +16,11 @@ const Board = () => {
   const wallMatrix = game.mazeToGrid(game.generateMaze(WALLS_W, WALLS_H), TILE_SIZE)
 
   const wallSegments = t.findWallSegments(wallMatrix)
+
+  const isWall = s.selector(
+    s.reactive(() => wallMatrix),
+    (position: t.Point, matrix) => matrix.get(position) !== false,
+  )
 
   const playerVec = s.signal(
     // place player in center of a random tile
@@ -37,57 +41,19 @@ const Board = () => {
 
   const WINDOW_SIZE = 15
 
-  const board = s.memo(
-    s.map(playerVec, player => game.getWindowedMaze(WINDOW_SIZE, player, wallMatrix)),
-  )
-
-  const reordered = s.memo(
-    s.map(board, board => {
-      const { width, height } = board,
-        arr: {
-          index: number
-          item: {
-            isPlayer: boolean
-            isWall: boolean
-          }
-        }[] = []
-      // display items in reverse y order
-      // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
-      for (const i of board) {
-        const point = board.point(i)
-        const reorderedI = (height - 1 - point.y) * width + point.x
-        arr.push({ index: reorderedI, item: board.get(reorderedI)! })
-      }
-      return arr
-    }),
-  )
-
-  css`
-    .wrapper {
-      grid-template-columns: repeat(${WINDOW_SIZE + ''}, 2rem);
-      grid-template-rows: repeat(${WINDOW_SIZE + ''}, 2rem);
-    }
-  `
-
-  console.log(wallMatrix)
+  const matrixWindowed = s.memo(s.map(playerVec, player => t.windowedMatrix(WINDOW_SIZE, player)))
 
   return (
-    <div class="wrapper relative grid">
-      <Index each={reordered.value}>
-        {item => (
-          <div
-            class={clsx(
-              'flex items-center justify-center',
-              item().item.isPlayer
-                ? 'bg-primary text-dark'
-                : item().item.isWall
-                ? 'text-dark bg-gray-4'
-                : 'text-gray-4 bg-transparent',
-            )}
-          />
-        )}
-      </Index>
-    </div>
+    <MatrixGrid matrix={matrixWindowed.value}>
+      {vec => (
+        <div
+          class={clsx(
+            'flex items-center justify-center',
+            isPlayer(vec()) ? 'bg-white' : isWall(vec()) ? 'bg-transparent' : 'bg-stone-6',
+          )}
+        />
+      )}
+    </MatrixGrid>
   )
 }
 

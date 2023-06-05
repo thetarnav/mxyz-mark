@@ -194,6 +194,17 @@ export class Matrix<T> {
   }
 }
 
+/**
+ * Creates a square matrix of points centered around a {@link center} point.
+ * The returned points hold an absolute position in the original matrix.
+ */
+export function windowedMatrix(size: number, center: Point): Matrix<Point> {
+  const dToCorner = (size - 1) / 2,
+    dVec = center.add(-dToCorner, -dToCorner)
+
+  return new Matrix(size, size, (x, y) => new Point(x, y).add(dVec))
+}
+
 export function findWallSegments(matrix: Matrix<boolean>) {
   const W = matrix.width,
     H = matrix.height

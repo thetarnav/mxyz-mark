@@ -47,19 +47,10 @@ export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
   })
 }
 
-export function selector<T>(reactive: Reactive<T>): (key: T) => boolean
-export function selector<TSource>(
-  reactive: Reactive<TSource>,
-  equals: (key: TSource, source: TSource) => boolean,
-): (key: TSource) => boolean
-export function selector<TSource, TKey>(
-  reactive: Reactive<TSource>,
-  equals: (key: TKey, source: TSource) => boolean,
-): (key: TKey) => boolean
-export function selector<T>(
+export function selector<T, U = T>(
   reactive: Reactive<T>,
-  equals?: (key: T, source: T) => boolean,
-): (key: T) => boolean {
+  equals?: (key: U, source: T) => boolean,
+): (key: U) => boolean {
   return solid.createSelector(() => reactive.value, equals)
 }
 

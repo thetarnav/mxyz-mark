@@ -79,23 +79,6 @@ export function mazeToGrid(
   })
 }
 
-export function getWindowedMaze(size: number, playerPoint: t.Point, matrix: t.Matrix<boolean>) {
-  const move = (size - 1) / 2
-
-  const movedPlayer = playerPoint.add(-move, -move)
-
-  return new t.Matrix(size, size, (x, y) => {
-    const vec = new t.Point(x, y).add(movedPlayer)
-
-    if (x === move && y === move) return { isPlayer: true, isWall: false }
-
-    let isWall = matrix.get(vec)
-    if (isWall === undefined) isWall = true
-
-    return { isPlayer: false, isWall }
-  })
-}
-
 export const DEFAULT_HELD_DIRECTION_STATE: Record<t.Direction, boolean> = {
   [t.Direction.Up]: false,
   [t.Direction.Right]: false,

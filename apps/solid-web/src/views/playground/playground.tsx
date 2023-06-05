@@ -4,6 +4,7 @@ import { Range } from '@solid-primitives/range'
 import { createEventListener } from '@solid-primitives/event-listener'
 import clsx from 'clsx'
 import { Direction, Matrix, Point, ZERO_POINT } from '../../lib/trig'
+import { MatrixGrid } from 'src/lib/state'
 
 export const PlaygroundContainer = (props: { children: JSX.Element }) => {
   return <div class="flex flex-col items-center">{props.children}</div>
@@ -50,31 +51,6 @@ export const Grid = <T,>(props: {
   children: (item: Accessor<T>, index: number) => JSX.Element
   offset?: Point
 }) => {
-  const reordered = createMemo(() => {
-    const { matrix } = props,
-      { width, height } = matrix,
-      arr: { index: number; item: T }[] = []
-    // display items in reverse y order
-    // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
-    for (const i of matrix) {
-      const point = matrix.point(i)
-      const reorderedI = (height - 1 - point.y) * width + point.x
-      arr.push({ index: reorderedI, item: matrix.get(reorderedI)! })
-    }
-    return arr
-  })
-
-  css`
-    .wrapper,
-    .x-axis {
-      grid-template-columns: repeat(${props.matrix.width + ''}, 2rem);
-    }
-    .wrapper,
-    .y-axis {
-      grid-template-rows: repeat(${props.matrix.height + ''}, 2rem);
-    }
-  `
-
   const AxisMark: ParentComponent = props => (
     <div class="center-child text-gray-5">{props.children}</div>
   )
@@ -82,14 +58,20 @@ export const Grid = <T,>(props: {
   const offset = () => props.offset || ZERO_POINT
 
   return (
-    <div class="wrapper border-gray-6 relative grid rounded-md border">
-      <Index each={reordered()}>{item => props.children(() => item().item, item().index)}</Index>
-      <div class="x-axis absolute left-0 top-full mt-2 grid w-full">
+    <div class="border-gray-6 relative rounded-md border">
+      <MatrixGrid matrix={props.matrix}>{props.children}</MatrixGrid>
+      <div
+        class="absolute left-0 top-full mt-2 grid w-full"
+        style={`grid-template-columns: repeat(${props.matrix.width + ''}, 2rem)`}
+      >
         <Range start={offset().x} to={props.matrix.width + offset().x}>
           {x => <AxisMark>{x}</AxisMark>}
         </Range>
       </div>
-      <div class="y-axis absolute right-full top-0 mr-3 grid h-full">
+      <div
+        class="absolute right-full top-0 mr-3 grid h-full"
+        style={`grid-template-rows: repeat(${props.matrix.height + ''}, 2rem)`}
+      >
         <Range start={props.matrix.height + offset().y - 1} to={offset().y - 1}>
           {y => <AxisMark>{y}</AxisMark>}
         </Range>
