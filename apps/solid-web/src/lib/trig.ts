@@ -38,6 +38,7 @@ export function* randomIterate<T>(arr: readonly T[]) {
 }
 
 export type Pointable = { get x(): number; get y(): number }
+export type VecString = `(${number}, ${number})`
 
 export class Point implements Pointable {
   constructor(public x: number, public y: number) {}
@@ -66,7 +67,7 @@ export class Point implements Pointable {
     return this.x === vec.x && this.y === vec.y
   }
 
-  toString() {
+  toString(): VecString {
     return `(${this.x}, ${this.y})`
   }
   toJSON() {
@@ -75,6 +76,11 @@ export class Point implements Pointable {
 }
 
 export const point = (x: number, y: number) => new Point(x, y)
+export const pointFrom = (vec: Pointable) => new Point(vec.x, vec.y)
+export const pointFromStr = (str: VecString) => {
+  const [x, y] = str.slice(1, -1).split(', ').map(Number)
+  return new Point(x, y)
+}
 
 export const ZERO_POINT = new Point(0, 0)
 
@@ -192,6 +198,10 @@ export class Matrix<T> {
   static inBounds(width: number, height: number, p: Pointable) {
     return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height
   }
+
+  toString() {
+    return `Matrix(${this.width}x${this.height})`
+  }
 }
 
 /**
@@ -203,44 +213,6 @@ export function windowedMatrix(size: number, center: Point): Matrix<Point> {
     dVec = center.add(-dToCorner, -dToCorner)
 
   return new Matrix(size, size, (x, y) => new Point(x, y).add(dVec))
-}
-
-export function findWallSegments(matrix: Matrix<boolean>) {
-  const W = matrix.width,
-    H = matrix.height
-
-  const wallSegments: Segment[] = []
-
-  const seen = {
-    h: new Set<number>(),
-    v: new Set<number>(),
-  }
-
-  for (const i of matrix) {
-    const point = matrix.point(i)
-
-    let x = point.x,
-      y = point.y,
-      j = i
-
-    while (matrix.get(j) && !seen.h.has(j) && x < W) {
-      seen.h.add(j)
-      x++
-      j++
-    }
-    point.x + 1 < x && wallSegments.push(new Segment(point, new Point(x - 1, point.y)))
-
-    j = i
-
-    while (matrix.get(j) && !seen.v.has(j) && y < H) {
-      seen.v.add(j)
-      y++
-      j += W
-    }
-    point.y + 1 < y && wallSegments.push(new Segment(point, new Point(point.x, y - 1)))
-  }
-
-  return wallSegments
 }
 
 export const between = (a: number, b: number, c: number): boolean => {
@@ -304,6 +276,8 @@ export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
  * Ignores points that are out of bounds.
  */
 export const getRing = (matrix: Matrix<unknown>, center: Point, radius: number) => {
+  if (radius <= 0) return [new Point(center.x, center.y)]
+
   const x1 = center.x - radius,
     x2 = center.x + radius,
     y1 = center.y - radius,
@@ -311,8 +285,8 @@ export const getRing = (matrix: Matrix<unknown>, center: Point, radius: number) 
     points: Point[] = [],
     startX = Math.max(x1, 0),
     endX = Math.min(x2, matrix.width - 1),
-    startY = Math.max(y1, 0),
-    endY = Math.min(y2, matrix.height - 1)
+    startY = Math.max(y1 + 1, 0),
+    endY = Math.min(y2 - 1, matrix.height - 1)
 
   for (let x = startX; x <= endX; x++) {
     const bottom = new Point(x, y1)
@@ -328,4 +302,46 @@ export const getRing = (matrix: Matrix<unknown>, center: Point, radius: number) 
   }
 
   return points
+}
+
+/**
+ * Find all horizontal and vertical walls made from tiles in the matrix.
+ * Returns an array of segments.
+ */
+export function findWallSegments(matrix: Matrix<boolean>) {
+  const W = matrix.width,
+    H = matrix.height
+
+  const wallSegments: Segment[] = []
+
+  const seen = {
+    h: new Set<number>(),
+    v: new Set<number>(),
+  }
+
+  for (const i of matrix) {
+    const point = matrix.point(i)
+
+    let x = point.x,
+      y = point.y,
+      j = i
+
+    while (matrix.get(j) && !seen.h.has(j) && x < W) {
+      seen.h.add(j)
+      x++
+      j++
+    }
+    point.x + 1 < x && wallSegments.push(new Segment(point, new Point(x - 1, point.y)))
+
+    j = i
+
+    while (matrix.get(j) && !seen.v.has(j) && y < H) {
+      seen.v.add(j)
+      y++
+      j += W
+    }
+    point.y + 1 < y && wallSegments.push(new Segment(point, new Point(point.x, y - 1)))
+  }
+
+  return wallSegments
 }

@@ -16,9 +16,9 @@
     "@solid-primitives/utils": "^6.2.0",
     "@solidjs/meta": "^0.28.5",
     "@solidjs/router": "^0.8.2",
-    "@unocss/reset": "^0.52.4",
+    "@unocss/reset": "^0.52.7",
     "clsx": "^1.2.1",
-    "solid-js": "^1.7.5",
+    "solid-js": "^1.7.6",
     "solid-start": "^0.2.26",
     "solid-styled": "^0.9.0",
     "undici": "^5.22.1"
@@ -26,7 +26,7 @@
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.4.2",
     "esbuild": "^0.17.19",
-    "postcss": "^8.4.23",
+    "postcss": "^8.4.24",
     "solid-start-node": "^0.2.26",
     "solid-start-static": "^0.2.26",
     "vite-plugin-solid-styled": "^0.9.1"
