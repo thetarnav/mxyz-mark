@@ -23,6 +23,8 @@ const matrix = new t.Matrix(W, H, (x, y) => !!WALLS[H - 1 - y][x])
 
 const wallSegments = t.findWallSegments(matrix)
 
+console.log(wallSegments.map(s => s + ''))
+
 export default function Movement(): JSX.Element {
   let initialPosition = t.randomInt(matrix.length)
   while (matrix.get(initialPosition)) {
@@ -105,6 +107,7 @@ export default function Movement(): JSX.Element {
             s.map(position, playerIndex => {
               const player = matrix.point(playerIndex)
               const visibleSet = new Set<number>([playerIndex])
+              // return visibleSet
 
               const toCheck: t.Point[] = []
               let radius = 1

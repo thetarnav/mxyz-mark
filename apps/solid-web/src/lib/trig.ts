@@ -308,39 +308,33 @@ export const getRing = (matrix: Matrix<unknown>, center: Point, radius: number) 
  * Find all horizontal and vertical walls made from tiles in the matrix.
  * Returns an array of segments.
  */
-export function findWallSegments(matrix: Matrix<boolean>) {
-  const W = matrix.width,
-    H = matrix.height
-
+export function findWallSegments(matrix: Matrix<boolean>): Segment[] {
   const wallSegments: Segment[] = []
 
-  const seen = {
-    h: new Set<number>(),
-    v: new Set<number>(),
+  const visitPoint = (x: number, y: number, newSeg: [Point?, Point?]) => {
+    const p = new Point(x, y)
+    if (matrix.get(p) === true) {
+      newSeg[newSeg[0] === undefined ? 0 : 1] = p
+    } else {
+      if (newSeg[0] !== undefined && newSeg[1] !== undefined) {
+        wallSegments.push(new Segment(newSeg[0]!, newSeg[1]!))
+      }
+      newSeg[0] = newSeg[1] = undefined
+    }
   }
 
-  for (const i of matrix) {
-    const point = matrix.point(i)
-
-    let x = point.x,
-      y = point.y,
-      j = i
-
-    while (matrix.get(j) && !seen.h.has(j) && x < W) {
-      seen.h.add(j)
-      x++
-      j++
+  const newYSeg: [Point?, Point?] = [undefined, undefined]
+  for (let x = 0; x < matrix.width; x++) {
+    for (let y = 0; y < matrix.height; y++) {
+      visitPoint(x, y, newYSeg)
     }
-    point.x + 1 < x && wallSegments.push(new Segment(point, new Point(x - 1, point.y)))
+  }
 
-    j = i
-
-    while (matrix.get(j) && !seen.v.has(j) && y < H) {
-      seen.v.add(j)
-      y++
-      j += W
+  const newXSeg: [Point?, Point?] = [undefined, undefined]
+  for (let y = 0; y < matrix.height; y++) {
+    for (let x = 0; x < matrix.width; x++) {
+      visitPoint(x, y, newXSeg)
     }
-    point.y + 1 < y && wallSegments.push(new Segment(point, new Point(point.x, y - 1)))
   }
 
   return wallSegments

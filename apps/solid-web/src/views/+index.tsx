@@ -9,12 +9,12 @@ import * as t from 'src/lib/trig'
 
 export function findVisiblePoints(
   wallMatrix: t.Matrix<boolean>,
-  wallSegments: t.Segment[],
   windowedMatrix: t.Matrix<t.Point>,
   player: t.Point,
 ): Set<t.VecString> {
   const windowedPlayerVec = t.point((windowedMatrix.width - 1) / 2, (windowedMatrix.height - 1) / 2)
   const visibleSet = new Set([player.toString()])
+  const wallSegments = t.findWallSegments(wallMatrix)
 
   const toCheck: t.Point[] = []
   let radius = 1
@@ -104,7 +104,6 @@ const Board = () => {
   const GRID_SIZE = 4
 
   const wallMatrix = game.mazeToGrid(game.generateMaze(WALLS_W, WALLS_H), TILE_SIZE)
-  const wallSegments = t.findWallSegments(wallMatrix)
 
   const isWall = s.selector(
     s.reactive(() => wallMatrix),
@@ -133,7 +132,7 @@ const Board = () => {
   const _fromPlayer = s.memo(
     s.map(playerVec, player => {
       const windowed = t.windowedMatrix(WINDOW_SIZE, player)
-      const visiblePoints = findVisiblePoints(wallMatrix, wallSegments, windowed, player)
+      const visiblePoints = findVisiblePoints(wallMatrix, windowed, player)
       return { windowed, visiblePoints }
     }),
   )
