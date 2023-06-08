@@ -1,16 +1,6 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "strict": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
     "jsxImportSource": "solid-js",
     "jsx": "preserve",
     "types": ["@total-typescript/ts-reset", "solid-start/env", "vite/client"],

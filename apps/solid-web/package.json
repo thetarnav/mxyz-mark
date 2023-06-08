@@ -24,7 +24,6 @@
     "undici": "^5.22.1"
   },
   "devDependencies": {
-    "@total-typescript/ts-reset": "^0.4.2",
     "esbuild": "^0.17.19",
     "postcss": "^8.4.24",
     "solid-start-node": "^0.2.26",

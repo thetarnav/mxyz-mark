@@ -133,7 +133,7 @@ const Board = () => {
   const _fromPlayer = s.memo(
     s.map(playerVec, player => {
       const windowed = t.windowedMatrix(WINDOW_SIZE, player)
-      let visiblePoints = findVisiblePoints(wallMatrix, wallSegments, windowed, player)
+      const visiblePoints = findVisiblePoints(wallMatrix, wallSegments, windowed, player)
       return { windowed, visiblePoints }
     }),
   )

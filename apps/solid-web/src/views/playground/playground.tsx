@@ -1,10 +1,9 @@
-import { Accessor, Component, Index, JSX, ParentComponent, createMemo } from 'solid-js'
-import { css } from 'solid-styled'
-import { Range } from '@solid-primitives/range'
 import { createEventListener } from '@solid-primitives/event-listener'
+import { Range } from '@solid-primitives/range'
 import clsx from 'clsx'
-import { Direction, Matrix, Point, ZERO_POINT } from '../../lib/trig'
+import { Accessor, Component, JSX, ParentComponent, createMemo } from 'solid-js'
 import { MatrixGrid } from 'src/lib/state'
+import { Direction, Matrix, Point, ZERO_POINT } from '../../lib/trig'
 
 export const PlaygroundContainer = (props: { children: JSX.Element }) => {
   return <div class="flex flex-col items-center">{props.children}</div>
