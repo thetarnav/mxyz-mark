@@ -17,6 +17,8 @@ export class Reactive<T> {
   }
 }
 
+export type ReactiveValue<T> = T extends Reactive<infer U> ? U : never
+
 export function reactive<T>(get: solid.Accessor<T>): Reactive<T> {
   return new Reactive(get)
 }
@@ -36,8 +38,16 @@ export function map<T, U>(source: Reactive<T>, fn: (value: T) => U): Reactive<U>
   })
 }
 
-export function join<T>(sources: Reactive<T>[]): Reactive<T[]> {
-  return new Reactive(() => sources.map(source => source.value))
+export function destructure<const T extends readonly unknown[]>(
+  source: Reactive<T>,
+): { [K in keyof T]: Reactive<T[K]> } {
+  return source.value.map(value => new Reactive(() => value)) as any
+}
+
+export function join<const T extends readonly Reactive<unknown>[]>(
+  sources: T,
+): Reactive<{ [K in keyof T]: ReactiveValue<T[K]> }> {
+  return new Reactive(() => sources.map(source => source.value)) as any
 }
 
 export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
@@ -81,28 +91,4 @@ export function update<T>(signal: Signal<T>, fn: (value: T) => T): void {
  */
 export function readonly<T>(signal: Signal<T>): Reactive<T> {
   return new Reactive(() => signal.value)
-}
-
-if (import.meta.env.MODE === 'test') {
-  const count = signal(0)
-  const sum = memo(
-    map(join([count, map(count, value => value * 2)]), ([count, double]) => count + double),
-  )
-
-  effect(sum, value => console.log(value))
-
-  const countReadonly = readonly(count)
-  set(count, 1)
-  update(count, value => value + 1)
-  // @ts-expect-error
-  countReadonly.set(2)
-
-  solid.createEffect(() => {
-    // tracked
-    count.value
-    // tracked
-    count.get()
-    // not tracked
-    peak(count)
-  })
 }

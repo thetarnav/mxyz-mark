@@ -128,22 +128,17 @@ const Board = () => {
   })
 
   const WINDOW_SIZE = 15
+  const windowed = s.map(playerVec, player => t.windowedMatrix(WINDOW_SIZE, player))
 
-  const _fromPlayer = s.memo(
-    s.map(playerVec, player => {
-      const windowed = t.windowedMatrix(WINDOW_SIZE, player)
-      const visiblePoints = findVisiblePoints(wallMatrix, windowed, player)
-      return { windowed, visiblePoints }
-    }),
-  )
-  const matrixWindowed = s.reactive(() => _fromPlayer.value.windowed)
-  const visiblePoints = s.reactive(() => _fromPlayer.value.visiblePoints)
-  const isVisible = s.selector(visiblePoints, (position: t.Point, set) =>
-    set.has(position.toString()),
+  const isVisible = s.selector(
+    s.map(s.join([playerVec, windowed]), ([player, windowed]) =>
+      findVisiblePoints(wallMatrix, windowed, player),
+    ),
+    (position: t.Point, set) => set.has(position.toString()),
   )
 
   return (
-    <MatrixGrid matrix={matrixWindowed.value}>
+    <MatrixGrid matrix={windowed.value}>
       {vec => (
         <div
           class={clsx(
