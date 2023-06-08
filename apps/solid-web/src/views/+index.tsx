@@ -37,7 +37,7 @@ export function findVisiblePoints(
     const point = windowedMatrix.get(toCheck.pop()!)!
 
     // walls are not visible
-    if (wallMatrix.get(point)) continue
+    if (wallMatrix.get(point) !== false) continue
 
     /*
       don't allow for gaps between visible tiles
@@ -124,7 +124,7 @@ const Board = () => {
   game.createDirectionMovement(direction => {
     s.update(playerVec, p => {
       const newPos = wallMatrix.go(p, direction)
-      return newPos && !wallMatrix.get(newPos) ? newPos : p
+      return newPos && !isWall(newPos) ? newPos : p
     })
   })
 
