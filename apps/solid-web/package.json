@@ -26,6 +26,7 @@
   "devDependencies": {
     "esbuild": "^0.17.19",
     "postcss": "^8.4.24",
+    "solid-devtools": "^0.27.2",
     "solid-start-node": "^0.2.26",
     "solid-start-static": "^0.2.26",
     "vite-plugin-solid-styled": "^0.9.1"

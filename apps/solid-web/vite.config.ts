@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config'
 import solidStyled from 'vite-plugin-solid-styled'
 // @ts-ignore
 import staticAdapter from 'solid-start-static'
+import devtools from "solid-devtools/vite"
 
 export default defineConfig({
   resolve: {
@@ -12,6 +13,9 @@ export default defineConfig({
     },
   },
   plugins: [
+    devtools({
+      autoname: true,
+    }),
     solid({
       adapter: staticAdapter(),
       prerenderRoutes: [
