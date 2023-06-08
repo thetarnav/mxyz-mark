@@ -23,8 +23,6 @@ const matrix = new t.Matrix(W, H, (x, y) => !!WALLS[H - 1 - y][x])
 
 const wallSegments = t.findWallSegments(matrix)
 
-console.log(wallSegments.map(s => s + ''))
-
 export default function Movement(): JSX.Element {
   let initialPosition = t.randomInt(matrix.length)
   while (matrix.get(initialPosition)) {
@@ -113,17 +111,24 @@ export default function Movement(): JSX.Element {
               let radius = 1
               points: for (const _ of matrix) {
                 if (!toCheck.length) {
+                  const ring = t.getRing(matrix, player, radius++)
+
+                  if (!ring.length) {
+                    // no more points to check
+                    break
+                  }
+
                   /*
                     check points closer to the player first
                     so that we can detect gaps between visible tiles
                   */
-                  toCheck.push.apply(toCheck, t.getRing(matrix, player, radius++))
+                  toCheck.push.apply(toCheck, ring)
                 }
 
                 const point = toCheck.pop()!
 
                 // walls are not visible
-                if (matrix.get(point)) continue
+                if (matrix.get(point) !== false) continue
 
                 /*
                   don't allow for gaps between visible tiles
