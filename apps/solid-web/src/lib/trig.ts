@@ -105,7 +105,7 @@ export class Segment {
   }
 
   toJSON() {
-    return { start: this.start.toJSON(), end: this.end.toJSON() }
+    return [this.start.toJSON(), this.end.toJSON()]
   }
   toString() {
     return `${this.start} -> ${this.end}`
