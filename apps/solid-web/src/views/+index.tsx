@@ -13,7 +13,9 @@ export function findVisiblePoints(
   windowedMatrix: t.Matrix<t.Point>,
   player: t.Point,
 ): Set<t.VecString> {
-  // player and all wall-less tiles in the first ring are visible
+  /*
+    player and all wall-less tiles around him are visible
+  */
   const visibleSet = new Set(
       t
         .getRing(player, 1)
@@ -32,7 +34,9 @@ export function findVisiblePoints(
     ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
       const point = windowedMatrix.get(wPoint)
 
-      // walls are not visible
+      /*
+       walls are not visible
+      */
       if (!point || wallMatrix.get(point) !== false) continue
 
       /*
@@ -115,7 +119,9 @@ const Board = () => {
   )
 
   const playerVec = s.signal(
-    // place player in center of a random tile
+    /*
+      place player in center of a random tile
+    */
     t.point(
       t.randomInt(WALLS_W) * GRID_SIZE + (TILE_SIZE - 1) / 2,
       t.randomInt(WALLS_H) * GRID_SIZE + (TILE_SIZE - 1) / 2,
