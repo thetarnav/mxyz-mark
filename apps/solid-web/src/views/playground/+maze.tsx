@@ -10,7 +10,44 @@ export default function Maze(): JSX.Element {
   const W = 10
   const H = 6
 
-  const maze = s.memo(s.map(trigger, () => game.generateMaze(W, H)))
+  const ignoredVectors = [
+    // bottom left
+    t.vector(0, 0),
+    t.vector(0, 1),
+    t.vector(1, 0),
+    t.vector(1, 1),
+    // top right
+    t.vector(W - 1, H - 1),
+    t.vector(W - 1, H - 2),
+    t.vector(W - 2, H - 1),
+    t.vector(W - 2, H - 2),
+  ]
+
+  const maze = s.memo(
+    s.map(trigger, () => game.generateMaze(W, H, ignoredVectors, t.vector(W / 2, H / 2))),
+  )
+
+  const walls = s.memo(
+    s.map(maze, maze => {
+      const walls = game.mazeToGrid(maze, 2)
+
+      // bottom left
+      for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+          walls.set(t.vector(x, y), false)
+        }
+      }
+
+      // top right
+      for (let x = walls.width - 5; x < walls.width; x++) {
+        for (let y = walls.height - 5; y < walls.height; y++) {
+          walls.set(t.vector(x, y), false)
+        }
+      }
+
+      return walls
+    }),
+  )
 
   return (
     <PlaygroundContainer>
@@ -23,19 +60,17 @@ export default function Maze(): JSX.Element {
       <Grid matrix={maze.value}>
         {(cell, i) => (
           <Cell
-            borders={{
-              [t.Direction.Right]: cell().right && !!maze.value.go(i, t.Direction.Right),
-              [t.Direction.Down]: cell().down && !!maze.value.go(i, t.Direction.Down),
-            }}
+            borders={([t.Direction.Right, t.Direction.Down] as const).reduce((rec, dir) => {
+              rec[dir] = cell()[dir] && !!maze.value.go(i, dir)
+              return rec
+            }, {} as Record<t.Direction, boolean>)}
           >
             {i}
           </Cell>
         )}
       </Grid>
       <div class="mt-24">
-        <Grid matrix={game.mazeToGrid(maze.get(), 2)}>
-          {(cell, i) => <Cell isWall={cell()}>{i}</Cell>}
-        </Grid>
+        <Grid matrix={walls.value}>{(cell, i) => <Cell isWall={cell()}>{i}</Cell>}</Grid>
       </div>
     </PlaygroundContainer>
   )

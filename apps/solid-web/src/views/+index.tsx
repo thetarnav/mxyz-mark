@@ -19,14 +19,14 @@ const Game = () => {
 
   const isWall = s.selector(
     s.reactive(() => wallMatrix),
-    (position: t.Point, matrix) => matrix.get(position) !== false,
+    (position: t.Vector, matrix) => matrix.get(position) !== false,
   )
 
   const playerVec = s.signal(
     /*
       place player in center of a random tile
     */
-    t.point(
+    t.vector(
       t.randomInt(WALLS_W) * GRID_SIZE + (TILE_SIZE - 1) / 2,
       // wallMatrix.width - 1,
       // 0,
@@ -52,12 +52,12 @@ const Game = () => {
     s.map(s.join([playerVec, windowed]), ([player, windowed]) =>
       game.findVisiblePoints(wallMatrix, wallSegments, windowed, player),
     ),
-    (position: t.Point, set) => set.has(position.toString()),
+    (position: t.Vector, set) => set.has(position.toString()),
   )
 
   const minimapPlayer = s.memo(
     s.map(playerVec, player =>
-      t.point(
+      t.vector(
         Math.floor((player.x / (wallMatrix.width - GRID_SIZE)) * (WINDOW_SIZE - 1)),
         Math.floor((player.y / (wallMatrix.height - GRID_SIZE)) * (WINDOW_SIZE - 1)),
       ),

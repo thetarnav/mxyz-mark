@@ -64,19 +64,19 @@ declare module 'vitest' {
 v.describe('segmentsIntersecting', () => {
   const segments: [from: t.Segment, to: t.Segment, result: boolean][] = [
     // parallel vertical
-    [t.segment(t.point(8, 1), t.point(8, 5)), t.segment(t.point(8, 2), t.point(8, 3)), true],
+    [t.segment(t.vector(8, 1), t.vector(8, 5)), t.segment(t.vector(8, 2), t.vector(8, 3)), true],
     // parallel vertical not intersecting
-    [t.segment(t.point(1, 5), t.point(1, 6)), t.segment(t.point(1, 1), t.point(1, 2)), false],
+    [t.segment(t.vector(1, 5), t.vector(1, 6)), t.segment(t.vector(1, 1), t.vector(1, 2)), false],
     // parallel horizontal
-    [t.segment(t.point(1, 5), t.point(7, 5)), t.segment(t.point(0, 5), t.point(8, 5)), true],
+    [t.segment(t.vector(1, 5), t.vector(7, 5)), t.segment(t.vector(0, 5), t.vector(8, 5)), true],
     // parallel diagonal
-    [t.segment(t.point(1, 1), t.point(4, 4)), t.segment(t.point(2, 2), t.point(3, 3)), true],
-    [t.segment(t.point(1, 5), t.point(1, 7)), t.segment(t.point(2, 5), t.point(0, 6)), true],
-    [t.segment(t.point(1, 5), t.point(1, 7)), t.segment(t.point(2, 2), t.point(0, 6)), false],
+    [t.segment(t.vector(1, 1), t.vector(4, 4)), t.segment(t.vector(2, 2), t.vector(3, 3)), true],
+    [t.segment(t.vector(1, 5), t.vector(1, 7)), t.segment(t.vector(2, 5), t.vector(0, 6)), true],
+    [t.segment(t.vector(1, 5), t.vector(1, 7)), t.segment(t.vector(2, 2), t.vector(0, 6)), false],
     // around corner
-    [t.segment(t.point(1, 4), t.point(0, 5)), t.segment(t.point(1, 5), t.point(1, 6)), false],
+    [t.segment(t.vector(1, 4), t.vector(0, 5)), t.segment(t.vector(1, 5), t.vector(1, 6)), false],
     // tip
-    [t.segment(t.point(3, 1), t.point(3, 4)), t.segment(t.point(0, 1), t.point(6, 1)), true],
+    [t.segment(t.vector(3, 1), t.vector(3, 4)), t.segment(t.vector(0, 1), t.vector(6, 1)), true],
   ]
 
   segments.forEach(([seg1, seg2, result]) => {
@@ -90,44 +90,44 @@ v.describe('getRing', () => {
   const tests: { params: Parameters<typeof t.getRing>; expected: ReturnType<typeof t.getRing> }[] =
     [
       {
-        params: [t.point(5, 5), 0],
-        expected: [t.point(5, 5)],
+        params: [t.vector(5, 5), 0],
+        expected: [t.vector(5, 5)],
       },
       {
-        params: [t.point(5, 5), 1],
+        params: [t.vector(5, 5), 1],
         expected: [
-          t.point(4, 4),
-          t.point(5, 4),
-          t.point(6, 4),
-          t.point(4, 6),
-          t.point(5, 6),
-          t.point(6, 6),
-          t.point(4, 5),
-          t.point(6, 5),
+          t.vector(4, 4),
+          t.vector(5, 4),
+          t.vector(6, 4),
+          t.vector(4, 6),
+          t.vector(5, 6),
+          t.vector(6, 6),
+          t.vector(4, 5),
+          t.vector(6, 5),
         ],
       },
       {
-        params: [t.point(5, 5), 2],
+        params: [t.vector(5, 5), 2],
         expected: [
-          t.point(3, 3),
-          t.point(4, 3),
-          t.point(5, 3),
-          t.point(6, 3),
-          t.point(7, 3),
+          t.vector(3, 3),
+          t.vector(4, 3),
+          t.vector(5, 3),
+          t.vector(6, 3),
+          t.vector(7, 3),
 
-          t.point(3, 7),
-          t.point(4, 7),
-          t.point(5, 7),
-          t.point(6, 7),
-          t.point(7, 7),
+          t.vector(3, 7),
+          t.vector(4, 7),
+          t.vector(5, 7),
+          t.vector(6, 7),
+          t.vector(7, 7),
 
-          t.point(3, 4),
-          t.point(3, 5),
-          t.point(3, 6),
+          t.vector(3, 4),
+          t.vector(3, 5),
+          t.vector(3, 6),
 
-          t.point(7, 4),
-          t.point(7, 5),
-          t.point(7, 6),
+          t.vector(7, 4),
+          t.vector(7, 5),
+          t.vector(7, 6),
         ],
       },
     ]
@@ -161,17 +161,17 @@ v.describe('findWallSegments', () => {
     const wallSegments = t.findWallSegments(matrix)
 
     v.expect(wallSegments).toIncludeSameMembers([
-      t.segment(t.point(1, 0), t.point(1, 3)),
-      t.segment(t.point(1, 5), t.point(1, 6)),
-      t.segment(t.point(1, 6), t.point(8, 6)),
-      t.segment(t.point(6, 5), t.point(6, 6)),
-      t.segment(t.point(1, 3), t.point(3, 3)),
-      t.segment(t.point(3, 1), t.point(3, 4)),
-      t.segment(t.point(3, 1), t.point(5, 1)),
-      t.segment(t.point(5, 1), t.point(5, 3)),
-      t.segment(t.point(7, 3), t.point(9, 3)),
-      t.segment(t.point(7, 1), t.point(8, 1)),
-      t.segment(t.point(8, 1), t.point(8, 4)),
+      t.segment(t.vector(1, 0), t.vector(1, 3)),
+      t.segment(t.vector(1, 5), t.vector(1, 6)),
+      t.segment(t.vector(1, 6), t.vector(8, 6)),
+      t.segment(t.vector(6, 5), t.vector(6, 6)),
+      t.segment(t.vector(1, 3), t.vector(3, 3)),
+      t.segment(t.vector(3, 1), t.vector(3, 4)),
+      t.segment(t.vector(3, 1), t.vector(5, 1)),
+      t.segment(t.vector(5, 1), t.vector(5, 3)),
+      t.segment(t.vector(7, 3), t.vector(9, 3)),
+      t.segment(t.vector(7, 1), t.vector(8, 1)),
+      t.segment(t.vector(8, 1), t.vector(8, 4)),
     ])
   })
 })

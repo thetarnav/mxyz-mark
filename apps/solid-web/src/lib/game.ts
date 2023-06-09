@@ -3,51 +3,70 @@ import * as t from './trig'
 import * as s from './signal'
 import { createEffect, createSignal, untrack } from 'solid-js'
 
-export function generateMaze(width: number, height: number) {
+export function generateMaze(
+  width: number,
+  height: number,
+  ignoredVectors: readonly t.Vector[] = [],
+  startingPoint: t.Vector = t.vector(0, 0),
+) {
   const walls = new t.Matrix(width, height, () => ({
-      right: true,
-      down: true,
-    })),
-    stack = [0],
-    neighbors: number[] = [],
-    add = (j: number) => {
-      const index = stack.indexOf(j)
-      if (index === -1) stack.push(j)
-      else if (index < stackIndex) neighbors.push(j)
-    }
+    [t.Direction.Right]: true,
+    [t.Direction.Down]: true,
+  }))
 
-  let stackIndex = 0
+  /*
+    use strings instead of vectors for === comparison
+  */
+  const ignoredVectorsStr = ignoredVectors.map(v => v.toString()),
+    ignoredVectorsSet = new Set(ignoredVectorsStr),
+    startingPointStr = startingPoint.toString(),
+    stack = ignoredVectorsStr.concat(startingPointStr),
+    directions: t.Direction[] = []
 
-  for (; stackIndex < walls.length; stackIndex++) {
-    const swap = t.randomIntFromTo(stackIndex, stack.length)
-    const i = stack[swap]
-    stack[swap] = stack[stackIndex]
-    stack[stackIndex] = i
+  if (ignoredVectorsSet.has(startingPointStr)) {
+    throw new Error('starting point cannot be ignored')
+  }
+
+  /*
+    walks through all vectors in the maze
+    and randomly removes walls
+
+    only remove walls from neighboring vectors that
+    have been visited but haven't been mutated
+    this way a path is guaranteed to exist
+  */
+  for (let i = ignoredVectors.length; i < walls.length; i++) {
+    /*
+      vectors below the index - mutated vectors
+      vectors above the index - unvisited vectors
+    */
+    const swap = t.randomIntFrom(i, stack.length),
+      vecStr = stack[swap]
+    let vec = t.vectorFromStr(vecStr)
+    stack[swap] = stack[i]
+    stack[i] = vecStr
 
     for (const direction of t.DIRECTIONS_H_V) {
-      const j = walls.go(i, direction)
-      j && add(walls.i(j))
+      const neighbor = walls.go(vec, direction)
+      if (!neighbor) continue
+
+      const str = neighbor.toString()
+      if (ignoredVectorsSet.has(str)) continue
+
+      const index = stack.indexOf(str)
+      if (index === -1) stack.push(str)
+      else if (index < i) directions.push(direction)
     }
 
-    if (neighbors.length === 0) continue
+    if (directions.length === 0) continue
 
-    const j = neighbors[t.randomInt(neighbors.length)]
-    switch (j - i) {
-      case width: // up
-        walls.get(i + width)!.down = false
-        break
-      case -1: // left
-        walls.get(i - 1)!.right = false
-        break
-      case -width: // down
-        walls.get(i)!.down = false
-        break
-      case 1: // right
-        walls.get(i)!.right = false
-        break
+    let dir = directions[t.randomInt(directions.length)]
+    if (dir === t.Direction.Up || dir === t.Direction.Left) {
+      vec = walls.go(vec, dir)!
+      dir = t.OPPOSITE_DIRECTION[dir]
     }
-
-    neighbors.length = 0
+    walls.get(vec)![dir] = false
+    directions.length = 0
   }
 
   return walls
@@ -62,20 +81,20 @@ export function mazeToGrid(
     height = maze.height * gridSize - 1
 
   return new t.Matrix(width, height, (x, y) => {
-    const p = t.point(x, y)
-    const tileP = t.point(p.x % gridSize, p.y % gridSize)
+    const p = t.vector(x, y)
+    const tileP = t.vector(p.x % gridSize, p.y % gridSize)
     // tiles
     if (tileP.x < tileSize && tileP.y < tileSize) return false
     // wall joints
     if (tileP.x === tileSize && tileP.y === tileSize) return true
     // vertical walls
     if (tileP.x === tileSize) {
-      const mazeP = t.point((p.x - tileSize) / gridSize, (p.y - tileP.y) / gridSize)
-      return maze.get(mazeP)!.right
+      const mazeP = t.vector((p.x - tileSize) / gridSize, (p.y - tileP.y) / gridSize)
+      return maze.get(mazeP)![t.Direction.Right]
     }
     // horizontal walls
-    const mazeP = t.point((p.x - tileP.x) / gridSize, (p.y - tileSize) / gridSize + 1)
-    return maze.get(mazeP)!.down
+    const mazeP = t.vector((p.x - tileP.x) / gridSize, (p.y - tileSize) / gridSize + 1)
+    return maze.get(mazeP)![t.Direction.Down]
   })
 }
 
@@ -178,8 +197,8 @@ export function createDirectionMovement(onMove: (direction: t.Direction) => void
 export function findVisiblePoints(
   wallMatrix: t.Matrix<boolean>,
   wallSegments: t.Segment[],
-  windowedMatrix: t.Matrix<t.Point>,
-  player: t.Point,
+  windowedMatrix: t.Matrix<t.Vector>,
+  player: t.Vector,
 ): Set<t.VecString> {
   /*
     player and all wall-less tiles around him are visible
@@ -192,7 +211,7 @@ export function findVisiblePoints(
         .map(p => p.toString()),
     ),
     radius = (windowedMatrix.width - 1) / 2,
-    windowedPlayerVec = t.point(radius, radius)
+    windowedPlayerVec = t.vector(radius, radius)
 
   /*
     check points closer to the player first
@@ -255,7 +274,7 @@ export function findVisiblePoints(
       /*
         a tile must be within the player's round field of view
       */
-      if (t.getSegmentLength(tileSeg) >= radius + 0.5) continue
+      if (t.segmentLength(tileSeg) >= radius + 0.5) continue
 
       /*
         a tile must not have a wall segment between it and the player

@@ -3,7 +3,7 @@ import { Range } from '@solid-primitives/range'
 import clsx from 'clsx'
 import { Accessor, Component, JSX, ParentComponent, createMemo } from 'solid-js'
 import { MatrixGrid } from 'src/lib/state'
-import { Direction, Matrix, Point, ZERO_POINT } from '../../lib/trig'
+import { Direction, Matrix, Vector, ZERO_VEC } from '../../lib/trig'
 
 export const PlaygroundContainer = (props: { children: JSX.Element }) => {
   return <div class="flex flex-col items-center">{props.children}</div>
@@ -48,13 +48,13 @@ export const TriggerButton = (props: {
 export const Grid = <T,>(props: {
   matrix: Matrix<T>
   children: (item: Accessor<T>, index: number) => JSX.Element
-  offset?: Point
+  offset?: Vector
 }) => {
   const AxisMark: ParentComponent = props => (
     <div class="center-child text-gray-5">{props.children}</div>
   )
 
-  const offset = () => props.offset || ZERO_POINT
+  const offset = () => props.offset || ZERO_VEC
 
   return (
     <div class="border-gray-6 relative rounded-md border">

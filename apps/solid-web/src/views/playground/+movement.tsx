@@ -107,7 +107,7 @@ export default function Movement(): JSX.Element {
               const visibleSet = new Set<number>([playerIndex])
               // return visibleSet
 
-              const toCheck: t.Point[] = []
+              const toCheck: t.Vector[] = []
               let radius = 1
               points: for (const _ of matrix) {
                 if (!toCheck.length) {
