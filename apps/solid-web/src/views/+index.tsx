@@ -7,103 +7,7 @@ import * as s from 'src/lib/signal'
 import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trig'
 
-export function findVisiblePoints(
-  wallMatrix: t.Matrix<boolean>,
-  wallSegments: t.Segment[],
-  windowedMatrix: t.Matrix<t.Point>,
-  player: t.Point,
-): Set<t.VecString> {
-  /*
-    player and all wall-less tiles around him are visible
-  */
-  const visibleSet = new Set(
-      t
-        .getRing(player, 1)
-        .filter(p => wallMatrix.get(p) === false)
-        .concat(player)
-        .map(p => p.toString()),
-    ),
-    radius = (windowedMatrix.width - 1) / 2,
-    windowedPlayerVec = t.point(radius, radius)
-
-  /*
-    check points closer to the player first
-    so that we can detect gaps between visible tiles
-  */
-  for (let r = 2; r <= radius; r++) {
-    ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
-      const point = windowedMatrix.get(wPoint)
-
-      /*
-       walls are not visible
-      */
-      if (!point || wallMatrix.get(point) !== false) continue
-
-      /*
-        don't allow for gaps between visible tiles
-        at least one neighbor must be visible
-      */
-      gaps: {
-        /*
-          X @ X
-        */
-        if (point.x > player.x) {
-          if (visibleSet.has(point.add(-1, 0).toString())) break gaps
-        } else if (point.x < player.x) {
-          if (visibleSet.has(point.add(1, 0).toString())) break gaps
-        }
-
-        /*
-          X
-          @
-          X
-        */
-        if (point.y > player.y) {
-          if (visibleSet.has(point.add(0, -1).toString())) break gaps
-        } else if (point.y < player.y) {
-          if (visibleSet.has(point.add(0, 1).toString())) break gaps
-        }
-
-        /*
-          X   X
-            @
-          X   X
-        */
-        if (point.x > player.x && point.y > player.y) {
-          if (visibleSet.has(point.add(-1, -1).toString())) break gaps
-        } else if (point.x < player.x && point.y < player.y) {
-          if (visibleSet.has(point.add(1, 1).toString())) break gaps
-        } else if (point.x > player.x && point.y < player.y) {
-          if (visibleSet.has(point.add(-1, 1).toString())) break gaps
-        } else if (point.x < player.x && point.y > player.y) {
-          if (visibleSet.has(point.add(1, -1).toString())) break gaps
-        }
-
-        continue
-      }
-
-      const tileSeg = t.segment(player, point)
-
-      /*
-        a tile must be within the player's round field of view
-      */
-      if (t.getSegmentLength(tileSeg) >= radius + 0.5) continue
-
-      /*
-        a tile must not have a wall segment between it and the player
-      */
-      for (const wallSeg of wallSegments) {
-        if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
-      }
-
-      visibleSet.add(point.toString())
-    }
-  }
-
-  return visibleSet
-}
-
-const Board = () => {
+const Game = () => {
   const WALLS_W = 48
   const WALLS_H = 48
   const TILE_SIZE = 3
@@ -124,7 +28,11 @@ const Board = () => {
     */
     t.point(
       t.randomInt(WALLS_W) * GRID_SIZE + (TILE_SIZE - 1) / 2,
+      // wallMatrix.width - 1,
+      // 0,
       t.randomInt(WALLS_H) * GRID_SIZE + (TILE_SIZE - 1) / 2,
+      // wallMatrix.height - 1,
+      // 0,
     ),
     { equals: (a, b) => a.equals(b) },
   )
@@ -142,22 +50,44 @@ const Board = () => {
 
   const isVisible = s.selector(
     s.map(s.join([playerVec, windowed]), ([player, windowed]) =>
-      findVisiblePoints(wallMatrix, wallSegments, windowed, player),
+      game.findVisiblePoints(wallMatrix, wallSegments, windowed, player),
     ),
     (position: t.Point, set) => set.has(position.toString()),
   )
 
+  const minimapPlayer = s.memo(
+    s.map(playerVec, player =>
+      t.point(
+        Math.floor((player.x / (wallMatrix.width - GRID_SIZE)) * (WINDOW_SIZE - 1)),
+        Math.floor((player.y / (wallMatrix.height - GRID_SIZE)) * (WINDOW_SIZE - 1)),
+      ),
+    ),
+  )
+  const isMinimapPlayer = s.selector(minimapPlayer, (p1, p2) => p1.equals(p2))
+
   return (
-    <MatrixGrid matrix={windowed.value}>
-      {vec => (
-        <div
-          class={clsx(
-            'flex items-center justify-center',
-            isPlayer(vec()) ? 'bg-white' : isVisible(vec()) ? 'bg-stone-7' : 'bg-transparent',
-          )}
-        />
-      )}
-    </MatrixGrid>
+    <>
+      <MatrixGrid matrix={windowed.value}>
+        {(vec, fovIndex) => {
+          const fovPoint = t.Matrix.vec(WINDOW_SIZE, fovIndex)
+          return (
+            <div
+              class={clsx(
+                'flex items-center justify-center',
+                isPlayer(vec())
+                  ? 'bg-white'
+                  : isMinimapPlayer(fovPoint)
+                  ? 'bg-primary'
+                  : isVisible(vec())
+                  ? 'bg-stone-7'
+                  : 'bg-transparent',
+              )}
+            />
+          )
+        }}
+      </MatrixGrid>
+      <div class="fixed right-12 top-12">{playerVec.value + ''}</div>
+    </>
   )
 }
 
@@ -181,7 +111,7 @@ export default function Home(): solid.JSX.Element {
           </A>
         </div>
       </nav>
-      <main class="flex flex-col items-center gap-24 py-24">{isHydrated() && <Board />}</main>
+      <main class="flex flex-col items-center gap-24 py-24">{isHydrated() && <Game />}</main>
     </>
   )
 }

@@ -86,7 +86,7 @@ export const DEFAULT_HELD_DIRECTION_STATE: Record<t.Direction, boolean> = {
   [t.Direction.Left]: false,
 }
 
-export const KEY_TO_DIRECTION: Record<string, t.Direction> = {
+export const KEY_TO_DIRECTION: { [K in string]?: t.Direction } = {
   ArrowUp: t.Direction.Up,
   w: t.Direction.Up,
   ArrowRight: t.Direction.Right,
@@ -113,10 +113,10 @@ export function createHeldDirection() {
       const direction = KEY_TO_DIRECTION[e.key]
       if (direction) s.update(directions, p => ({ ...p, [direction]: false }))
     },
-    blur(e) {
+    blur() {
       s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
     },
-    contextmenu(e) {
+    contextmenu() {
       s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
     },
   })
@@ -173,4 +173,100 @@ export function createDirectionMovement(onMove: (direction: t.Direction) => void
   })
 
   return heldDirections.directions
+}
+
+export function findVisiblePoints(
+  wallMatrix: t.Matrix<boolean>,
+  wallSegments: t.Segment[],
+  windowedMatrix: t.Matrix<t.Point>,
+  player: t.Point,
+): Set<t.VecString> {
+  /*
+    player and all wall-less tiles around him are visible
+  */
+  const visibleSet = new Set(
+      t
+        .getRing(player, 1)
+        .filter(p => wallMatrix.get(p) === false)
+        .concat(player)
+        .map(p => p.toString()),
+    ),
+    radius = (windowedMatrix.width - 1) / 2,
+    windowedPlayerVec = t.point(radius, radius)
+
+  /*
+    check points closer to the player first
+    so that we can detect gaps between visible tiles
+  */
+  for (let r = 2; r <= radius; r++) {
+    ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
+      const point = windowedMatrix.get(wPoint)
+
+      /*
+       walls are not visible
+      */
+      if (!point || wallMatrix.get(point) !== false) continue
+
+      /*
+        don't allow for gaps between visible tiles
+        at least one neighbor must be visible
+      */
+      gaps: {
+        /*
+          X @ X
+        */
+        if (point.x > player.x) {
+          if (visibleSet.has(point.add(-1, 0).toString())) break gaps
+        } else if (point.x < player.x) {
+          if (visibleSet.has(point.add(1, 0).toString())) break gaps
+        }
+
+        /*
+          X
+          @
+          X
+        */
+        if (point.y > player.y) {
+          if (visibleSet.has(point.add(0, -1).toString())) break gaps
+        } else if (point.y < player.y) {
+          if (visibleSet.has(point.add(0, 1).toString())) break gaps
+        }
+
+        /*
+          X   X
+            @
+          X   X
+        */
+        if (point.x > player.x && point.y > player.y) {
+          if (visibleSet.has(point.add(-1, -1).toString())) break gaps
+        } else if (point.x < player.x && point.y < player.y) {
+          if (visibleSet.has(point.add(1, 1).toString())) break gaps
+        } else if (point.x > player.x && point.y < player.y) {
+          if (visibleSet.has(point.add(-1, 1).toString())) break gaps
+        } else if (point.x < player.x && point.y > player.y) {
+          if (visibleSet.has(point.add(1, -1).toString())) break gaps
+        }
+
+        continue
+      }
+
+      const tileSeg = t.segment(player, point)
+
+      /*
+        a tile must be within the player's round field of view
+      */
+      if (t.getSegmentLength(tileSeg) >= radius + 0.5) continue
+
+      /*
+        a tile must not have a wall segment between it and the player
+      */
+      for (const wallSeg of wallSegments) {
+        if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
+      }
+
+      visibleSet.add(point.toString())
+    }
+  }
+
+  return visibleSet
 }
