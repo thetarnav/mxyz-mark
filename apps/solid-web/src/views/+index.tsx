@@ -147,7 +147,7 @@ const Board = () => {
         <div
           class={clsx(
             'flex items-center justify-center',
-            isPlayer(vec()) ? 'bg-white' : isVisible(vec()) ? 'bg-stone-6' : 'bg-transparent',
+            isPlayer(vec()) ? 'bg-white' : isVisible(vec()) ? 'bg-stone-7' : 'bg-transparent',
           )}
         />
       )}
