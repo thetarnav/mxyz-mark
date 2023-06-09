@@ -87,7 +87,7 @@ export function findVisiblePoints(
       /*
         a tile must be within the player's round field of view
       */
-      if (t.getSegmentLength(tileSeg) > radius + 1) continue
+      if (t.getSegmentLength(tileSeg) >= radius + 0.5) continue
 
       /*
         a tile must not have a wall segment between it and the player
