@@ -9,89 +9,88 @@ import * as t from 'src/lib/trig'
 
 export function findVisiblePoints(
   wallMatrix: t.Matrix<boolean>,
+  wallSegments: t.Segment[],
   windowedMatrix: t.Matrix<t.Point>,
   player: t.Point,
 ): Set<t.VecString> {
-  const windowedPlayerVec = t.point((windowedMatrix.width - 1) / 2, (windowedMatrix.height - 1) / 2)
-  const visibleSet = new Set([player.toString()])
-  const wallSegments = t.findWallSegments(wallMatrix)
+  // player and all wall-less tiles in the first ring are visible
+  const visibleSet = new Set(
+      t
+        .getRing(player, 1)
+        .filter(p => wallMatrix.get(p) === false)
+        .concat(player)
+        .map(p => p.toString()),
+    ),
+    rw = (windowedMatrix.width - 1) / 2,
+    rh = (windowedMatrix.height - 1) / 2,
+    windowedPlayerVec = t.point(rw, rh),
+    maxRadius = Math.max(rw, rh) - 1
 
-  const toCheck: t.Point[] = []
-  let radius = 1
-  points: for (const _ of wallMatrix) {
-    if (!toCheck.length) {
+  /*
+    check points closer to the player first
+    so that we can detect gaps between visible tiles
+  */
+  for (let radius = 2; radius < maxRadius; radius++) {
+    ring: for (const wPoint of t.getRing(windowedPlayerVec, radius)) {
+      const point = windowedMatrix.get(wPoint)
+
+      // walls are not visible
+      if (!point || wallMatrix.get(point) !== false) continue
+
       /*
-        check points closer to the player first
-        so that we can detect gaps between visible tiles
+        don't allow for gaps between visible tiles
+        at least one neighbor must be visible
       */
-      const ring = t.getRing(windowedMatrix, windowedPlayerVec, radius++)
+      gaps: {
+        /*
+          X @ X
+        */
+        if (point.x > player.x) {
+          if (visibleSet.has(point.add(-1, 0).toString())) break gaps
+        } else if (point.x < player.x) {
+          if (visibleSet.has(point.add(1, 0).toString())) break gaps
+        }
 
-      if (!ring.length) {
-        // no more points to check
-        break
-      }
-
-      toCheck.push.apply(toCheck, ring)
-    }
-
-    const point = windowedMatrix.get(toCheck.pop()!)!
-
-    // walls are not visible
-    if (wallMatrix.get(point) !== false) continue
-
-    /*
-      don't allow for gaps between visible tiles
-      at least one neighbor must be visible
-    */
-    gaps: {
-      /*
-        X @ X
-      */
-      if (point.x > player.x) {
-        if (visibleSet.has(point.add(-1, 0).toString())) break gaps
-      } else if (point.x < player.x) {
-        if (visibleSet.has(point.add(1, 0).toString())) break gaps
-      }
-
-      /*
-        X
-        @
-        X
-      */
-      if (point.y > player.y) {
-        if (visibleSet.has(point.add(0, -1).toString())) break gaps
-      } else if (point.y < player.y) {
-        if (visibleSet.has(point.add(0, 1).toString())) break gaps
-      }
-
-      /*
-        X   X
+        /*
+          X
           @
-        X   X
-      */
-      if (point.x > player.x && point.y > player.y) {
-        if (visibleSet.has(point.add(-1, -1).toString())) break gaps
-      } else if (point.x < player.x && point.y < player.y) {
-        if (visibleSet.has(point.add(1, 1).toString())) break gaps
-      } else if (point.x > player.x && point.y < player.y) {
-        if (visibleSet.has(point.add(-1, 1).toString())) break gaps
-      } else if (point.x < player.x && point.y > player.y) {
-        if (visibleSet.has(point.add(1, -1).toString())) break gaps
+          X
+        */
+        if (point.y > player.y) {
+          if (visibleSet.has(point.add(0, -1).toString())) break gaps
+        } else if (point.y < player.y) {
+          if (visibleSet.has(point.add(0, 1).toString())) break gaps
+        }
+
+        /*
+          X   X
+            @
+          X   X
+        */
+        if (point.x > player.x && point.y > player.y) {
+          if (visibleSet.has(point.add(-1, -1).toString())) break gaps
+        } else if (point.x < player.x && point.y < player.y) {
+          if (visibleSet.has(point.add(1, 1).toString())) break gaps
+        } else if (point.x > player.x && point.y < player.y) {
+          if (visibleSet.has(point.add(-1, 1).toString())) break gaps
+        } else if (point.x < player.x && point.y > player.y) {
+          if (visibleSet.has(point.add(1, -1).toString())) break gaps
+        }
+
+        continue
       }
 
-      continue
+      /*
+        a tile must not have a wall segment between it and the player
+      */
+      const tileSeg = t.segment(player, point)
+
+      for (const wallSeg of wallSegments) {
+        if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
+      }
+
+      visibleSet.add(point.toString())
     }
-
-    /*
-      a tile must not have a wall segment between it and the player
-    */
-    const tileSeg = t.segment(player, point)
-
-    for (const wallSeg of wallSegments) {
-      if (t.segmentsIntersecting(tileSeg, wallSeg)) continue points
-    }
-
-    visibleSet.add(point.toString())
   }
 
   return visibleSet
@@ -104,6 +103,7 @@ const Board = () => {
   const GRID_SIZE = 4
 
   const wallMatrix = game.mazeToGrid(game.generateMaze(WALLS_W, WALLS_H), TILE_SIZE)
+  const wallSegments = t.findWallSegments(wallMatrix)
 
   const isWall = s.selector(
     s.reactive(() => wallMatrix),
@@ -132,7 +132,7 @@ const Board = () => {
 
   const isVisible = s.selector(
     s.map(s.join([playerVec, windowed]), ([player, windowed]) =>
-      findVisiblePoints(wallMatrix, windowed, player),
+      findVisiblePoints(wallMatrix, wallSegments, windowed, player),
     ),
     (position: t.Point, set) => set.has(position.toString()),
   )

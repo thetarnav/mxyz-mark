@@ -41,7 +41,7 @@ export function map<T, U>(source: Reactive<T>, fn: (value: T) => U): Reactive<U>
 export function destructure<const T extends readonly unknown[]>(
   source: Reactive<T>,
 ): { [K in keyof T]: Reactive<T[K]> } {
-  return source.value.map(value => new Reactive(() => value)) as any
+  return peak(source).map(value => new Reactive(() => value)) as any
 }
 
 export function join<const T extends readonly Reactive<unknown>[]>(

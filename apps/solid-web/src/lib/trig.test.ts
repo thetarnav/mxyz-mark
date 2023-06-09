@@ -87,16 +87,14 @@ v.describe('segmentsIntersecting', () => {
 })
 
 v.describe('getRing', () => {
-  const matrix = new t.Matrix(10, 10, i => i)
-
   const tests: { params: Parameters<typeof t.getRing>; expected: ReturnType<typeof t.getRing> }[] =
     [
       {
-        params: [matrix, t.point(5, 5), 0],
+        params: [t.point(5, 5), 0],
         expected: [t.point(5, 5)],
       },
       {
-        params: [matrix, t.point(5, 5), 1],
+        params: [t.point(5, 5), 1],
         expected: [
           t.point(4, 4),
           t.point(5, 4),
@@ -109,7 +107,7 @@ v.describe('getRing', () => {
         ],
       },
       {
-        params: [matrix, t.point(5, 5), 2],
+        params: [t.point(5, 5), 2],
         expected: [
           t.point(3, 3),
           t.point(4, 3),
@@ -131,10 +129,6 @@ v.describe('getRing', () => {
           t.point(7, 5),
           t.point(7, 6),
         ],
-      },
-      {
-        params: [matrix, t.point(0, 0), 1],
-        expected: [t.point(0, 1), t.point(1, 1), t.point(1, 0)],
       },
     ]
 

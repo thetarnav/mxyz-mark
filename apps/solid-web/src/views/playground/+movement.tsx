@@ -111,18 +111,11 @@ export default function Movement(): JSX.Element {
               let radius = 1
               points: for (const _ of matrix) {
                 if (!toCheck.length) {
-                  const ring = t.getRing(matrix, player, radius++)
-
-                  if (!ring.length) {
-                    // no more points to check
-                    break
-                  }
-
                   /*
                     check points closer to the player first
                     so that we can detect gaps between visible tiles
                   */
-                  toCheck.push.apply(toCheck, ring)
+                  toCheck.push.apply(toCheck, t.getRing(player, radius++))
                 }
 
                 const point = toCheck.pop()!

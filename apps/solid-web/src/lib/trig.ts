@@ -275,33 +275,25 @@ export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
 
 /**
  * Returns the points in the matrix that are within the given radius of the center point.
- *
- * Ignores points that are out of bounds.
  */
-export const getRing = (matrix: Matrix<unknown>, center: Point, radius: number) => {
-  if (radius <= 0) return [new Point(center.x, center.y)]
+export const getRing = (center: Point, radius: number) => {
+  if (radius < 0) return []
+  if (radius === 0) return [center]
 
   const x1 = center.x - radius,
     x2 = center.x + radius,
     y1 = center.y - radius,
     y2 = center.y + radius,
-    points: Point[] = [],
-    startX = Math.max(x1, 0),
-    endX = Math.min(x2, matrix.width - 1),
-    startY = Math.max(y1 + 1, 0),
-    endY = Math.min(y2 - 1, matrix.height - 1)
+    points: Point[] = Array(8 * radius)
 
-  for (let x = startX; x <= endX; x++) {
-    const bottom = new Point(x, y1)
-    matrix.inBounds(bottom) && points.push(bottom)
-    const top = new Point(x, y2)
-    matrix.inBounds(top) && points.push(top)
+  let i = 0
+  for (let x = x1; x <= x2; x++) {
+    points[i++] = new Point(x, y1)
+    points[i++] = new Point(x, y2)
   }
-  for (let y = startY; y <= endY; y++) {
-    const left = new Point(x1, y)
-    matrix.inBounds(left) && points.push(left)
-    const right = new Point(x2, y)
-    matrix.inBounds(right) && points.push(right)
+  for (let y = y1 + 1; y <= y2 - 1; y++) {
+    points[i++] = new Point(x1, y)
+    points[i++] = new Point(x2, y)
   }
 
   return points
