@@ -21,17 +21,15 @@ export function findVisiblePoints(
         .concat(player)
         .map(p => p.toString()),
     ),
-    rw = (windowedMatrix.width - 1) / 2,
-    rh = (windowedMatrix.height - 1) / 2,
-    windowedPlayerVec = t.point(rw, rh),
-    maxRadius = Math.max(rw, rh) - 1
+    radius = (windowedMatrix.width - 1) / 2,
+    windowedPlayerVec = t.point(radius, radius)
 
   /*
     check points closer to the player first
     so that we can detect gaps between visible tiles
   */
-  for (let radius = 2; radius < maxRadius; radius++) {
-    ring: for (const wPoint of t.getRing(windowedPlayerVec, radius)) {
+  for (let r = 2; r <= radius; r++) {
+    ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
       const point = windowedMatrix.get(wPoint)
 
       // walls are not visible
@@ -80,11 +78,16 @@ export function findVisiblePoints(
         continue
       }
 
+      const tileSeg = t.segment(player, point)
+
+      /*
+        a tile must be within the player's round field of view
+      */
+      if (t.getSegmentLength(tileSeg) > radius + 1) continue
+
       /*
         a tile must not have a wall segment between it and the player
       */
-      const tileSeg = t.segment(player, point)
-
       for (const wallSeg of wallSegments) {
         if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
       }
@@ -103,6 +106,7 @@ const Board = () => {
   const GRID_SIZE = 4
 
   const wallMatrix = game.mazeToGrid(game.generateMaze(WALLS_W, WALLS_H), TILE_SIZE)
+  // const wallMatrix = new t.Matrix(WALLS_W * GRID_SIZE - 1, WALLS_H * GRID_SIZE - 1, () => false)
   const wallSegments = t.findWallSegments(wallMatrix)
 
   const isWall = s.selector(

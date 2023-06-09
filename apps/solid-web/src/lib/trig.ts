@@ -273,6 +273,19 @@ export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
   )
 }
 
+export function getSegmentLength(seg: Segment): number {
+  /*
+    Pythagorean theorem
+    a^2 + b^2 = c^2
+    a = x2 - x1
+    b = y2 - y1
+    c = length
+    length^2 = (x2 - x1)^2 + (y2 - y1)^2
+    length = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+  */
+  return Math.sqrt((seg.x2 - seg.x1) ** 2 + (seg.y2 - seg.y1) ** 2)
+}
+
 /**
  * Returns the points in the matrix that are within the given radius of the center point.
  */
