@@ -23,9 +23,7 @@ export default function Maze(): JSX.Element {
     t.vector(W - 2, H - 2),
   ]
 
-  const maze = s.memo(
-    s.map(trigger, () => game.generateMaze(W, H, ignoredVectors, t.vector(W / 2, H / 2))),
-  )
+  const maze = s.memo(s.map(trigger, () => game.generateMaze(W, H, ignoredVectors)))
 
   const walls = s.memo(
     s.map(maze, maze => {

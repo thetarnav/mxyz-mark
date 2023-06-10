@@ -7,7 +7,6 @@ export function generateMaze(
   width: number,
   height: number,
   ignoredVectors: readonly t.Vector[] = [],
-  startingPoint: t.Vector = t.vector(0, 0),
 ) {
   const walls = new t.Matrix(width, height, () => ({
     [t.Direction.Right]: true,
@@ -19,12 +18,18 @@ export function generateMaze(
   */
   const ignoredVectorsStr = ignoredVectors.map(v => v.toString()),
     ignoredVectorsSet = new Set(ignoredVectorsStr),
-    startingPointStr = startingPoint.toString(),
-    stack = ignoredVectorsStr.concat(startingPointStr),
+    stack = ignoredVectorsStr,
     directions: t.Direction[] = []
 
-  if (ignoredVectorsSet.has(startingPointStr)) {
-    throw new Error('starting point cannot be ignored')
+  /*
+    pick a random vector to start from
+    that is not in the ignored vectors
+  */
+  for (const i of walls) {
+    const vec = walls.vec(i)
+    if (ignoredVectorsSet.has(vec.toString())) continue
+    stack.push(vec.toString())
+    break
   }
 
   /*

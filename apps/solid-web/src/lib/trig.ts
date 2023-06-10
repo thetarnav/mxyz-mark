@@ -212,18 +212,18 @@ export class Matrix<T> {
   }
 
   set(point: Pointable | number, value: T) {
-    if (typeof point === 'number') point = this.point(point)
+    if (typeof point === 'number') point = this.vec(point)
     if (!this.inBounds(point)) return
     this.#values[point.x][point.y] = value
   }
   get(point: Pointable | number): T | undefined {
-    if (typeof point === 'number') point = this.point(point)
+    if (typeof point === 'number') point = this.vec(point)
     return this.inBounds(point) ? this.#values[point.x][point.y] : undefined
   }
   i(point: Pointable) {
     return Matrix.i(this.width, point)
   }
-  point(i: number) {
+  vec(i: number) {
     return Matrix.vec(this.width, i)
   }
   go(from: Vector | number, by: Vector | number | Direction) {

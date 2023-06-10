@@ -31,7 +31,7 @@ export default function Movement(): JSX.Element {
 
   const position = s.signal(initialPosition)
   const isPlayer = s.selector(position)
-  const playerVec = s.memo(s.map(position, position => matrix.point(position)))
+  const playerVec = s.memo(s.map(position, position => matrix.vec(position)))
 
   const heldDirections = game.createDirectionMovement(direction => {
     s.update(position, p => {
@@ -103,7 +103,7 @@ export default function Movement(): JSX.Element {
         {untrack(() => {
           const visiblePoints = s.memo(
             s.map(position, playerIndex => {
-              const player = matrix.point(playerIndex)
+              const player = matrix.vec(playerIndex)
               const visibleSet = new Set<number>([playerIndex])
               // return visibleSet
 

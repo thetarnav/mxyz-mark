@@ -13,7 +13,7 @@ export const MatrixGrid = <T,>(props: {
     // display items in reverse y order
     // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
     for (const i of matrix) {
-      const point = matrix.point(i)
+      const point = matrix.vec(i)
       const reorderedI = (height - 1 - point.y) * width + point.x
       arr.push({ index: reorderedI, item: matrix.get(reorderedI)! })
     }

@@ -15,6 +15,7 @@ const SHRINE_SIZE_TILES = 4
 const SHRINE_RADIUS_TILES = 2
 const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 const WINDOW_SIZE = 15
+const CENTER = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
 
 const Game = () => {
   // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
@@ -33,8 +34,8 @@ const Game = () => {
     /*
       place player in center of a random corner quadrant
     */
-    getCornerShrineCenter(startingQuadrand),
-    // t.vector(190, 190),
+    // getCornerShrineCenter(startingQuadrand),
+    CENTER,
     { equals: (a, b) => a.equals(b) },
   )
   const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
@@ -56,12 +57,7 @@ const Game = () => {
   }
 
   const wallMatrix = game.mazeToGrid(
-    game.generateMaze(
-      N_TILES,
-      N_TILES,
-      ignoredShrineTiles,
-      t.vector(Math.floor(N_TILES / 2), Math.floor(N_TILES / 2)),
-    ),
+    game.generateMaze(N_TILES, N_TILES, ignoredShrineTiles),
     TILE_SIZE,
   )
 
