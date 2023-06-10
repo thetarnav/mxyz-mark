@@ -32,7 +32,7 @@ const Game = () => {
   const playerVec = s.signal(
     /*
       place player in center of a random corner quadrant
-      */
+    */
     getCornerShrineCenter(startingQuadrand),
     // t.vector(190, 190),
     { equals: (a, b) => a.equals(b) },
@@ -43,10 +43,10 @@ const Game = () => {
   const finishVec = getCornerShrineCenter(finishQuadrand)
 
   /*
-    ignore maze generation is the 5x5 tiles at each corner
+    ignore maze generation is the shrine tiles at each corner
   */
   const ignoredShrineTiles: t.Vector[] = []
-  for (let q = 0 as t.Quadrand; q < 4; q++) {
+  for (const q of t.QUADRANTS) {
     const originTile = getCornerShrineOriginTile(q)
     for (let x = 0; x < SHRINE_SIZE_TILES; x++) {
       for (let y = 0; y < SHRINE_SIZE_TILES; y++) {
@@ -65,7 +65,7 @@ const Game = () => {
     TILE_SIZE,
   )
 
-  for (let q = 0 as t.Quadrand; q < 4; q++) {
+  for (const q of t.QUADRANTS) {
     /*
       Clear walls inside the corner shrines
     */
@@ -81,18 +81,17 @@ const Game = () => {
     }
 
     /*
-      Make H and V shrine exits
+      Make corner shrine exits (one on each maze-facing edge)
     */
-    const wallX = (1 - qVec.x) * SHRINE_SIZE - 1,
-      wallY = (1 - qVec.y) * SHRINE_SIZE - 1,
+    const wall = qVec.map(xy => (1 - xy) * SHRINE_SIZE - 1),
       exitTileX = t.randomInt(SHRINE_SIZE_TILES - 1),
       exitTileY = t.randomInt(SHRINE_SIZE_TILES - 1)
 
     for (let x = 0; x < TILE_SIZE; x++) {
-      wallMatrix.set(corner.add(x + exitTileX * GRID_SIZE, wallY), false)
+      wallMatrix.set(corner.add(x + exitTileX * GRID_SIZE, wall.y), false)
     }
     for (let y = 0; y < TILE_SIZE; y++) {
-      wallMatrix.set(corner.add(wallX, y + exitTileY * GRID_SIZE), false)
+      wallMatrix.set(corner.add(wall.x, y + exitTileY * GRID_SIZE), false)
     }
   }
 

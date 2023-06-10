@@ -116,7 +116,8 @@ export const vectorFromStr = (str: VecString) => {
 
 export const ZERO_VEC = new Vector(0, 0)
 
-export type Quadrand = 0 | 1 | 2 | 3
+export const QUADRANTS = [0, 1, 2, 3] as const
+export type Quadrand = (typeof QUADRANTS)[number]
 
 export const QUADRAND_TO_VEC: Record<Quadrand, Vector> = {
   0: new Vector(0, 0), // bottom left
