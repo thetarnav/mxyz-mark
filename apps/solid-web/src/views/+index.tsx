@@ -7,13 +7,102 @@ import * as s from 'src/lib/signal'
 import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trig'
 
-const Game = () => {
-  const WALLS_W = 48
-  const WALLS_H = 48
-  const TILE_SIZE = 3
-  const GRID_SIZE = 4
+type Quadrand = 0 | 1 | 2 | 3
 
-  const wallMatrix = game.mazeToGrid(game.generateMaze(WALLS_W, WALLS_H), TILE_SIZE)
+const QUADRAND_TO_VEC: Record<Quadrand, t.Vector> = {
+  0: t.vector(0, 0),
+  1: t.vector(1, 0),
+  2: t.vector(0, 1),
+  3: t.vector(1, 1),
+}
+
+const Game = () => {
+  const N_TILES = 48
+  const TILE_SIZE = 3
+  const GRID_SIZE = 4 // TILE_SIZE + wall
+  const SHRINE_SIZE_TILES = 4
+  const SHRINE_RADIUS_TILES = 2
+  const SHRINE_LENGTH = SHRINE_SIZE_TILES * GRID_SIZE
+
+  const startingQuadrand = t.randomInt(4) as Quadrand
+  const finishQuadrand = ((startingQuadrand + 2) % 4) as Quadrand // opposite
+
+  // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
+
+  const getCornerShrineOriginTile = (quadrand: Quadrand) => {
+    return QUADRAND_TO_VEC[quadrand].multiply(N_TILES - SHRINE_SIZE_TILES)
+  }
+
+  const getCornerShrineCenter = (quadrand: Quadrand) =>
+    getCornerShrineOriginTile(quadrand)
+      .multiply(GRID_SIZE)
+      .add(t.vector(SHRINE_RADIUS_TILES, SHRINE_RADIUS_TILES).multiply(GRID_SIZE))
+      .add(-1, -1)
+
+  const playerVec = s.signal(
+    /*
+      place player in center of a random corner quadrant
+    */
+    getCornerShrineCenter(startingQuadrand),
+    // t.vector(190, 190),
+    { equals: (a, b) => a.equals(b) },
+  )
+  const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
+
+  /*
+    ignore maze generation is the 5x5 tiles at each corner
+  */
+  const ignoredShrineTiles: t.Vector[] = []
+  for (let q = 0 as Quadrand; q < 4; q++) {
+    const originTile = getCornerShrineOriginTile(q)
+    for (let x = 0; x < SHRINE_SIZE_TILES; x++) {
+      for (let y = 0; y < SHRINE_SIZE_TILES; y++) {
+        ignoredShrineTiles.push(originTile.add(x, y))
+      }
+    }
+  }
+
+  const wallMatrix = game.mazeToGrid(
+    game.generateMaze(
+      N_TILES,
+      N_TILES,
+      ignoredShrineTiles,
+      t.vector(Math.floor(N_TILES / 2), Math.floor(N_TILES / 2)),
+    ),
+    TILE_SIZE,
+  )
+
+  for (let q = 0 as Quadrand; q < 4; q++) {
+    /*
+      Clear walls inside the corner shrines
+    */
+    const qVec = QUADRAND_TO_VEC[q]
+    const corner = qVec
+      .multiply(t.vector(wallMatrix.width - 1, wallMatrix.height - 1))
+      .subtract(qVec.multiply(SHRINE_LENGTH - 2))
+
+    for (let x = 0; x < SHRINE_LENGTH - 1; x++) {
+      for (let y = 0; y < SHRINE_LENGTH - 1; y++) {
+        wallMatrix.set(corner.add(x, y), false)
+      }
+    }
+
+    /*
+      Make H and V shrine exits
+    */
+    const wallX = (1 - qVec.x) * SHRINE_LENGTH - 1,
+      wallY = (1 - qVec.y) * SHRINE_LENGTH - 1,
+      exitTileX = t.randomInt(SHRINE_SIZE_TILES - 1),
+      exitTileY = t.randomInt(SHRINE_SIZE_TILES - 1)
+
+    for (let x = 0; x < TILE_SIZE; x++) {
+      wallMatrix.set(corner.add(x + exitTileX * GRID_SIZE, wallY), false)
+    }
+    for (let y = 0; y < TILE_SIZE; y++) {
+      wallMatrix.set(corner.add(wallX, y + exitTileY * GRID_SIZE), false)
+    }
+  }
+
   // const wallMatrix = new t.Matrix(WALLS_W * GRID_SIZE - 1, WALLS_H * GRID_SIZE - 1, () => false)
   const wallSegments = t.findWallSegments(wallMatrix)
 
@@ -21,22 +110,6 @@ const Game = () => {
     s.reactive(() => wallMatrix),
     (position: t.Vector, matrix) => matrix.get(position) !== false,
   )
-
-  const playerVec = s.signal(
-    /*
-      place player in center of a random tile
-    */
-    t.vector(
-      t.randomInt(WALLS_W) * GRID_SIZE + (TILE_SIZE - 1) / 2,
-      // wallMatrix.width - 1,
-      // 0,
-      t.randomInt(WALLS_H) * GRID_SIZE + (TILE_SIZE - 1) / 2,
-      // wallMatrix.height - 1,
-      // 0,
-    ),
-    { equals: (a, b) => a.equals(b) },
-  )
-  const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
 
   game.createDirectionMovement(direction => {
     s.update(playerVec, p => {

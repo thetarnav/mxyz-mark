@@ -63,6 +63,16 @@ export class Vector implements Pointable {
     const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX
     return new Vector(this.x + dx, this.y + dy)
   }
+  subtract(vec: Vector): Vector
+  subtract(x: number, y: number): Vector
+  subtract(vecOrX: Vector | number, y?: number): Vector {
+    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX
+    return new Vector(this.x - dx, this.y - dy)
+  }
+  multiply(vec: Vector | number): Vector {
+    const [dx, dy] = typeof vec === 'number' ? [vec, vec] : vec
+    return new Vector(this.x * dx, this.y * dy)
+  }
   equals(vec: Pointable) {
     return this.x === vec.x && this.y === vec.y
   }
