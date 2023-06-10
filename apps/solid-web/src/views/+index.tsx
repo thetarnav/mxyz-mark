@@ -34,8 +34,8 @@ const Game = () => {
     /*
       place player in center of a random corner quadrant
     */
-    // getCornerShrineCenter(startingQuadrand),
-    CENTER,
+    getCornerShrineCenter(startingQuadrand),
+    // CENTER,
     { equals: (a, b) => a.equals(b) },
   )
   const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
@@ -44,16 +44,23 @@ const Game = () => {
   const finishVec = getCornerShrineCenter(finishQuadrand)
 
   /*
-    ignore maze generation is the shrine tiles at each corner
+    ignore maze generation in the shrine tiles at each corner
+    and in the center shrine
   */
   const ignoredShrineTiles: t.Vector[] = []
   for (const q of t.QUADRANTS) {
     const originTile = getCornerShrineOriginTile(q)
-    for (let x = 0; x < SHRINE_SIZE_TILES; x++) {
-      for (let y = 0; y < SHRINE_SIZE_TILES; y++) {
-        ignoredShrineTiles.push(originTile.add(x, y))
-      }
+    for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE_TILES - 1)).points()) {
+      ignoredShrineTiles.push(originTile.add(vec))
     }
+  }
+  for (const vec of t
+    .segment(
+      t.vector(N_TILES / 2 - SHRINE_RADIUS_TILES),
+      t.vector(N_TILES / 2 + SHRINE_RADIUS_TILES),
+    )
+    .points()) {
+    ignoredShrineTiles.push(vec)
   }
 
   const wallMatrix = game.mazeToGrid(
@@ -61,33 +68,52 @@ const Game = () => {
     TILE_SIZE,
   )
 
-  for (const q of t.QUADRANTS) {
-    /*
-      Clear walls inside the corner shrines
-    */
-    const qVec = t.QUADRAND_TO_VEC[q]
-    const corner = qVec
-      .multiply(t.vector(wallMatrix.width - 1, wallMatrix.height - 1))
-      .subtract(qVec.multiply(SHRINE_SIZE - 2))
+  {
+    const getRandomExit = () => t.randomInt(SHRINE_SIZE_TILES - 1) * GRID_SIZE
 
-    for (let x = 0; x < SHRINE_SIZE - 1; x++) {
-      for (let y = 0; y < SHRINE_SIZE - 1; y++) {
-        wallMatrix.set(corner.add(x, y), false)
+    for (const q of t.QUADRANTS) {
+      /*
+        Clear walls inside the corner shrines
+      */
+      const qVec = t.QUADRAND_TO_VEC[q]
+      const corner = qVec
+        .multiply(t.vector(wallMatrix.width - 1, wallMatrix.height - 1))
+        .subtract(qVec.multiply(SHRINE_SIZE - 2))
+
+      for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE - 2)).points()) {
+        wallMatrix.set(corner.add(vec), false)
+      }
+
+      /*
+        Make corner shrine exits (one on each maze-facing edge)
+      */
+      const wall = qVec.map(xy => (1 - xy) * SHRINE_SIZE - 1),
+        exit = t.vector(getRandomExit(), getRandomExit())
+
+      for (let x = 0; x < TILE_SIZE; x++) {
+        wallMatrix.set(corner.add(x + exit.x, wall.y), false)
+      }
+      for (let y = 0; y < TILE_SIZE; y++) {
+        wallMatrix.set(corner.add(wall.x, y + exit.y), false)
       }
     }
 
     /*
-      Make corner shrine exits (one on each maze-facing edge)
+      Clear walls inside the center shrine
     */
-    const wall = qVec.map(xy => (1 - xy) * SHRINE_SIZE - 1),
-      exitTileX = t.randomInt(SHRINE_SIZE_TILES - 1),
-      exitTileY = t.randomInt(SHRINE_SIZE_TILES - 1)
-
+    const bottomLeft = CENTER.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
+    const topRight = CENTER.add(SHRINE_RADIUS_TILES * GRID_SIZE)
+    for (const vec of t.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
+      wallMatrix.set(vec, false)
+    }
+    const exitTiles = Array.from({ length: 4 }, getRandomExit)
     for (let x = 0; x < TILE_SIZE; x++) {
-      wallMatrix.set(corner.add(x + exitTileX * GRID_SIZE, wall.y), false)
+      wallMatrix.set({ x: bottomLeft.x + exitTiles[0] + x + 1, y: bottomLeft.y }, false)
+      wallMatrix.set({ x: bottomLeft.x + exitTiles[1] + x + 1, y: topRight.y }, false)
     }
     for (let y = 0; y < TILE_SIZE; y++) {
-      wallMatrix.set(corner.add(wall.x, y + exitTileY * GRID_SIZE), false)
+      wallMatrix.set({ x: bottomLeft.x, y: bottomLeft.y + exitTiles[2] + y + 1 }, false)
+      wallMatrix.set({ x: topRight.x, y: bottomLeft.y + exitTiles[3] + y + 1 }, false)
     }
   }
 

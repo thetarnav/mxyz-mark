@@ -60,7 +60,12 @@ export type Pointable = { get x(): number; get y(): number }
 export type VecString = `(${number}, ${number})`
 
 export class Vector implements Pointable {
-  constructor(public x: number, public y: number) {}
+  x: number
+  y: number
+  constructor(x: number, y?: number) {
+    this.x = x
+    this.y = y ?? x
+  }
   get 0() {
     return this.x
   }
@@ -77,15 +82,15 @@ export class Vector implements Pointable {
     return this.y * width + this.x
   }
   add(vec: Vector): Vector
-  add(x: number, y: number): Vector
+  add(x: number, y?: number): Vector
   add(vecOrX: Vector | number, y?: number): Vector {
-    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX
+    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y ?? vecOrX] : vecOrX
     return new Vector(this.x + dx, this.y + dy)
   }
   subtract(vec: Vector): Vector
-  subtract(x: number, y: number): Vector
+  subtract(x: number, y?: number): Vector
   subtract(vecOrX: Vector | number, y?: number): Vector {
-    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y!] : vecOrX
+    const [dx, dy] = typeof vecOrX === 'number' ? [vecOrX, y ?? vecOrX] : vecOrX
     return new Vector(this.x - dx, this.y - dy)
   }
   multiply(vec: Vector | number): Vector {
@@ -107,7 +112,7 @@ export class Vector implements Pointable {
   }
 }
 
-export const vector = (x: number, y: number) => new Vector(x, y)
+export const vector = (x: number, y?: number) => new Vector(x, y)
 export const vectorFrom = (vec: Pointable) => new Vector(vec.x, vec.y)
 export const vectorFromStr = (str: VecString) => {
   const [x, y] = str.slice(1, -1).split(', ').map(Number)
@@ -144,6 +149,13 @@ export class Segment {
   *[Symbol.iterator]() {
     yield this.start
     yield this.end
+  }
+  *points() {
+    for (let x = this.x1; x <= this.x2; x++) {
+      for (let y = this.y1; y <= this.y2; y++) {
+        yield new Vector(x, y)
+      }
+    }
   }
 
   toJSON() {
@@ -211,7 +223,7 @@ export class Matrix<T> {
     )
   }
 
-  set(point: Pointable | number, value: T) {
+  set(point: Pointable | number, value: T): void {
     if (typeof point === 'number') point = this.vec(point)
     if (!this.inBounds(point)) return
     this.#values[point.x][point.y] = value
