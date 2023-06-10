@@ -15,6 +15,16 @@ export class Reactive<T> {
   constructor(get: solid.Accessor<T>) {
     this.get = get
   }
+
+  toString() {
+    return `Reactive(${this.value})`
+  }
+  toJSON() {
+    return this.value
+  }
+  valueOf() {
+    return this.value
+  }
 }
 
 export type ReactiveValue<T> = T extends Reactive<infer U> ? U : never

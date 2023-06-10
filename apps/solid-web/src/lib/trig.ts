@@ -2,6 +2,33 @@ export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFrom = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min)) + min
 
+export const mapRange = (
+  value: number,
+  in_min: number,
+  in_max: number,
+  out_min: number,
+  out_max: number,
+) => ((value - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+
+export const between = (a: number, b: number, c: number): boolean => {
+  if (a > c) [a, c] = [c, a]
+  return a - Number.EPSILON <= b && b <= c + Number.EPSILON
+}
+
+export const rangesIntersecting = (a1: number, b1: number, a2: number, b2: number) => {
+  if (a1 > b1) [a1, b1] = [b1, a1]
+  if (a2 > b2) [a2, b2] = [b2, a2]
+  return a1 <= b2 && a2 <= b1
+}
+
+export function* randomIterate<T>(arr: readonly T[]) {
+  const copy = arr.slice()
+  while (copy.length) {
+    const index = randomInt(copy.length)
+    yield copy.splice(index, 1)[0]
+  }
+}
+
 export const enum Direction {
   Right = 'RIGHT',
   Left = 'LEFT',
@@ -28,14 +55,6 @@ export const OPPOSITE_DIRECTION = {
   [Direction.Down]: Direction.Up,
   [Direction.Up]: Direction.Down,
 } as const
-
-export function* randomIterate<T>(arr: readonly T[]) {
-  const copy = arr.slice()
-  while (copy.length) {
-    const index = randomInt(copy.length)
-    yield copy.splice(index, 1)[0]
-  }
-}
 
 export type Pointable = { get x(): number; get y(): number }
 export type VecString = `(${number}, ${number})`
@@ -73,6 +92,9 @@ export class Vector implements Pointable {
     const [dx, dy] = typeof vec === 'number' ? [vec, vec] : vec
     return new Vector(this.x * dx, this.y * dy)
   }
+  map(fn: (xy: number) => number): Vector {
+    return new Vector(fn(this.x), fn(this.y))
+  }
   equals(vec: Pointable) {
     return this.x === vec.x && this.y === vec.y
   }
@@ -93,6 +115,15 @@ export const vectorFromStr = (str: VecString) => {
 }
 
 export const ZERO_VEC = new Vector(0, 0)
+
+export type Quadrand = 0 | 1 | 2 | 3
+
+export const QUADRAND_TO_VEC: Record<Quadrand, Vector> = {
+  0: new Vector(0, 0), // bottom left
+  1: new Vector(1, 0), // bottom right
+  2: new Vector(1, 1), // top right
+  3: new Vector(0, 1), // top left
+}
 
 export class Segment {
   constructor(public start: Vector, public end: Vector) {}
@@ -241,17 +272,6 @@ export function windowedMatrix(size: number, center: Vector): Matrix<Vector> {
     dVec = center.add(-dToCorner, -dToCorner)
 
   return new Matrix(size, size, (x, y) => new Vector(x, y).add(dVec))
-}
-
-export const between = (a: number, b: number, c: number): boolean => {
-  if (a > c) [a, c] = [c, a]
-  return a - Number.EPSILON <= b && b <= c + Number.EPSILON
-}
-
-export const rangesIntersecting = (a1: number, b1: number, a2: number, b2: number) => {
-  if (a1 > b1) [a1, b1] = [b1, a1]
-  if (a2 > b2) [a2, b2] = [b2, a2]
-  return a1 <= b2 && a2 <= b1
 }
 
 // general form: ax + by + c = 0
