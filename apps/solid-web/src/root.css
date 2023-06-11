@@ -1,12 +1,12 @@
 body {
-  /* background-color: #111; */
-  --at-apply: text-white bg-black;
+    /* background-color: #111; */
+    --at-apply: text-white bg-black;
 }
 
 button {
-  --at-apply: text-white bg-transparent cursor-pointer;
-  --at-apply: border-white border-1 border-solid rounded-md;
-  --at-apply: px-2 py-1;
-  --at-apply: 'hover:border-primary';
-  --at-apply: 'active:bg-primary active:focus:bg-primary active:text-black active:border-primary';
+    --at-apply: text-white bg-transparent cursor-pointer;
+    --at-apply: border-white border-1 border-solid rounded-md;
+    --at-apply: px-2 py-1;
+    --at-apply: 'hover:border-primary';
+    --at-apply: 'active:bg-primary active:focus:bg-primary active:text-black active:border-primary';
 }

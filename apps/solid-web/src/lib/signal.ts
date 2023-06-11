@@ -7,98 +7,98 @@ Experiment with a reactive signal API for Solid.
 import * as solid from 'solid-js'
 
 export class Reactive<T> {
-  get: solid.Accessor<T>
-  get value() {
-    return this.get()
-  }
+    get: solid.Accessor<T>
+    get value() {
+        return this.get()
+    }
 
-  constructor(get: solid.Accessor<T>) {
-    this.get = get
-  }
+    constructor(get: solid.Accessor<T>) {
+        this.get = get
+    }
 
-  toString() {
-    return `Reactive(${this.value})`
-  }
-  toJSON() {
-    return this.value
-  }
-  valueOf() {
-    return this.value
-  }
+    toString() {
+        return `Reactive(${this.value})`
+    }
+    toJSON() {
+        return this.value
+    }
+    valueOf() {
+        return this.value
+    }
 }
 
 export type ReactiveValue<T> = T extends Reactive<infer U> ? U : never
 
 export function reactive<T>(get: solid.Accessor<T>): Reactive<T> {
-  return new Reactive(get)
+    return new Reactive(get)
 }
 
 export function peak<T>(reactive: Reactive<T>): T {
-  return solid.untrack(() => reactive.value)
+    return solid.untrack(() => reactive.value)
 }
 
 export function memo<T>(source: Reactive<T>): Reactive<T> {
-  return new Reactive(solid.createMemo(() => source.value))
+    return new Reactive(solid.createMemo(() => source.value))
 }
 
 export function map<T, U>(source: Reactive<T>, fn: (value: T) => U): Reactive<U> {
-  return new Reactive(() => {
-    const value = source.value
-    return solid.untrack(() => fn(value))
-  })
+    return new Reactive(() => {
+        const value = source.value
+        return solid.untrack(() => fn(value))
+    })
 }
 
 export function destructure<const T extends readonly unknown[]>(
-  source: Reactive<T>,
+    source: Reactive<T>,
 ): { [K in keyof T]: Reactive<T[K]> } {
-  return peak(source).map(value => new Reactive(() => value)) as any
+    return peak(source).map(value => new Reactive(() => value)) as any
 }
 
 export function join<const T extends readonly Reactive<unknown>[]>(
-  sources: T,
+    sources: T,
 ): Reactive<{ [K in keyof T]: ReactiveValue<T[K]> }> {
-  return new Reactive(() => sources.map(source => source.value)) as any
+    return new Reactive(() => sources.map(source => source.value)) as any
 }
 
 export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
-  solid.createEffect(() => {
-    const value = source.value
-    solid.untrack(() => fn(value))
-  })
+    solid.createEffect(() => {
+        const value = source.value
+        solid.untrack(() => fn(value))
+    })
 }
 
 export function selector<T, U = T>(
-  reactive: Reactive<T>,
-  equals?: (key: U, source: T) => boolean,
+    reactive: Reactive<T>,
+    equals?: (key: U, source: T) => boolean,
 ): (key: U) => boolean {
-  return solid.createSelector(() => reactive.value, equals)
+    return solid.createSelector(() => reactive.value, equals)
 }
 
 export class Signal<T> extends Reactive<T> {
-  setter: solid.Setter<T>
+    setter: solid.Setter<T>
 
-  constructor(initialValue: T, options?: solid.SignalOptions<T>) {
-    const [get, setter] = solid.createSignal(initialValue, options)
-    super(get)
-    this.setter = setter
-  }
+    constructor(initialValue: T, options?: solid.SignalOptions<T>) {
+        const [get, setter] = solid.createSignal(initialValue, options)
+        super(get)
+        this.setter = setter
+    }
 }
 
 export function signal<T>(initialValue: T, options?: solid.SignalOptions<T>): Signal<T> {
-  return new Signal(initialValue, options)
+    return new Signal(initialValue, options)
 }
 
 export function set<T>(signal: Signal<T>, value: T): void {
-  signal.setter(() => value)
+    signal.setter(() => value)
 }
 
 export function update<T>(signal: Signal<T>, fn: (value: T) => T): void {
-  signal.setter(fn)
+    signal.setter(fn)
 }
 
 /**
  * For read-only access to a signal.
  */
 export function readonly<T>(signal: Signal<T>): Reactive<T> {
-  return new Reactive(() => signal.value)
+    return new Reactive(() => signal.value)
 }

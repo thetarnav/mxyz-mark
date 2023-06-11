@@ -1,9 +1,9 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "jsxImportSource": "solid-js",
-    "jsx": "preserve",
-    "types": ["@total-typescript/ts-reset", "solid-start/env", "vite/client"],
-    "baseUrl": "./"
-  }
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "jsxImportSource": "solid-js",
+        "jsx": "preserve",
+        "types": ["@total-typescript/ts-reset", "solid-start/env", "vite/client"],
+        "baseUrl": "./"
+    }
 }

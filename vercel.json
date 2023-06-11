@@ -1,10 +1,10 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "pnpm i",
-  "buildCommand": "pnpm -dir apps/solid-web run build",
-  "outputDirectory": "apps/solid-web/dist/public",
-  "public": true,
-  "github": {
-    "silent": true
-  }
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "installCommand": "pnpm i",
+    "buildCommand": "pnpm -dir apps/solid-web run build",
+    "outputDirectory": "apps/solid-web/dist/public",
+    "public": true,
+    "github": {
+        "silent": true
+    }
 }
