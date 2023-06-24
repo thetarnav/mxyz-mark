@@ -136,11 +136,7 @@ const Game = () => {
         const prevPlayerVec = playerVec.value
         const newPos = wallMatrix.go(prevPlayerVec, direction)
 
-        if (!newPos || isWall(newPos)) return
-
-        const newStr = newPos.toString()
-
-        if (floodSet.value.deep.has(newStr)) return
+        if (!newPos || isWall(newPos) || floodSet.value.deep.has(newPos.toString())) return
 
         s.set(playerVec, newPos)
 
@@ -148,16 +144,24 @@ const Game = () => {
             expand flood set
         */
         s.mutate(floodSet, set => {
-            for (const pos of t.randomIterate([...set.shallow])) {
-                for (const neighbor of t.eachPointDirection(t.vectorFromStr(pos), wallMatrix)) {
-                    const newStr = neighbor.toString()
-                    if (!isWall(neighbor) && !set.shallow.has(newStr) && !set.deep.has(newStr)) {
-                        set.shallow.add(newStr)
-                        return
+            const expand_times = Math.ceil((set.deep.size + 1) / ((N_TILES * N_TILES) / 2))
+
+            for (let i = 0; i < expand_times; i++) {
+                for (const pos of t.randomIterate([...set.shallow])) {
+                    for (const neighbor of t.eachPointDirection(t.vectorFromStr(pos), wallMatrix)) {
+                        const newStr = neighbor.toString()
+                        if (
+                            !isWall(neighbor) &&
+                            !set.shallow.has(newStr) &&
+                            !set.deep.has(newStr)
+                        ) {
+                            set.shallow.add(newStr)
+                            return
+                        }
                     }
+                    set.shallow.delete(pos)
+                    set.deep.add(pos)
                 }
-                set.shallow.delete(pos)
-                set.deep.add(pos)
             }
         })
     })
