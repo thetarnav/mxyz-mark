@@ -206,8 +206,8 @@ export function findVisiblePoints(
     player: t.Vector,
 ): Set<t.VecString> {
     /*
-    player and all wall-less tiles around him are visible
-  */
+        player and all wall-less tiles around him are visible
+    */
     const visibleSet = new Set(
             t
                 .getRing(player, 1)
@@ -219,76 +219,76 @@ export function findVisiblePoints(
         windowedPlayerVec = t.vector(radius, radius)
 
     /*
-    check points closer to the player first
-    so that we can detect gaps between visible tiles
-  */
+        check points closer to the player first
+        so that we can detect gaps between visible tiles
+    */
     for (let r = 2; r <= radius; r++) {
         ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
-            const point = windowedMatrix.get(wPoint)
+            const p = windowedMatrix.get(wPoint)
 
             /*
-       walls are not visible
-      */
-            if (!point || wallMatrix.get(point) !== false) continue
+                walls are not visible
+            */
+            if (!p || wallMatrix.get(p) !== false) continue
 
             /*
-        don't allow for gaps between visible tiles
-        at least one neighbor must be visible
-      */
+                don't allow for gaps between visible tiles
+                at least one neighbor must be visible
+            */
             gaps: {
                 /*
-          X @ X
-        */
-                if (point.x > player.x) {
-                    if (visibleSet.has(point.add(-1, 0).toString())) break gaps
-                } else if (point.x < player.x) {
-                    if (visibleSet.has(point.add(1, 0).toString())) break gaps
+                    X @ X
+                */
+                if (p.x > player.x) {
+                    if (visibleSet.has(p.add(-1, 0).toString())) break gaps
+                } else if (p.x < player.x) {
+                    if (visibleSet.has(p.add(1, 0).toString())) break gaps
                 }
 
                 /*
-          X
-          @
-          X
-        */
-                if (point.y > player.y) {
-                    if (visibleSet.has(point.add(0, -1).toString())) break gaps
-                } else if (point.y < player.y) {
-                    if (visibleSet.has(point.add(0, 1).toString())) break gaps
+                    X
+                    @
+                    X
+                */
+                if (p.y > player.y) {
+                    if (visibleSet.has(p.add(0, -1).toString())) break gaps
+                } else if (p.y < player.y) {
+                    if (visibleSet.has(p.add(0, 1).toString())) break gaps
                 }
 
                 /*
-          X   X
-            @
-          X   X
-        */
-                if (point.x > player.x && point.y > player.y) {
-                    if (visibleSet.has(point.add(-1, -1).toString())) break gaps
-                } else if (point.x < player.x && point.y < player.y) {
-                    if (visibleSet.has(point.add(1, 1).toString())) break gaps
-                } else if (point.x > player.x && point.y < player.y) {
-                    if (visibleSet.has(point.add(-1, 1).toString())) break gaps
-                } else if (point.x < player.x && point.y > player.y) {
-                    if (visibleSet.has(point.add(1, -1).toString())) break gaps
+                    X   X
+                      @
+                    X   X
+                */
+                if (p.x > player.x && p.y > player.y) {
+                    if (visibleSet.has(p.add(-1, -1).toString())) break gaps
+                } else if (p.x < player.x && p.y < player.y) {
+                    if (visibleSet.has(p.add(1, 1).toString())) break gaps
+                } else if (p.x > player.x && p.y < player.y) {
+                    if (visibleSet.has(p.add(-1, 1).toString())) break gaps
+                } else if (p.x < player.x && p.y > player.y) {
+                    if (visibleSet.has(p.add(1, -1).toString())) break gaps
                 }
 
                 continue
             }
 
-            const tileSeg = t.segment(player, point)
+            const tileSeg = t.segment(player, p)
 
             /*
-        a tile must be within the player's round field of view
-      */
+                a tile must be within the player's round field of view
+            */
             if (t.segmentLength(tileSeg) >= radius + 0.5) continue
 
             /*
-        a tile must not have a wall segment between it and the player
-      */
+                a tile must not have a wall segment between it and the player
+            */
             for (const wallSeg of wallSegments) {
                 if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
             }
 
-            visibleSet.add(point.toString())
+            visibleSet.add(p.toString())
         }
     }
 

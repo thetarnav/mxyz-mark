@@ -38,7 +38,6 @@ const Game = () => {
         CENTER.add(1, 1),
         { equals: t.vec_equals },
     )
-    const isPlayer = s.selector(playerVec, t.vec_equals)
 
     const finishQuadrand = ((startingQuadrand + 2) % 4) as t.Quadrand // opposite of start
     const finishVec = getCornerShrineCenter(finishQuadrand)
@@ -125,59 +124,89 @@ const Game = () => {
         (position: t.Vector, matrix) => matrix.get(position) !== false,
     )
 
+    const floodSet = s.signal({
+        deep: new Set<t.VecString>(),
+        shallow: new Set([CENTER.toString()]),
+    })
+
     game.createDirectionMovement(direction => {
-        s.update(playerVec, p => {
-            const newPos = wallMatrix.go(p, direction)
-            return newPos && !isWall(newPos) ? newPos : p
+        /*
+            move player in direction if possible
+        */
+        const prevPlayerVec = playerVec.value
+        const newPos = wallMatrix.go(prevPlayerVec, direction)
+
+        if (!newPos || isWall(newPos)) return
+
+        const newStr = newPos.toString()
+
+        if (floodSet.value.deep.has(newStr)) return
+
+        s.set(playerVec, newPos)
+
+        /*
+            expand flood set
+        */
+        s.mutate(floodSet, set => {
+            for (const pos of t.randomIterate([...set.shallow])) {
+                for (const dir of t.DIRECTIONS_H_V) {
+                    const newPos = wallMatrix.go(t.vectorFromStr(pos), dir)
+                    if (!newPos) continue
+                    const newStr = newPos.toString()
+                    if (!isWall(newPos) && !set.shallow.has(newStr) && !set.deep.has(newStr)) {
+                        set.shallow.add(newStr)
+                        return
+                    }
+                }
+                set.shallow.delete(pos)
+                set.deep.add(pos)
+            }
         })
     })
 
-    const windowed = s.map(playerVec, player => t.windowedMatrix(WINDOW_SIZE, player))
+    const windowed = s.memo(s.map(playerVec, player => t.windowedMatrix(WINDOW_SIZE, player)))
 
-    const isVisible = s.selector(
+    const visible = s.memo(
         s.map(s.join([playerVec, windowed]), ([player, windowed]) =>
             game.findVisiblePoints(wallMatrix, wallSegments, windowed, player),
         ),
-        (position: t.Vector, set) => set.has(position.toString()),
     )
 
     const vecToMinimap = (vec: t.Vector) =>
         vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
     const minimapPlayer = s.memo(s.map(playerVec, vecToMinimap))
-    const isMinimapPlayer = s.selector(minimapPlayer, t.vec_equals)
-
     const minimapFinish = vecToMinimap(finishVec)
 
-    const floodSet = s.signal(new Set([CENTER.toString()]))
-    const isFlooded = s.selector(floodSet, (position: t.Vector, set) =>
-        set.has(position.toString()),
-    )
+    const getTileClass = (vec: t.Vector, fovIndex: number): string => {
+        const fovPoint = t.Matrix.vec(WINDOW_SIZE, fovIndex)
+        if (minimapPlayer.value.equals(fovPoint)) return 'bg-primary'
+        if (fovPoint.equals(minimapFinish)) return 'bg-amber'
+
+        const str = vec.toString()
+        if (visible.value.has(str))
+            return playerVec.value.equals(vec)
+                ? 'bg-white'
+                : floodSet.value.deep.has(str)
+                ? 'bg-blue-6'
+                : floodSet.value.shallow.has(str)
+                ? 'bg-blue-4'
+                : 'bg-stone-7'
+
+        return 'bg-transparent'
+    }
 
     return (
         <>
             <MatrixGrid matrix={windowed.value}>
-                {(vec, fovIndex) => {
-                    const fovPoint = t.Matrix.vec(WINDOW_SIZE, fovIndex)
-                    return (
-                        <div
-                            class={clsx(
-                                'flex items-center justify-center',
-                                isPlayer(vec())
-                                    ? 'bg-white'
-                                    : isMinimapPlayer(fovPoint)
-                                    ? 'bg-primary'
-                                    : fovPoint.equals(minimapFinish)
-                                    ? 'bg-amber'
-                                    : isFlooded(vec())
-                                    ? 'bg-blue'
-                                    : isVisible(vec())
-                                    ? 'bg-stone-7'
-                                    : 'bg-transparent',
-                            )}
-                        />
-                    )
-                }}
+                {(vec, fovIndex) => (
+                    <div
+                        class={clsx(
+                            'flex items-center justify-center',
+                            getTileClass(vec(), fovIndex),
+                        )}
+                    />
+                )}
             </MatrixGrid>
             <div class="fixed right-12 top-12">{playerVec.value + ''}</div>
         </>
