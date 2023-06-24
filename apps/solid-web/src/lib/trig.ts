@@ -112,6 +112,8 @@ export class Vector implements Pointable {
     }
 }
 
+export const vec_equals = (a: Pointable, b: Pointable) => a.x === b.x && a.y === b.y
+
 export const vector = (x: number, y?: number) => new Vector(x, y)
 export const vectorFrom = (vec: Pointable) => new Vector(vec.x, vec.y)
 export const vectorFromStr = (str: VecString) => {

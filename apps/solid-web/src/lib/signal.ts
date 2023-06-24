@@ -74,17 +74,33 @@ export function selector<T, U = T>(
     return solid.createSelector(() => reactive.value, equals)
 }
 
+export type SignalOptions<T> = {
+    name?: string
+    equals?: (a: T, b: T) => boolean
+    internal?: boolean
+}
+
 export class Signal<T> extends Reactive<T> {
     setter: solid.Setter<T>
+    mutating: boolean = false
 
-    constructor(initialValue: T, options?: solid.SignalOptions<T>) {
-        const [get, setter] = solid.createSignal(initialValue, options)
+    constructor(initialValue: T, options?: SignalOptions<T>) {
+        const equals = options?.equals ?? solid.equalFn
+        const [get, setter] = solid.createSignal(initialValue, {
+            ...options,
+            equals: (a, b) => (this.mutating ? (this.mutating = false) : equals(a, b)),
+        })
         super(get)
         this.setter = setter
     }
 }
 
-export function signal<T>(initialValue: T, options?: solid.SignalOptions<T>): Signal<T> {
+export function signal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T>
+export function signal(
+    initialValue?: undefined,
+    options?: SignalOptions<undefined>,
+): Signal<undefined>
+export function signal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T> {
     return new Signal(initialValue, options)
 }
 
@@ -94,6 +110,19 @@ export function set<T>(signal: Signal<T>, value: T): void {
 
 export function update<T>(signal: Signal<T>, fn: (value: T) => T): void {
     signal.setter(fn)
+}
+
+export function mutate<T>(signal: Signal<T>, fn: (value: T) => void): void {
+    signal.mutating = true
+    signal.setter(value => {
+        fn(value)
+        return value
+    })
+}
+
+export function trigger(signal: Signal<any>): void {
+    signal.mutating = true
+    signal.setter(value => value)
 }
 
 /**

@@ -7,7 +7,7 @@ import * as s from 'src/lib/signal'
 import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trig'
 
-const N_TILES = 40
+const N_TILES = 36
 const TILE_SIZE = 3
 const GRID_SIZE = TILE_SIZE + 1
 const BOARD_SIZE = N_TILES * GRID_SIZE - 1 // -1 for omitted last wall
@@ -34,11 +34,11 @@ const Game = () => {
         /*
             place player in center of a random corner quadrant
         */
-        getCornerShrineCenter(startingQuadrand),
-        // CENTER,
-        { equals: (a, b) => a.equals(b) },
+        // getCornerShrineCenter(startingQuadrand),
+        CENTER.add(1, 1),
+        { equals: t.vec_equals },
     )
-    const isPlayer = s.selector(playerVec, (position, player) => player.equals(position))
+    const isPlayer = s.selector(playerVec, t.vec_equals)
 
     const finishQuadrand = ((startingQuadrand + 2) % 4) as t.Quadrand // opposite of start
     const finishVec = getCornerShrineCenter(finishQuadrand)
@@ -145,10 +145,14 @@ const Game = () => {
         vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
     const minimapPlayer = s.memo(s.map(playerVec, vecToMinimap))
-    const isMinimapPlayer = s.selector(minimapPlayer, (p1, p2) => p1.equals(p2))
+    const isMinimapPlayer = s.selector(minimapPlayer, t.vec_equals)
 
     const minimapFinish = vecToMinimap(finishVec)
-    const isMinimapFinish = (vec: t.Vector) => vec.equals(minimapFinish)
+
+    const floodSet = s.signal(new Set([CENTER.toString()]))
+    const isFlooded = s.selector(floodSet, (position: t.Vector, set) =>
+        set.has(position.toString()),
+    )
 
     return (
         <>
@@ -163,8 +167,10 @@ const Game = () => {
                                     ? 'bg-white'
                                     : isMinimapPlayer(fovPoint)
                                     ? 'bg-primary'
-                                    : isMinimapFinish(fovPoint)
+                                    : fovPoint.equals(minimapFinish)
                                     ? 'bg-amber'
+                                    : isFlooded(vec())
+                                    ? 'bg-blue'
                                     : isVisible(vec())
                                     ? 'bg-stone-7'
                                     : 'bg-transparent',

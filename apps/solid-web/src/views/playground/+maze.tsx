@@ -5,7 +5,7 @@ import * as s from 'src/lib/signal'
 import * as game from 'src/lib/game'
 
 export default function Maze(): JSX.Element {
-    const trigger = s.signal(undefined, { equals: false })
+    const triggerSig = s.signal()
 
     const W = 10
     const H = 6
@@ -23,7 +23,7 @@ export default function Maze(): JSX.Element {
         t.vector(W - 2, H - 2),
     ]
 
-    const maze = s.memo(s.map(trigger, () => game.generateMaze(W, H, ignoredVectors)))
+    const maze = s.memo(s.map(triggerSig, () => game.generateMaze(W, H, ignoredVectors)))
 
     const walls = s.memo(
         s.map(maze, maze => {
@@ -51,7 +51,7 @@ export default function Maze(): JSX.Element {
         <PlaygroundContainer>
             <TriggerButton
                 class="mb-8"
-                onTrigger={() => s.set(trigger, undefined)}
+                onTrigger={() => s.trigger(triggerSig)}
                 text="Regenerate"
                 key="R"
             />
