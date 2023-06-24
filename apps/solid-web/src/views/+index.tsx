@@ -149,11 +149,9 @@ const Game = () => {
         */
         s.mutate(floodSet, set => {
             for (const pos of t.randomIterate([...set.shallow])) {
-                for (const dir of t.DIRECTIONS_H_V) {
-                    const newPos = wallMatrix.go(t.vectorFromStr(pos), dir)
-                    if (!newPos) continue
-                    const newStr = newPos.toString()
-                    if (!isWall(newPos) && !set.shallow.has(newStr) && !set.deep.has(newStr)) {
+                for (const neighbor of t.eachPointDirection(t.vectorFromStr(pos), wallMatrix)) {
+                    const newStr = neighbor.toString()
+                    if (!isWall(neighbor) && !set.shallow.has(newStr) && !set.deep.has(newStr)) {
                         set.shallow.add(newStr)
                         return
                     }
@@ -184,14 +182,17 @@ const Game = () => {
         if (fovPoint.equals(minimapFinish)) return 'bg-amber'
 
         const str = vec.toString()
-        if (visible.value.has(str))
-            return playerVec.value.equals(vec)
-                ? 'bg-white'
-                : floodSet.value.deep.has(str)
-                ? 'bg-blue-6'
-                : floodSet.value.shallow.has(str)
-                ? 'bg-blue-4'
-                : 'bg-stone-7'
+        if (visible.value.has(str)) {
+            if (playerVec.value.equals(vec)) return 'bg-white'
+            if (floodSet.value.deep.has(str)) return 'bg-red-5'
+            if (floodSet.value.shallow.has(str)) {
+                for (const neighbor of t.eachPointDirection(vec, wallMatrix)) {
+                    if (floodSet.value.deep.has(neighbor.toString())) return 'bg-orange-5'
+                }
+                return 'bg-orange'
+            }
+            return 'bg-stone-7'
+        }
 
         return 'bg-transparent'
     }

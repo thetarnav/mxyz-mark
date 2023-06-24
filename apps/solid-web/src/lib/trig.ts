@@ -277,6 +277,13 @@ export class Matrix<T> {
     }
 }
 
+export function* eachPointDirection<T>(point: Vector | number, matrix: Matrix<T>) {
+    for (const dir of DIRECTION_POINTS) {
+        const next = matrix.go(point, dir)
+        if (next !== undefined) yield next
+    }
+}
+
 /**
  * Creates a square matrix of points centered around a {@link center} point.
  * The returned points hold an absolute position in the original matrix.
