@@ -2,34 +2,22 @@ import { isHydrated } from '@solid-primitives/lifecycle'
 import clsx from 'clsx'
 import * as solid from 'solid-js'
 import { A, Title } from 'solid-start'
-import * as game from 'src/lib/game'
 import * as s from 'src/lib/signal'
 import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trig'
-
-const N_TILES = 36
-const TILE_SIZE = 3
-const GRID_SIZE = TILE_SIZE + 1
-const BOARD_SIZE = N_TILES * GRID_SIZE - 1 // -1 for omitted last wall
-const SHRINE_SIZE_TILES = 4
-const SHRINE_RADIUS_TILES = 2
-const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
-const WINDOW_SIZE = 15
-const CENTER = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
-
-const CORNER_SHRINE_ORIGINS = t.QUADRANTS.reduce((acc, quadrand) => {
-    acc[quadrand] = t.QUADRAND_TO_VEC[quadrand].multiply(N_TILES - SHRINE_SIZE_TILES)
-    return acc
-}, {} as Record<t.Quadrand, t.Vector>)
-
-const CORNER_SHRINE_CENTERS = t.QUADRANTS.reduce((acc, quadrand) => {
-    const canter = CORNER_SHRINE_ORIGINS[quadrand]
-        .multiply(GRID_SIZE)
-        .add(t.vector(SHRINE_RADIUS_TILES, SHRINE_RADIUS_TILES).multiply(GRID_SIZE))
-        .subtract(1, 1)
-    acc[quadrand] = canter
-    return acc
-}, {} as Record<t.Quadrand, t.Vector>)
+import { createDirectionMovement } from './held-direction'
+import {
+    CORNER_SHRINE_CENTERS,
+    generateInitMazeState,
+    findWallSegments,
+    N_TILES,
+    CENTER,
+    SHRINE_RADIUS_TILES,
+    GRID_SIZE,
+    WINDOW_SIZE,
+    findVisiblePoints,
+    BOARD_SIZE,
+} from './state'
 
 const Game = () => {
     // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
@@ -47,86 +35,17 @@ const Game = () => {
     const finishQuadrand = ((startingQuadrand + 2) % 4) as t.Quadrand // opposite of start
     const finishVec = CORNER_SHRINE_CENTERS[finishQuadrand]
 
-    /*
-        ignore maze generation in the shrine tiles at each corner
-        and in the center shrine
-    */
-    const ignoredShrineTiles: t.Vector[] = []
-    for (const q of t.QUADRANTS) {
-        const originTile = CORNER_SHRINE_ORIGINS[q]
-        for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE_TILES - 1)).points()) {
-            ignoredShrineTiles.push(originTile.add(vec))
-        }
-    }
-    for (const vec of t
-        .segment(
-            t.vector(N_TILES / 2 - SHRINE_RADIUS_TILES),
-            t.vector(N_TILES / 2 + SHRINE_RADIUS_TILES),
-        )
-        .points()) {
-        ignoredShrineTiles.push(vec)
-    }
-
-    const wallMatrix = game.mazeToGrid(
-        game.generateMaze(N_TILES, N_TILES, ignoredShrineTiles),
-        TILE_SIZE,
-    )
-
-    {
-        const getRandomExit = () => t.randomInt(SHRINE_SIZE_TILES - 1) * GRID_SIZE
-
-        for (const q of t.QUADRANTS) {
-            /*
-                Clear walls inside the corner shrines
-            */
-            const qVec = t.QUADRAND_TO_VEC[q]
-            const corner = qVec
-                .multiply(t.vector(wallMatrix.width - 1, wallMatrix.height - 1))
-                .subtract(qVec.multiply(SHRINE_SIZE - 2))
-
-            for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE - 2)).points()) {
-                wallMatrix.set(corner.add(vec), false)
-            }
-
-            /*
-                Make corner shrine exits (one on each maze-facing edge)
-            */
-            const wall = qVec.map(xy => (1 - xy) * SHRINE_SIZE - 1),
-                exit = t.vector(getRandomExit(), getRandomExit())
-
-            for (let x = 0; x < TILE_SIZE; x++) {
-                wallMatrix.set(corner.add(x + exit.x, wall.y), false)
-            }
-            for (let y = 0; y < TILE_SIZE; y++) {
-                wallMatrix.set(corner.add(wall.x, y + exit.y), false)
-            }
-        }
-
-        /*
-            Clear walls inside the center shrine
-        */
-        const bottomLeft = CENTER.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
-        const topRight = CENTER.add(SHRINE_RADIUS_TILES * GRID_SIZE)
-        for (const vec of t.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
-            wallMatrix.set(vec, false)
-        }
-        const exitTiles = Array.from({ length: 4 }, getRandomExit)
-        for (let x = 0; x < TILE_SIZE; x++) {
-            wallMatrix.set({ x: bottomLeft.x + exitTiles[0] + x + 1, y: bottomLeft.y }, false)
-            wallMatrix.set({ x: bottomLeft.x + exitTiles[1] + x + 1, y: topRight.y }, false)
-        }
-        for (let y = 0; y < TILE_SIZE; y++) {
-            wallMatrix.set({ x: bottomLeft.x, y: bottomLeft.y + exitTiles[2] + y + 1 }, false)
-            wallMatrix.set({ x: topRight.x, y: bottomLeft.y + exitTiles[3] + y + 1 }, false)
-        }
-    }
+    const maze_state = generateInitMazeState()
 
     // const wallMatrix = new t.Matrix(WALLS_W * GRID_SIZE - 1, WALLS_H * GRID_SIZE - 1, () => false)
-    const wallSegments = t.findWallSegments(wallMatrix)
+    const wallSegments = findWallSegments(maze_state)
 
     const isWall = s.selector(
-        s.reactive(() => wallMatrix),
-        (position: t.Vector, matrix) => matrix.get(position) !== false,
+        s.reactive(() => maze_state),
+        (position: t.Vector, matrix) => {
+            const state = matrix.get(position)
+            return !!state && state.wall
+        },
     )
 
     if (import.meta.env.DEV) {
@@ -134,7 +53,7 @@ const Game = () => {
             if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
                 throw new Error('invalid input')
             }
-            if (!wallMatrix.inBounds({ x, y })) {
+            if (!maze_state.inBounds({ x, y })) {
                 throw new Error('out of bounds')
             }
             s.set(playerVec, t.vector(x, y))
@@ -150,12 +69,12 @@ const Game = () => {
         shallow: new Set([CORNER_SHRINE_CENTERS[floodStartQuadrand].toString()]),
     })
 
-    game.createDirectionMovement(direction => {
+    createDirectionMovement(direction => {
         /*
             move player in direction if possible
         */
         const prevPlayerVec = playerVec.value
-        const newPos = wallMatrix.go(prevPlayerVec, direction)
+        const newPos = maze_state.go(prevPlayerVec, direction)
 
         if (!newPos || isWall(newPos) || floodSet.value.deep.has(newPos.toString())) return
 
@@ -169,7 +88,7 @@ const Game = () => {
 
             for (let i = 0; i < expand_times; i++) {
                 for (const pos of t.randomIterate([...set.shallow])) {
-                    for (const neighbor of t.eachPointDirection(t.vectorFromStr(pos), wallMatrix)) {
+                    for (const neighbor of t.eachPointDirection(t.vectorFromStr(pos), maze_state)) {
                         const newStr = neighbor.toString()
                         if (
                             !isWall(neighbor) &&
@@ -200,7 +119,7 @@ const Game = () => {
 
     const visible = s.memo(
         s.map(s.join([playerVec, windowed]), ([player, windowed]) =>
-            game.findVisiblePoints(wallMatrix, wallSegments, windowed, player),
+            findVisiblePoints(maze_state, wallSegments, windowed, player),
         ),
     )
 
@@ -222,7 +141,7 @@ const Game = () => {
             if (playerVec.value.equals(vec)) return 'bg-white'
             if (floodSet.value.deep.has(str)) return 'bg-red-5'
             if (floodSet.value.shallow.has(str)) {
-                for (const neighbor of t.eachPointDirection(vec, wallMatrix)) {
+                for (const neighbor of t.eachPointDirection(vec, maze_state)) {
                     if (floodSet.value.deep.has(neighbor.toString())) return 'bg-orange-5'
                 }
                 return 'bg-orange'

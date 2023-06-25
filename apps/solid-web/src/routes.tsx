@@ -32,7 +32,7 @@ export const usePlaygroundTitle = () => {
 const ROUTES = [
     {
         path: '/',
-        component: lazy(() => import('./views/+index')),
+        component: lazy(() => import('./game/index')),
     },
     {
         path: '/playground',

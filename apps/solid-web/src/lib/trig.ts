@@ -380,39 +380,3 @@ export const getRing = (center: Vector, radius: number) => {
 
     return points
 }
-
-/**
- * Find all horizontal and vertical walls made from tiles in the matrix.
- * Returns an array of segments.
- */
-export function findWallSegments(matrix: Matrix<boolean>): Segment[] {
-    const wallSegments: Segment[] = []
-
-    const visitPoint = (x: number, y: number, newSeg: [Vector?, Vector?]) => {
-        const p = new Vector(x, y)
-        if (matrix.get(p) === true) {
-            newSeg[newSeg[0] === undefined ? 0 : 1] = p
-        } else {
-            if (newSeg[0] !== undefined && newSeg[1] !== undefined) {
-                wallSegments.push(new Segment(newSeg[0]!, newSeg[1]!))
-            }
-            newSeg[0] = newSeg[1] = undefined
-        }
-    }
-
-    const newYSeg: [Vector?, Vector?] = [undefined, undefined]
-    for (let x = 0; x < matrix.width; x++) {
-        for (let y = 0; y < matrix.height; y++) {
-            visitPoint(x, y, newYSeg)
-        }
-    }
-
-    const newXSeg: [Vector?, Vector?] = [undefined, undefined]
-    for (let y = 0; y < matrix.height; y++) {
-        for (let x = 0; x < matrix.width; x++) {
-            visitPoint(x, y, newXSeg)
-        }
-    }
-
-    return wallSegments
-}
