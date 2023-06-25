@@ -125,8 +125,18 @@ export const vectorFromStr = (str: VecString) => {
 
 export const ZERO_VEC = new Vector(0, 0)
 
-export const QUADRANTS = [0, 1, 2, 3] as const
-export type Quadrand = (typeof QUADRANTS)[number]
+export const enum Quadrand {
+    BottomLeft = 0,
+    BottomRight = 1,
+    TopRight = 2,
+    TopLeft = 3,
+}
+export const QUADRANTS = [
+    Quadrand.BottomLeft,
+    Quadrand.BottomRight,
+    Quadrand.TopRight,
+    Quadrand.TopLeft,
+] as const
 
 export const QUADRAND_TO_VEC: Record<Quadrand, Vector> = {
     0: new Vector(0, 0), // bottom left
@@ -174,6 +184,9 @@ export const segment = (start: Vector, end: Vector) => new Segment(start, end)
 
 export const segmentVector = (seg: Segment): Vector => new Vector(seg.x2 - seg.x1, seg.y2 - seg.y1)
 
+export const distance = (a: Pointable, b: Pointable) =>
+    Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
+
 /*
     Pythagorean theorem
     a^2 + b^2 = c^2
@@ -183,8 +196,7 @@ export const segmentVector = (seg: Segment): Vector => new Vector(seg.x2 - seg.x
     length^2 = (x2 - x1)^2 + (y2 - y1)^2
     length = sqrt((x2 - x1)^2 + (y2 - y1)^2)
 */
-export const segmentLength = (seg: Segment) =>
-    Math.sqrt((seg.x2 - seg.x1) ** 2 + (seg.y2 - seg.y1) ** 2)
+export const segmentLength = (seg: Segment) => distance(seg.start, seg.end)
 
 export const DIRECTION_TO_VECTOR: Record<Direction, Vector> = {
     [Direction.Up]: new Vector(0, 1),

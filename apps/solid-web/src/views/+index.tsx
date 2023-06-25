@@ -17,30 +17,35 @@ const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 const WINDOW_SIZE = 15
 const CENTER = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
 
+const CORNER_SHRINE_ORIGINS = t.QUADRANTS.reduce((acc, quadrand) => {
+    acc[quadrand] = t.QUADRAND_TO_VEC[quadrand].multiply(N_TILES - SHRINE_SIZE_TILES)
+    return acc
+}, {} as Record<t.Quadrand, t.Vector>)
+
+const CORNER_SHRINE_CENTERS = t.QUADRANTS.reduce((acc, quadrand) => {
+    const canter = CORNER_SHRINE_ORIGINS[quadrand]
+        .multiply(GRID_SIZE)
+        .add(t.vector(SHRINE_RADIUS_TILES, SHRINE_RADIUS_TILES).multiply(GRID_SIZE))
+        .subtract(1, 1)
+    acc[quadrand] = canter
+    return acc
+}, {} as Record<t.Quadrand, t.Vector>)
+
 const Game = () => {
     // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
-
-    const getCornerShrineOriginTile = (quadrand: t.Quadrand) =>
-        t.QUADRAND_TO_VEC[quadrand].multiply(N_TILES - SHRINE_SIZE_TILES)
-
-    const getCornerShrineCenter = (quadrand: t.Quadrand) =>
-        getCornerShrineOriginTile(quadrand)
-            .multiply(GRID_SIZE)
-            .add(t.vector(SHRINE_RADIUS_TILES, SHRINE_RADIUS_TILES).multiply(GRID_SIZE))
-            .subtract(1, 1)
 
     const startingQuadrand = t.randomInt(4) as t.Quadrand
     const playerVec = s.signal(
         /*
         place player in center of a random corner quadrant
         */
-        getCornerShrineCenter(startingQuadrand),
+        CORNER_SHRINE_CENTERS[startingQuadrand],
         // CENTER.add(1, 1),
         { equals: t.vec_equals },
     )
 
     const finishQuadrand = ((startingQuadrand + 2) % 4) as t.Quadrand // opposite of start
-    const finishVec = getCornerShrineCenter(finishQuadrand)
+    const finishVec = CORNER_SHRINE_CENTERS[finishQuadrand]
 
     /*
         ignore maze generation in the shrine tiles at each corner
@@ -48,7 +53,7 @@ const Game = () => {
     */
     const ignoredShrineTiles: t.Vector[] = []
     for (const q of t.QUADRANTS) {
-        const originTile = getCornerShrineOriginTile(q)
+        const originTile = CORNER_SHRINE_ORIGINS[q]
         for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE_TILES - 1)).points()) {
             ignoredShrineTiles.push(originTile.add(vec))
         }
@@ -124,13 +129,25 @@ const Game = () => {
         (position: t.Vector, matrix) => matrix.get(position) !== false,
     )
 
+    if (import.meta.env.DEV) {
+        ;(window as any).$tp = (x: unknown, y: unknown) => {
+            if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+                throw new Error('invalid input')
+            }
+            if (!wallMatrix.inBounds({ x, y })) {
+                throw new Error('out of bounds')
+            }
+            s.set(playerVec, t.vector(x, y))
+        }
+    }
+
     const floodStartQuadrand = t.remainder(
         startingQuadrand + (Math.random() > 0.5 ? 1 : -1), // corner shrine adjacent to start
         4,
     ) as t.Quadrand
     const floodSet = s.signal({
         deep: new Set<t.VecString>(),
-        shallow: new Set([getCornerShrineCenter(floodStartQuadrand).toString()]),
+        shallow: new Set([CORNER_SHRINE_CENTERS[floodStartQuadrand].toString()]),
     })
 
     game.createDirectionMovement(direction => {
@@ -170,6 +187,15 @@ const Game = () => {
         })
     })
 
+    const allShrineCenters = [CENTER, ...Object.values(CORNER_SHRINE_CENTERS)]
+    const isPlayerInShrine = s.memo(
+        s.map(playerVec, player =>
+            allShrineCenters.some(
+                center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
+            ),
+        ),
+    )
+
     const windowed = s.memo(s.map(playerVec, player => t.windowedMatrix(WINDOW_SIZE, player)))
 
     const visible = s.memo(
@@ -185,9 +211,11 @@ const Game = () => {
     const minimapFinish = vecToMinimap(finishVec)
 
     const getTileClass = (vec: t.Vector, fovIndex: number): string => {
-        const fovPoint = t.Matrix.vec(WINDOW_SIZE, fovIndex)
-        if (minimapPlayer.value.equals(fovPoint)) return 'bg-primary'
-        if (fovPoint.equals(minimapFinish)) return 'bg-amber'
+        if (isPlayerInShrine.value) {
+            const fovPoint = t.Matrix.vec(WINDOW_SIZE, fovIndex)
+            if (minimapPlayer.value.equals(fovPoint)) return 'bg-primary'
+            if (fovPoint.equals(minimapFinish)) return 'bg-amber'
+        }
 
         const str = vec.toString()
         if (visible.value.has(str)) {
@@ -217,7 +245,9 @@ const Game = () => {
                     />
                 )}
             </MatrixGrid>
-            <div class="fixed right-12 top-12">{playerVec.value + ''}</div>
+            <div class="fixed right-12 top-12">
+                <p>{playerVec.value + ''}</p>
+            </div>
         </>
     )
 }
