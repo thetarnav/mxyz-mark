@@ -32,10 +32,10 @@ const Game = () => {
     const startingQuadrand = t.randomInt(4) as t.Quadrand
     const playerVec = s.signal(
         /*
-            place player in center of a random corner quadrant
+        place player in center of a random corner quadrant
         */
-        // getCornerShrineCenter(startingQuadrand),
-        CENTER.add(1, 1),
+        getCornerShrineCenter(startingQuadrand),
+        // CENTER.add(1, 1),
         { equals: t.vec_equals },
     )
 
@@ -124,9 +124,13 @@ const Game = () => {
         (position: t.Vector, matrix) => matrix.get(position) !== false,
     )
 
+    const floodStartQuadrand = t.remainder(
+        startingQuadrand + (Math.random() > 0.5 ? 1 : -1), // corner shrine adjacent to start
+        4,
+    ) as t.Quadrand
     const floodSet = s.signal({
         deep: new Set<t.VecString>(),
-        shallow: new Set([CENTER.toString()]),
+        shallow: new Set([getCornerShrineCenter(floodStartQuadrand).toString()]),
     })
 
     game.createDirectionMovement(direction => {

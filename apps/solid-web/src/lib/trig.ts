@@ -2,6 +2,8 @@ export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFrom = (min: number, max: number) =>
     Math.floor(Math.random() * (max - min)) + min
 
+export const remainder = (a: number, b: number) => ((a % b) + b) % b
+
 export const mapRange = (
     value: number,
     in_min: number,
