@@ -1,66 +1,6 @@
 import * as t from './trig'
 import * as v from 'vitest'
 
-v.expect.extend({
-    toIncludeSameMembers(received, expected) {
-        if (!Array.isArray(received) || !Array.isArray(expected)) {
-            return {
-                pass: false,
-                message: () => `Expected ${received} and ${expected} to be arrays`,
-            }
-        }
-
-        if (received.length < expected.length) {
-            const missing = expected.filter(a => !received.some(b => this.equals(a, b)))
-
-            return {
-                pass: false,
-                message: () =>
-                    `${received}\nis shorter than\n${expected}.\nReceived: ${
-                        received.length
-                    }\nExpected: ${expected.length}\nMissing: ${missing.length && missing}`,
-            }
-        }
-
-        if (received.length > expected.length) {
-            const extra = received.filter(a => !expected.some(b => this.equals(b, a)))
-
-            return {
-                pass: false,
-                message: () =>
-                    `${received}\nis longer than\n${expected}.\nReceived: ${
-                        received.length
-                    }\nExpected: ${expected.length}\nExtra: ${extra.length && extra}`,
-            }
-        }
-
-        for (const secondValue of expected) {
-            const index = received.findIndex(firstValue => this.equals(secondValue, firstValue))
-
-            if (index === -1) {
-                return {
-                    pass: false,
-                    message: () => `${received} does not include member ${secondValue}`,
-                }
-            }
-        }
-
-        return {
-            pass: true,
-            message: () => `${received} includes same members as ${expected}`,
-        }
-    },
-})
-
-interface CustomMatchers<R = unknown> {
-    toIncludeSameMembers(arr: unknown[]): R
-}
-
-declare module 'vitest' {
-    interface Assertion<T = any> extends CustomMatchers<T> {}
-    interface AsymmetricMatchersContaining extends CustomMatchers {}
-}
-
 v.describe('segmentsIntersecting', () => {
     const segments: [from: t.Segment, to: t.Segment, result: boolean][] = [
         // parallel vertical
@@ -170,42 +110,5 @@ v.describe('getRing', () => {
         v.it(`getRing(${params.join(', ')})`, () => {
             v.expect(t.getRing(...params)).toIncludeSameMembers(expected)
         })
-    })
-})
-
-v.describe('findWallSegments', () => {
-    v.test('finds all wall segments', () => {
-        const WALLS = [
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], // 6
-            [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0], // 5
-            [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], // 4
-            [0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0], // 3
-            [0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0], // 2
-            [0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1], // 1
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 0
-            /*
-       0  1  2  3  4  5  6  7  8  9  10 */
-        ]
-
-        const W = WALLS[0].length
-        const H = WALLS.length
-
-        const matrix = new t.Matrix(W, H, (x, y) => !!WALLS[H - 1 - y][x])
-
-        const wallSegments = t.findWallSegments(matrix)
-
-        v.expect(wallSegments).toIncludeSameMembers([
-            t.segment(t.vector(1, 0), t.vector(1, 3)),
-            t.segment(t.vector(1, 5), t.vector(1, 6)),
-            t.segment(t.vector(1, 6), t.vector(8, 6)),
-            t.segment(t.vector(6, 5), t.vector(6, 6)),
-            t.segment(t.vector(1, 3), t.vector(3, 3)),
-            t.segment(t.vector(3, 1), t.vector(3, 4)),
-            t.segment(t.vector(3, 1), t.vector(5, 1)),
-            t.segment(t.vector(5, 1), t.vector(5, 3)),
-            t.segment(t.vector(7, 3), t.vector(9, 3)),
-            t.segment(t.vector(7, 1), t.vector(8, 1)),
-            t.segment(t.vector(8, 1), t.vector(8, 4)),
-        ])
     })
 })

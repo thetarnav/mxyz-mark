@@ -34,4 +34,7 @@ export default defineConfig({
         // config in ../uno.config.ts
         UnoCSS(),
     ],
+    test: {
+        setupFiles: 'vitest.setup.ts',
+    },
 })
