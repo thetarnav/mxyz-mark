@@ -10,13 +10,13 @@ import {
     CORNER_SHRINE_CENTERS,
     generateInitMazeState,
     findWallSegments,
-    N_TILES,
     CENTER,
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
     WINDOW_SIZE,
     findVisiblePoints,
     BOARD_SIZE,
+    isFlooded,
 } from './state'
 
 const Game = () => {
@@ -40,14 +40,6 @@ const Game = () => {
     // const wallMatrix = new t.Matrix(WALLS_W * GRID_SIZE - 1, WALLS_H * GRID_SIZE - 1, () => false)
     const wallSegments = findWallSegments(maze_state)
 
-    const isWall = s.selector(
-        s.reactive(() => maze_state),
-        (position: t.Vector, matrix) => {
-            const state = matrix.get(position)
-            return !!state && state.wall
-        },
-    )
-
     if (import.meta.env.DEV) {
         ;(window as any).$tp = (x: unknown, y: unknown) => {
             if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
@@ -60,47 +52,53 @@ const Game = () => {
         }
     }
 
-    const floodStartQuadrand = t.remainder(
-        startingQuadrand + (Math.random() > 0.5 ? 1 : -1), // corner shrine adjacent to start
-        4,
-    ) as t.Quadrand
-    const floodSet = s.signal({
-        deep: new Set<t.VecString>(),
-        shallow: new Set([CORNER_SHRINE_CENTERS[floodStartQuadrand].toString()]),
-    })
+    const shallowFlood = s.signal(new Set<t.VecString>())
+    {
+        const floodStartQuadrand = t.remainder(
+            startingQuadrand + (Math.random() > 0.5 ? 1 : -1), // corner shrine adjacent to start
+            4,
+        ) as t.Quadrand
+        const floodStart = CORNER_SHRINE_CENTERS[floodStartQuadrand]
+        shallowFlood.value.add(floodStart.toString())
+    }
 
     createDirectionMovement(direction => {
         /*
             move player in direction if possible
         */
-        const prevPlayerVec = playerVec.value
-        const newPos = maze_state.go(prevPlayerVec, direction)
+        const vec = playerVec.value.go(direction)
+        const vec_state = maze_state.get(vec)
 
-        if (!newPos || isWall(newPos) || floodSet.value.deep.has(newPos.toString())) return
+        if (!vec_state || vec_state.wall || vec_state.flooded) return
 
-        s.set(playerVec, newPos)
+        s.set(playerVec, vec)
 
         /*
             expand flood set
         */
-        s.mutate(floodSet, set => {
-            const expand_times = Math.ceil((set.deep.size + 1) / ((N_TILES * N_TILES) / 2))
+        s.mutate(shallowFlood, set => {
+            // const expand_times = Math.ceil((set.deep.size + 1) / ((N_TILES * N_TILES) / 2))
+            const expand_times = 1 // TODO: increase as game progresses
 
             for (let i = 0; i < expand_times; i++) {
-                for (const pos of t.randomIterate([...set.shallow])) {
-                    for (const neighbor of t.eachPointDirection(t.vectorFromStr(pos), maze_state)) {
-                        const newStr = neighbor.toString()
-                        if (
-                            !isWall(neighbor) &&
-                            !set.shallow.has(newStr) &&
-                            !set.deep.has(newStr)
-                        ) {
-                            set.shallow.add(newStr)
-                            return
-                        }
+                for (const pos_str of t.randomIterate([...set])) {
+                    for (const neighbor of t.eachPointDirection(
+                        t.Vector.fromStr(pos_str),
+                        maze_state,
+                    )) {
+                        const neighbor_state = maze_state.get(neighbor)
+                        if (!neighbor_state) continue
+
+                        const neighbor_str = neighbor.toString()
+                        if (neighbor_state.wall || neighbor_state.flooded || set.has(neighbor_str))
+                            continue
+
+                        set.add(neighbor_str)
+                        return
                     }
-                    set.shallow.delete(pos)
-                    set.deep.add(pos)
+
+                    set.delete(pos_str)
+                    maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
                 }
             }
         })
@@ -136,13 +134,15 @@ const Game = () => {
             if (fovPoint.equals(minimapFinish)) return 'bg-amber'
         }
 
-        const str = vec.toString()
-        if (visible.value.has(str)) {
+        const vec_str = vec.toString()
+        const vec_state = maze_state.get(vec)
+
+        if (vec_state && visible.value.has(vec_str)) {
             if (playerVec.value.equals(vec)) return 'bg-white'
-            if (floodSet.value.deep.has(str)) return 'bg-red-5'
-            if (floodSet.value.shallow.has(str)) {
+            if (vec_state.flooded) return 'bg-red-5'
+            if (shallowFlood.value.has(vec_str)) {
                 for (const neighbor of t.eachPointDirection(vec, maze_state)) {
-                    if (floodSet.value.deep.has(neighbor.toString())) return 'bg-orange-5'
+                    if (isFlooded(maze_state, neighbor)) return 'bg-orange-5'
                 }
                 return 'bg-orange'
             }

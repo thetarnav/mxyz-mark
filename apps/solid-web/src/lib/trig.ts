@@ -68,6 +68,14 @@ export class Vector implements Pointable {
         this.x = x
         this.y = y ?? x
     }
+    static from(vec: Pointable) {
+        return new Vector(vec.x, vec.y)
+    }
+    static fromStr(str: VecString) {
+        const [x, y] = str.slice(1, -1).split(', ').map(Number)
+        return new Vector(x, y)
+    }
+
     get 0() {
         return this.x
     }
@@ -104,6 +112,11 @@ export class Vector implements Pointable {
     }
     equals(vec: Pointable) {
         return this.x === vec.x && this.y === vec.y
+    }
+    go(direction: Direction, amount = 1): Vector {
+        let d = DIRECTION_TO_VECTOR[direction]
+        if (amount != 1) d = d.multiply(amount)
+        return this.add(d)
     }
 
     toString(): VecString {

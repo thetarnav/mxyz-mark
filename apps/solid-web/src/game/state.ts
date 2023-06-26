@@ -31,12 +31,17 @@ export type MazeTileState = {
 }
 export type MazeMatrix = t.Matrix<MazeTileState>
 
-const isWall = (maze_state: MazeMatrix, p: t.Vector) => {
+export const isWall = (maze_state: MazeMatrix, p: t.Vector) => {
     const state = maze_state.get(p)
     return !!(state && state.wall)
 }
 
-const isVisible = (maze_state: MazeMatrix, p: t.Vector) => {
+export const isFlooded = (maze_state: MazeMatrix, p: t.Vector) => {
+    const state = maze_state.get(p)
+    return !!(state && state.flooded)
+}
+
+export const isVisible = (maze_state: MazeMatrix, p: t.Vector) => {
     const state = maze_state.get(p)
     return !!state && !state.wall
 }
