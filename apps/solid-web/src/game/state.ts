@@ -24,6 +24,8 @@ export const CORNER_SHRINE_CENTERS = t.QUADRANTS.reduce((acc, quadrand) => {
     return acc
 }, {} as Record<t.Quadrand, t.Vector>)
 
+export const ALL_SHRINE_CENTERS = [CENTER, ...Object.values(CORNER_SHRINE_CENTERS)]
+
 export type MazeTileState = {
     wall: boolean
     flooded: boolean

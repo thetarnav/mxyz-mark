@@ -48,6 +48,17 @@ export function map<T, U>(source: Reactive<T>, fn: (value: T) => U): Reactive<U>
     })
 }
 
+export function map_nested<T, K extends keyof T, U>(
+    source: Reactive<T>,
+    key: K,
+    fn: (value: T[K]) => U,
+): Reactive<U> {
+    return new Reactive(() => {
+        const value = source.value[key]
+        return solid.untrack(() => fn(value))
+    })
+}
+
 export function destructure<const T extends readonly unknown[]>(
     source: Reactive<T>,
 ): { [K in keyof T]: Reactive<T[K]> } {
