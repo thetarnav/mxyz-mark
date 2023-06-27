@@ -18,6 +18,7 @@ import {
     BOARD_SIZE,
     isFlooded,
     ALL_SHRINE_CENTERS,
+    GameState,
 } from './state'
 
 // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
@@ -25,38 +26,90 @@ import {
 const vecToMinimap = (vec: t.Vector) =>
     vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
+function updateState(game_state: GameState, player: t.Vector) {
+    game_state.player = player
+
+    game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
+
+    game_state.visible = findVisiblePoints(game_state)
+
+    game_state.in_shrine = ALL_SHRINE_CENTERS.some(
+        center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
+    )
+}
+
+function expandFlood(game_state: GameState) {
+    const { maze_state } = game_state
+
+    game_state.turn++
+    game_state.progress_to_flood_update += game_state.turn / 1000
+    const expand_times = Math.floor(game_state.progress_to_flood_update)
+    game_state.progress_to_flood_update -= expand_times
+
+    for (let i = 0; i < expand_times; i++) {
+        for (const pos_str of t.randomIterate([...game_state.shallow_flood])) {
+            for (const neighbor of t.eachPointDirection(t.Vector.fromStr(pos_str), maze_state)) {
+                const neighbor_state = maze_state.get(neighbor)
+                if (!neighbor_state) continue
+
+                const neighbor_str = neighbor.toString()
+                if (
+                    neighbor_state.wall ||
+                    neighbor_state.flooded ||
+                    game_state.shallow_flood.has(neighbor_str)
+                )
+                    continue
+
+                game_state.shallow_flood.add(neighbor_str)
+                return
+            }
+
+            game_state.shallow_flood.delete(pos_str)
+            maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
+        }
+    }
+}
+
 const Game = () => {
-    const reactive = s.signal({
+    const game_state: GameState = {
         /*
             place player in center of a random corner quadrant
         */
         player: CENTER,
+        finish: null!,
+        maze_state: null!,
+        wall_segments: null!,
         turn: 0,
+        progress_to_flood_update: 0,
         shallow_flood: new Set<t.VecString>(),
-        windowed: null as any as t.Matrix<t.Vector>,
+        windowed: null!,
         visible: new Set<t.VecString>(),
         in_shrine: false,
-    })
-    let finish: t.Vector
-
-    {
-        const startingQuadrand = t.randomInt(4) as t.Quadrand
-        const finishQuadrand = ((startingQuadrand + 2) % 4) as t.Quadrand // opposite of start
-        const floodStartQuadrand = t.remainder(
-            startingQuadrand + (Math.random() > 0.5 ? 1 : -1), // corner shrine adjacent to start
-            4,
-        ) as t.Quadrand
-
-        const player = CORNER_SHRINE_CENTERS[startingQuadrand]
-        finish = CORNER_SHRINE_CENTERS[finishQuadrand]
-        const floodStart = CORNER_SHRINE_CENTERS[floodStartQuadrand]
-
-        reactive.value.player = player
-        reactive.value.shallow_flood.add(floodStart.toString())
     }
 
-    const maze_state = generateInitMazeState()
-    const wall_segments = findWallSegments(maze_state)
+    /*
+        Init game state
+    */
+    {
+        const starting_q = t.randomInt(4)
+        const finish_q = (starting_q + 2) % 4 // opposite of start
+        const flood_start_q = // corner shrine adjacent to start
+            t.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
+
+        game_state.player = CORNER_SHRINE_CENTERS[starting_q as t.Quadrand]
+        game_state.finish = CORNER_SHRINE_CENTERS[finish_q as t.Quadrand]
+        game_state.shallow_flood.add(CORNER_SHRINE_CENTERS[flood_start_q as t.Quadrand].toString())
+
+        game_state.maze_state = generateInitMazeState()
+        game_state.wall_segments = findWallSegments(game_state.maze_state)
+    }
+
+    const turn_signal = s.signal()
+
+    const trackGameState = () => {
+        turn_signal.get()
+        return game_state
+    }
 
     if (import.meta.env.DEV) {
         ;(window as any).$tp = (x: unknown, y: unknown) => {
@@ -64,94 +117,49 @@ const Game = () => {
                 throw new Error('invalid input')
             }
             const vec = t.vector(x, y)
-            if (!maze_state.inBounds(vec)) {
+            if (!game_state.maze_state.inBounds(vec)) {
                 throw new Error('out of bounds')
             }
-            s.mutate(reactive, state => {
-                state.player = vec
-            })
+            updateState(game_state, vec)
+            s.trigger(turn_signal)
         }
     }
 
-    function updateState(player: t.Vector) {
-        const state = reactive.value
-
-        state.player = player
-        state.turn++
-
-        state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
-
-        state.visible = findVisiblePoints(maze_state, wall_segments, state.windowed, player)
-
-        state.in_shrine = ALL_SHRINE_CENTERS.some(
-            center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
-        )
-
-        expand_flood: {
-            // const expand_times = Math.ceil((set.deep.size + 1) / ((N_TILES * N_TILES) / 2))
-            const expand_times = 1 // TODO: increase as game progresses
-
-            for (let i = 0; i < expand_times; i++) {
-                for (const pos_str of t.randomIterate([...state.shallow_flood])) {
-                    for (const neighbor of t.eachPointDirection(
-                        t.Vector.fromStr(pos_str),
-                        maze_state,
-                    )) {
-                        const neighbor_state = maze_state.get(neighbor)
-                        if (!neighbor_state) continue
-
-                        const neighbor_str = neighbor.toString()
-                        if (
-                            neighbor_state.wall ||
-                            neighbor_state.flooded ||
-                            state.shallow_flood.has(neighbor_str)
-                        )
-                            continue
-
-                        state.shallow_flood.add(neighbor_str)
-                        break expand_flood
-                    }
-
-                    state.shallow_flood.delete(pos_str)
-                    maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
-                }
-            }
-        }
-    }
-
-    updateState(reactive.value.player)
+    updateState(game_state, game_state.player)
 
     createDirectionMovement(direction => {
         /*
             move player in direction if possible
         */
-        const vec = reactive.value.player.go(direction)
-        const vec_state = maze_state.get(vec)
+        const vec = game_state.player.go(direction)
+        const vec_state = game_state.maze_state.get(vec)
 
         if (!vec_state || vec_state.wall || vec_state.flooded) return
 
-        updateState(vec)
-        s.trigger(reactive)
+        updateState(game_state, vec)
+        expandFlood(game_state)
+        s.trigger(turn_signal)
     })
 
-    const minimapFinish = vecToMinimap(finish)
+    const minimap_finish = vecToMinimap(game_state.finish)
 
-    const getTileClass = (vec: t.Vector, fovIndex: number): string => {
-        const state = reactive.value
+    const getTileClass = (vec: t.Vector, fov_idx: number): string => {
+        const game_state = trackGameState()
+        const { maze_state } = game_state
 
-        if (state.in_shrine) {
-            const fovPoint = t.Matrix.vec(WINDOW_SIZE, fovIndex)
-            if (vecToMinimap(state.player).equals(fovPoint)) return 'bg-primary'
-            if (fovPoint.equals(minimapFinish)) return 'bg-amber'
+        if (game_state.in_shrine) {
+            const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
+            if (vecToMinimap(game_state.player).equals(fov_vec)) return 'bg-primary'
+            if (fov_vec.equals(minimap_finish)) return 'bg-amber'
         }
 
         const vec_str = vec.toString()
         const vec_state = maze_state.get(vec)
 
-        if (vec_state && state.visible.has(vec_str)) {
-            if (state.player.equals(vec)) return 'bg-white'
+        if (vec_state && game_state.visible.has(vec_str)) {
+            if (game_state.player.equals(vec)) return 'bg-white'
             if (vec_state.flooded) return 'bg-red-5'
-            if (state.shallow_flood.has(vec_str)) {
+            if (game_state.shallow_flood.has(vec_str)) {
                 for (const neighbor of t.eachPointDirection(vec, maze_state)) {
                     if (isFlooded(maze_state, neighbor)) return 'bg-orange-5'
                 }
@@ -165,7 +173,7 @@ const Game = () => {
 
     return (
         <>
-            <MatrixGrid matrix={reactive.value.windowed}>
+            <MatrixGrid matrix={trackGameState().windowed}>
                 {(vec, fovIndex) => (
                     <div
                         class={clsx(
@@ -176,7 +184,8 @@ const Game = () => {
                 )}
             </MatrixGrid>
             <div class="fixed right-12 top-12">
-                <p>{reactive.value.player + ''}</p>
+                <p>{trackGameState().player + ''}</p>
+                <p>turn: {trackGameState().turn}</p>
             </div>
         </>
     )

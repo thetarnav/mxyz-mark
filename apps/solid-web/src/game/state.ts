@@ -33,6 +33,19 @@ export type MazeTileState = {
 }
 export type MazeMatrix = t.Matrix<MazeTileState>
 
+export type GameState = {
+    player: t.Vector
+    finish: t.Vector
+    maze_state: MazeMatrix
+    wall_segments: t.Segment[]
+    shallow_flood: Set<t.VecString>
+    windowed: t.Matrix<t.Vector>
+    visible: Set<t.VecString>
+    turn: number
+    progress_to_flood_update: number
+    in_shrine: boolean
+}
+
 export const isWall = (maze_state: MazeMatrix, p: t.Vector) => {
     const state = maze_state.get(p)
     return !!(state && state.wall)
@@ -253,12 +266,9 @@ export function findWallSegments(matrix: MazeMatrix): t.Segment[] {
     return wallSegments
 }
 
-export function findVisiblePoints(
-    maze_state: MazeMatrix,
-    wallSegments: t.Segment[],
-    windowedMatrix: t.Matrix<t.Vector>,
-    player: t.Vector,
-): Set<t.VecString> {
+export function findVisiblePoints(game_state: GameState): Set<t.VecString> {
+    const { maze_state, player, windowed, wall_segments } = game_state
+
     /*
         player and all wall-less tiles around him are visible
     */
@@ -269,7 +279,7 @@ export function findVisiblePoints(
                 .concat(player)
                 .map(p => p.toString()),
         ),
-        radius = (windowedMatrix.width - 1) / 2,
+        radius = (windowed.width - 1) / 2,
         windowedPlayerVec = t.vector(radius, radius)
 
     /*
@@ -278,7 +288,7 @@ export function findVisiblePoints(
     */
     for (let r = 2; r <= radius; r++) {
         ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
-            const p = windowedMatrix.get(wPoint)
+            const p = windowed.get(wPoint)
 
             /*
                 walls are not visible
@@ -338,7 +348,7 @@ export function findVisiblePoints(
             /*
                 a tile must not have a wall segment between it and the player
             */
-            for (const wallSeg of wallSegments) {
+            for (const wallSeg of wall_segments) {
                 if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
             }
 
