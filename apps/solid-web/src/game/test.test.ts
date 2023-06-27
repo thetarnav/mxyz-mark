@@ -1,4 +1,4 @@
-import * as t from 'src/lib/trig'
+import * as t from 'src/lib/trigonometry'
 import * as v from 'vitest'
 import { MazeMatrix, findWallSegments } from './state'
 

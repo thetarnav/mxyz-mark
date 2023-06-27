@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { JSX, untrack } from 'solid-js'
 import { css } from 'solid-styled'
 import { Cell, Grid, PlaygroundContainer } from './playground'
-import * as t from 'src/lib/trig'
+import * as t from 'src/lib/trigonometry'
 import * as s from 'src/lib/signal'
 import * as game from 'src/lib/game'
 

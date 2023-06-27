@@ -3,7 +3,7 @@ import { Range } from '@solid-primitives/range'
 import clsx from 'clsx'
 import { Accessor, Component, JSX, ParentComponent, createMemo } from 'solid-js'
 import { MatrixGrid } from 'src/lib/state'
-import { Direction, Matrix, Vector, ZERO_VEC } from '../../lib/trig'
+import { Direction, Matrix, Vector, ZERO_VEC } from '../../lib/trigonometry'
 
 export const PlaygroundContainer = (props: { children: JSX.Element }) => {
     return <div class="flex flex-col items-center">{props.children}</div>

@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js'
 import { Cell, Grid, PlaygroundContainer, TriggerButton } from './playground'
-import * as t from 'src/lib/trig'
+import * as t from 'src/lib/trigonometry'
 import * as s from 'src/lib/signal'
 import * as game from 'src/lib/game'
 

@@ -1,4 +1,4 @@
-import * as t from './trig'
+import * as t from './trigonometry'
 import * as v from 'vitest'
 
 v.describe('segmentsIntersecting', () => {

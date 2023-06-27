@@ -1,4 +1,4 @@
-import * as t from './trig'
+import * as t from './trigonometry'
 import * as s from './signal'
 import * as solid from 'solid-js'
 

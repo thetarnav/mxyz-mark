@@ -6,7 +6,7 @@ import {
     Direction,
     randomIterate,
     DIRECTION_AND_CORNER_POINTS,
-} from '../../lib/trig'
+} from '../../lib/trigonometry'
 
 export default function Noise(): JSX.Element {
     const [track, trigger] = createSignal(undefined, { equals: false })

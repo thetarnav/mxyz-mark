@@ -1,10 +1,10 @@
 import { isHydrated } from '@solid-primitives/lifecycle'
 import clsx from 'clsx'
 import * as solid from 'solid-js'
-import { A, Title } from 'solid-start'
+import { Title } from 'solid-start'
 import * as s from 'src/lib/signal'
 import { MatrixGrid } from 'src/lib/state'
-import * as t from 'src/lib/trig'
+import * as t from 'src/lib/trigonometry'
 import { createDirectionMovement } from './held-direction'
 import {
     corner_shrine_centers,

@@ -1,4 +1,4 @@
-import * as t from 'src/lib/trig'
+import * as t from 'src/lib/trigonometry'
 
 export const N_TILES = 36
 export const TILE_SIZE = 3
