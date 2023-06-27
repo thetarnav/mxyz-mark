@@ -195,7 +195,7 @@ export default function Home(): solid.JSX.Element {
     return (
         <>
             <Title>mxyz mark solid</Title>
-            <nav class="z-999 absolute left-4 top-4 flex flex-col">
+            {/* <nav class="z-999 absolute left-4 top-4 flex flex-col">
                 <div>
                     <A
                         href="/"
@@ -214,7 +214,7 @@ export default function Home(): solid.JSX.Element {
                         /playground
                     </A>
                 </div>
-            </nav>
+            </nav> */}
             <main class="flex flex-col items-center gap-24 py-24">{isHydrated() && <Game />}</main>
         </>
     )
