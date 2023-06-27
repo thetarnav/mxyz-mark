@@ -7,10 +7,10 @@ import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trig'
 import { createDirectionMovement } from './held-direction'
 import {
-    CORNER_SHRINE_CENTERS,
+    corner_shrine_centers,
     generateInitMazeState,
     findWallSegments,
-    CENTER,
+    maze_center,
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
     WINDOW_SIZE,
@@ -75,7 +75,7 @@ const Game = () => {
         /*
             place player in center of a random corner quadrant
         */
-        player: CENTER,
+        player: maze_center,
         finish: null!,
         maze_state: null!,
         wall_segments: null!,
@@ -96,9 +96,9 @@ const Game = () => {
         const flood_start_q = // corner shrine adjacent to start
             t.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
 
-        game_state.player = CORNER_SHRINE_CENTERS[starting_q as t.Quadrand]
-        game_state.finish = CORNER_SHRINE_CENTERS[finish_q as t.Quadrand]
-        game_state.shallow_flood.add(CORNER_SHRINE_CENTERS[flood_start_q as t.Quadrand].toString())
+        game_state.player = corner_shrine_centers[starting_q as t.Quadrand]
+        game_state.finish = corner_shrine_centers[finish_q as t.Quadrand]
+        game_state.shallow_flood.add(corner_shrine_centers[flood_start_q as t.Quadrand].toString())
 
         game_state.maze_state = generateInitMazeState()
         game_state.wall_segments = findWallSegments(game_state.maze_state)

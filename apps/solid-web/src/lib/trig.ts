@@ -4,6 +4,8 @@ export const randomIntFrom = (min: number, max: number) =>
 
 export const remainder = (a: number, b: number) => ((a % b) + b) % b
 
+export const toRadian = (degrees: number) => (degrees * Math.PI) / 180
+
 export const mapRange = (
     value: number,
     in_min: number,
@@ -11,6 +13,8 @@ export const mapRange = (
     out_min: number,
     out_max: number,
 ) => ((value - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
+
+export const number_equals = (a: number, b: number) => Math.abs(a - b) < Number.EPSILON
 
 export const between = (a: number, b: number, c: number): boolean => {
     if (a > c) [a, c] = [c, a]
@@ -111,12 +115,22 @@ export class Vector implements Pointable {
         return new Vector(fn(this.x), fn(this.y))
     }
     equals(vec: Pointable) {
-        return this.x === vec.x && this.y === vec.y
+        return vec_equals(this, vec)
     }
     go(direction: Direction, amount = 1): Vector {
         let d = DIRECTION_TO_VECTOR[direction]
         if (amount != 1) d = d.multiply(amount)
         return this.add(d)
+    }
+    rotate(rad: number, center: Pointable = ZERO_VEC) {
+        const cos = Math.cos(rad),
+            sin = Math.sin(rad),
+            x = center.x + (this.x - center.x) * cos - (this.y - center.y) * sin,
+            y = center.y + (this.x - center.x) * sin + (this.y - center.y) * cos
+        return new Vector(x, y)
+    }
+    round(): Vector {
+        return new Vector(Math.round(this.x), Math.round(this.y))
     }
 
     toString(): VecString {
@@ -127,7 +141,8 @@ export class Vector implements Pointable {
     }
 }
 
-export const vec_equals = (a: Pointable, b: Pointable) => a.x === b.x && a.y === b.y
+export const vec_equals = (a: Pointable, b: Pointable) =>
+    number_equals(a.x, b.x) && number_equals(a.y, b.y)
 
 export const vector = (x: number, y?: number) => new Vector(x, y)
 export const vectorFrom = (vec: Pointable) => new Vector(vec.x, vec.y)
@@ -138,24 +153,35 @@ export const vectorFromStr = (str: VecString) => {
 
 export const ZERO_VEC = new Vector(0, 0)
 
+/**
+ * Quadrants are reversed from the normal cartesian plane
+ * So that the origin is in the bottom left
+ */
 export const enum Quadrand {
-    BottomLeft = 0,
-    BottomRight = 1,
-    TopRight = 2,
-    TopLeft = 3,
+    Bottom_Left = 0,
+    Bottom_Right = 1,
+    Top_Right = 2,
+    Top_Left = 3,
 }
-export const QUADRANTS = [
-    Quadrand.BottomLeft,
-    Quadrand.BottomRight,
-    Quadrand.TopRight,
-    Quadrand.TopLeft,
+export const quadrants = [
+    Quadrand.Top_Right,
+    Quadrand.Top_Left,
+    Quadrand.Bottom_Left,
+    Quadrand.Bottom_Right,
 ] as const
 
-export const QUADRAND_TO_VEC: Record<Quadrand, Vector> = {
-    0: new Vector(0, 0), // bottom left
-    1: new Vector(1, 0), // bottom right
-    2: new Vector(1, 1), // top right
-    3: new Vector(0, 1), // top left
+export const quadrand_to_vec: Record<Quadrand, Vector> = {
+    [Quadrand.Top_Right]: new Vector(1, 1),
+    [Quadrand.Top_Left]: new Vector(0, 1),
+    [Quadrand.Bottom_Left]: new Vector(0, 0),
+    [Quadrand.Bottom_Right]: new Vector(1, 0),
+}
+
+export const quadrand_to_rotation: Record<Quadrand, number> = {
+    [Quadrand.Bottom_Left]: 0,
+    [Quadrand.Bottom_Right]: Math.PI / 2,
+    [Quadrand.Top_Right]: Math.PI,
+    [Quadrand.Top_Left]: (3 * Math.PI) / 2,
 }
 
 export class Segment {
@@ -183,6 +209,10 @@ export class Segment {
                 yield new Vector(x, y)
             }
         }
+    }
+
+    add(vec: Vector): Segment {
+        return new Segment(this.start.add(vec), this.end.add(vec))
     }
 
     toJSON() {

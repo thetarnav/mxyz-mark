@@ -8,23 +8,25 @@ export const SHRINE_SIZE_TILES = 4
 export const SHRINE_RADIUS_TILES = 2
 export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 export const WINDOW_SIZE = 15
-export const CENTER = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
 
-export const CORNER_SHRINE_ORIGINS = t.QUADRANTS.reduce((acc, quadrand) => {
-    acc[quadrand] = t.QUADRAND_TO_VEC[quadrand].multiply(N_TILES - SHRINE_SIZE_TILES)
-    return acc
-}, {} as Record<t.Quadrand, t.Vector>)
+export const maze_center = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
+export const maze_center_origin = maze_center.subtract(Math.floor(WINDOW_SIZE / 2))
 
-export const CORNER_SHRINE_CENTERS = t.QUADRANTS.reduce((acc, quadrand) => {
-    const canter = CORNER_SHRINE_ORIGINS[quadrand]
+export const corner_shrine_corners = t.quadrants.reduce((acc, quadrand) => {
+    acc[quadrand] = t.quadrand_to_vec[quadrand]
+        .multiply(N_TILES - SHRINE_SIZE_TILES)
         .multiply(GRID_SIZE)
-        .add(t.vector(SHRINE_RADIUS_TILES, SHRINE_RADIUS_TILES).multiply(GRID_SIZE))
-        .subtract(1, 1)
-    acc[quadrand] = canter
     return acc
 }, {} as Record<t.Quadrand, t.Vector>)
 
-export const ALL_SHRINE_CENTERS = [CENTER, ...Object.values(CORNER_SHRINE_CENTERS)]
+export const shrine_center = t.vector(SHRINE_RADIUS_TILES).multiply(GRID_SIZE).subtract(1)
+
+export const corner_shrine_centers = t.quadrants.reduce((acc, quadrand) => {
+    acc[quadrand] = corner_shrine_corners[quadrand].add(shrine_center)
+    return acc
+}, {} as Record<t.Quadrand, t.Vector>)
+
+export const ALL_SHRINE_CENTERS = [maze_center, ...Object.values(corner_shrine_centers)]
 
 export type MazeTileState = {
     wall: boolean
@@ -72,8 +74,8 @@ function generateWallsInfo() {
         and in the center shrine
     */
     const ignoredVectorsSet = new Set<t.VecString>()
-    for (const q of t.QUADRANTS) {
-        const originTile = CORNER_SHRINE_ORIGINS[q]
+    for (const q of t.quadrants) {
+        const originTile = t.quadrand_to_vec[q].multiply(N_TILES - SHRINE_SIZE_TILES)
         for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE_TILES - 1)).points()) {
             ignoredVectorsSet.add(originTile.add(vec).toString())
         }
@@ -165,6 +167,51 @@ function isWallsPointWall(p: t.Vector, walls: ReturnType<typeof generateWallsInf
     return walls.get(mazeP)![t.Direction.Down]
 }
 
+export const shrine_structure_paths = {
+    Corner: [
+        t.vector(3, 3),
+        t.vector(3, 4),
+        t.vector(4, 3),
+        t.vector(3, 5),
+        t.vector(5, 3),
+        t.vector(3, 6),
+        t.vector(6, 3),
+        t.vector(3, 8),
+        t.vector(8, 3),
+        t.vector(3, 9),
+        t.vector(9, 3),
+        t.vector(3, 11),
+        t.vector(11, 3),
+    ],
+    Circle: [
+        t.vector(3, 4),
+        t.vector(4, 4),
+        t.vector(5, 4),
+        t.vector(4, 3),
+        t.vector(4, 5),
+        //
+        t.vector(9, 4),
+        t.vector(10, 4),
+        t.vector(11, 4),
+        t.vector(10, 3),
+        t.vector(10, 5),
+        //
+        t.vector(3, 10),
+        t.vector(4, 10),
+        t.vector(5, 10),
+        t.vector(4, 9),
+        t.vector(4, 11),
+        //
+        t.vector(9, 10),
+        t.vector(10, 10),
+        t.vector(11, 10),
+        t.vector(10, 9),
+        t.vector(10, 11),
+    ],
+} satisfies Record<string, t.Pointable[]>
+
+const getRandomExit = () => t.randomInt(SHRINE_SIZE_TILES - 1) * GRID_SIZE
+
 export function generateInitMazeState(): MazeMatrix {
     const walls = generateWallsInfo()
 
@@ -178,53 +225,68 @@ export function generateInitMazeState(): MazeMatrix {
         }
     })
 
-    {
-        const getRandomExit = () => t.randomInt(SHRINE_SIZE_TILES - 1) * GRID_SIZE
+    for (const q of t.quadrants) {
+        const corner = corner_shrine_corners[q]
 
-        for (const q of t.QUADRANTS) {
-            /*
-                Clear walls inside the corner shrines
-            */
-            const qVec = t.QUADRAND_TO_VEC[q]
-            const corner = qVec
-                .multiply(t.vector(BOARD_SIZE - 1, BOARD_SIZE - 1))
-                .subtract(qVec.multiply(SHRINE_SIZE - 2))
-
-            for (const vec of t.segment(t.ZERO_VEC, t.vector(SHRINE_SIZE - 2)).points()) {
-                state.get(corner.add(vec))!.wall = false
-            }
-
-            /*
-                Make corner shrine exits (one on each maze-facing edge)
-            */
-            const wall = qVec.map(xy => (1 - xy) * SHRINE_SIZE - 1),
-                exit = t.vector(getRandomExit(), getRandomExit())
-
-            for (let x = 0; x < TILE_SIZE; x++) {
-                state.get(corner.add(x + exit.x, wall.y))!.wall = false
-            }
-            for (let y = 0; y < TILE_SIZE; y++) {
-                state.get(corner.add(wall.x, y + exit.y))!.wall = false
-            }
+        /*
+            Clear walls inside the corner shrines
+        */
+        for (const vec of t
+            .segment(t.ZERO_VEC, t.vector(SHRINE_SIZE - 2))
+            .add(corner)
+            .points()) {
+            state.get(vec)!.wall = false
         }
 
         /*
-            Clear walls inside the center shrine
+            Make corner shrine exits (one on each maze-facing edge)
         */
-        const bottomLeft = CENTER.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
-        const topRight = CENTER.add(SHRINE_RADIUS_TILES * GRID_SIZE)
-        for (const vec of t.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
-            state.get(vec)!.wall = false
-        }
-        const exitTiles = Array.from({ length: 4 }, getRandomExit)
+        const q_vec = t.quadrand_to_vec[q],
+            wall = q_vec.map(xy => (1 - xy) * SHRINE_SIZE - 1),
+            exit = t.vector(getRandomExit(), getRandomExit())
+
         for (let x = 0; x < TILE_SIZE; x++) {
-            state.get({ x: bottomLeft.x + exitTiles[0] + x + 1, y: bottomLeft.y })!.wall = false
-            state.get({ x: bottomLeft.x + exitTiles[1] + x + 1, y: topRight.y })!.wall = false
+            state.get(corner.add(x + exit.x, wall.y))!.wall = false
         }
         for (let y = 0; y < TILE_SIZE; y++) {
-            state.get({ x: bottomLeft.x, y: bottomLeft.y + exitTiles[2] + y + 1 })!.wall = false
-            state.get({ x: topRight.x, y: bottomLeft.y + exitTiles[3] + y + 1 })!.wall = false
+            state.get(corner.add(wall.x, y + exit.y))!.wall = false
         }
+    }
+
+    /*
+        Clear walls inside the center shrine
+    */
+    const bottomLeft = maze_center.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
+    const topRight = maze_center.add(SHRINE_RADIUS_TILES * GRID_SIZE)
+    for (const vec of t.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
+        state.get(vec)!.wall = false
+    }
+    const exitTiles = Array.from({ length: 4 }, getRandomExit)
+    for (let x = 0; x < TILE_SIZE; x++) {
+        state.get({ x: bottomLeft.x + exitTiles[0] + x + 1, y: bottomLeft.y })!.wall = false
+        state.get({ x: bottomLeft.x + exitTiles[1] + x + 1, y: topRight.y })!.wall = false
+    }
+    for (let y = 0; y < TILE_SIZE; y++) {
+        state.get({ x: bottomLeft.x, y: bottomLeft.y + exitTiles[2] + y + 1 })!.wall = false
+        state.get({ x: topRight.x, y: bottomLeft.y + exitTiles[3] + y + 1 })!.wall = false
+    }
+
+    /*
+        add shrine structures
+    */
+    for (const q of t.quadrants) {
+        const corner = corner_shrine_corners[q]
+        const structure = shrine_structure_paths.Corner
+        const rotation = t.quadrand_to_rotation[q]
+
+        for (let vec of structure) {
+            vec = vec.rotate(rotation, shrine_center).add(corner).round()
+            state.get(vec)!.wall = true
+        }
+    }
+
+    for (const vec of shrine_structure_paths.Circle) {
+        state.get(vec.add(maze_center_origin))!.wall = true
     }
 
     return state
