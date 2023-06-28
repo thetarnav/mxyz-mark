@@ -68,7 +68,7 @@ export const isVisible = (maze_state: Maze_Matrix, p: t.Vector) => {
 
 export const shrine_structure_paths = {
     Corner: [
-        t.vector(3, 3),
+        // t.vector(3, 3),
         t.vector(3, 4),
         t.vector(4, 3),
         t.vector(3, 5),
@@ -371,7 +371,12 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
                 */
                 const x = -Math.sign(dx),
                     y = -Math.sign(dy)
-                if (updatePointVisibility(game_state, p.add(x, y))) break gaps
+                if (
+                    updatePointVisibility(game_state, p.add(x, y)) &&
+                    (updatePointVisibility(game_state, p.add(x, 0)) ||
+                        updatePointVisibility(game_state, p.add(0, y)))
+                )
+                    break gaps
             } else {
                 /*
                       X
@@ -420,13 +425,16 @@ export function updateVisiblePoints(game_state: Game_State): void {
     /*
         player and all wall-less tiles around him are visible
     */
-    game_state.visible = new Map(
-        t
-            .getRing(player, 1)
-            .filter(p => isVisible(maze_state, p))
-            .concat(player)
-            .map(p => [maze_state.i(p), true]),
-    )
+    game_state.visible = new Map([[maze_state.i(player), true]])
+
+    for (let x = -1; x <= 1; x += 2) {
+        const p = player.add(x, 0)
+        if (isVisible(maze_state, p)) game_state.visible.set(maze_state.i(p), true)
+    }
+    for (let y = -1; y <= 1; y += 2) {
+        const p = player.add(0, y)
+        if (isVisible(maze_state, p)) game_state.visible.set(maze_state.i(p), true)
+    }
 
     for (const p of windowed) updatePointVisibility(game_state, windowed.get(p)!)
 }
