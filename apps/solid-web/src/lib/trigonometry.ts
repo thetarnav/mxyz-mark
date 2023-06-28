@@ -123,14 +123,13 @@ export class Vector implements Pointable {
         return this.add(d)
     }
     rotate(rad: number, center: Pointable = ZERO_VEC) {
-        const cos = Math.cos(rad),
-            sin = Math.sin(rad),
-            x = center.x + (this.x - center.x) * cos - (this.y - center.y) * sin,
-            y = center.y + (this.x - center.x) * sin + (this.y - center.y) * cos
-        return new Vector(x, y)
+        return rotate(this, rad, center)
     }
     round(): Vector {
         return new Vector(Math.round(this.x), Math.round(this.y))
+    }
+    flip(center: Pointable = ZERO_VEC): Vector {
+        return flip_vector(this, center)
     }
 
     toString(): VecString {
@@ -141,8 +140,7 @@ export class Vector implements Pointable {
     }
 }
 
-export const vec_equals = (a: Pointable, b: Pointable) =>
-    number_equals(a.x, b.x) && number_equals(a.y, b.y)
+export const ZERO_VEC = new Vector(0, 0)
 
 export const vector = (x: number, y?: number) => new Vector(x, y)
 export const vectorFrom = (vec: Pointable) => new Vector(vec.x, vec.y)
@@ -151,7 +149,20 @@ export const vectorFromStr = (str: VecString) => {
     return new Vector(x, y)
 }
 
-export const ZERO_VEC = new Vector(0, 0)
+export const rotate = (vec: Pointable, rad: number, center: Pointable = ZERO_VEC) => {
+    const cos = Math.cos(rad),
+        sin = Math.sin(rad),
+        x = center.x + (vec.x - center.x) * cos - (vec.y - center.y) * sin,
+        y = center.y + (vec.x - center.x) * sin + (vec.y - center.y) * cos
+    return new Vector(x, y)
+}
+
+export const flip_vector = (vec: Pointable, center: Pointable = ZERO_VEC) => {
+    return new Vector(center.x * 2 - vec.x, center.y * 2 - vec.y)
+}
+
+export const vec_equals = (a: Pointable, b: Pointable) =>
+    number_equals(a.x, b.x) && number_equals(a.y, b.y)
 
 /**
  * Quadrants are reversed from the normal cartesian plane
@@ -164,10 +175,10 @@ export const enum Quadrand {
     Top_Left = 3,
 }
 export const quadrants = [
-    Quadrand.Top_Right,
-    Quadrand.Top_Left,
     Quadrand.Bottom_Left,
     Quadrand.Bottom_Right,
+    Quadrand.Top_Right,
+    Quadrand.Top_Left,
 ] as const
 
 export const quadrand_to_vec: Record<Quadrand, Vector> = {
