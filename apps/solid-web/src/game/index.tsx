@@ -9,7 +9,6 @@ import { createDirectionMovement } from './held-direction'
 import {
     corner_shrine_centers,
     generateInitMazeState,
-    findWallSegments,
     maze_center,
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
@@ -90,7 +89,6 @@ const Game = () => {
         player: maze_center,
         finish: null!,
         maze_state: null!,
-        wall_segments: null!,
         turn: 0,
         progress_to_flood_update: 0,
         shallow_flood: new Set(),
@@ -115,7 +113,6 @@ const Game = () => {
         game_state.shallow_flood.add(corner_shrine_centers[flood_start_q as t.Quadrand].toString())
 
         game_state.maze_state = generateInitMazeState()
-        game_state.wall_segments = findWallSegments(game_state.maze_state)
     }
 
     const trackGameState = () => {

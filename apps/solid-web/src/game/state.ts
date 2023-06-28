@@ -40,7 +40,6 @@ export type Game_State = {
     player: t.Vector
     finish: t.Vector
     maze_state: Maze_Matrix
-    wall_segments: t.Segment[]
     windowed: t.Matrix<t.Vector>
     visible: Map<number, boolean>
     shallow_flood: Set<t.VecString>
@@ -298,44 +297,8 @@ export function generateInitMazeState(): Maze_Matrix {
     return state
 }
 
-/**
- * Find all horizontal and vertical walls made from tiles in the matrix.
- * Returns an array of segments.
- */
-export function findWallSegments(matrix: Maze_Matrix): t.Segment[] {
-    const wallSegments: t.Segment[] = []
-
-    const visitPoint = (x: number, y: number, newSeg: [t.Vector?, t.Vector?]) => {
-        const p = new t.Vector(x, y)
-        if (matrix.get(p)!.wall === true) {
-            newSeg[newSeg[0] === undefined ? 0 : 1] = p
-        } else {
-            if (newSeg[0] !== undefined && newSeg[1] !== undefined) {
-                wallSegments.push(new t.Segment(newSeg[0]!, newSeg[1]!))
-            }
-            newSeg[0] = newSeg[1] = undefined
-        }
-    }
-
-    const newYSeg: [t.Vector?, t.Vector?] = [undefined, undefined]
-    for (let x = 0; x < matrix.width; x++) {
-        for (let y = 0; y < matrix.height; y++) {
-            visitPoint(x, y, newYSeg)
-        }
-    }
-
-    const newXSeg: [t.Vector?, t.Vector?] = [undefined, undefined]
-    for (let y = 0; y < matrix.height; y++) {
-        for (let x = 0; x < matrix.width; x++) {
-            visitPoint(x, y, newXSeg)
-        }
-    }
-
-    return wallSegments
-}
-
 function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
-    const { maze_state, player, visible, windowed, wall_segments } = game_state
+    const { maze_state, player, visible, windowed } = game_state
 
     if (!maze_state.inBounds(p)) return false
 
@@ -355,62 +318,51 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
             break check
         }
 
+        const dx = p.x - player.x,
+            dy = p.y - player.y,
+            sx = Math.sign(dx),
+            sy = Math.sign(dy)
+
         /*
             don't allow for gaps between visible tiles
             at least one neighbor must be visible
         */
-        gaps: {
-            const dx = p.x - player.x,
-                dy = p.y - player.y
-
-            if (Math.abs(dx) === Math.abs(dy)) {
-                /*
-                    X   X
-                      @
-                    X   X
-                */
-                const x = -Math.sign(dx),
-                    y = -Math.sign(dy)
-                if (
-                    updatePointVisibility(game_state, p.add(x, y)) &&
-                    (updatePointVisibility(game_state, p.add(x, 0)) ||
-                        updatePointVisibility(game_state, p.add(0, y)))
-                )
-                    break gaps
-            } else {
-                /*
-                      X
-                    X @ X
-                      X
-                */
-                if (dx > 0) {
-                    if (updatePointVisibility(game_state, p.add(-1, 0))) break gaps
-                } else if (dx < 0) {
-                    if (updatePointVisibility(game_state, p.add(1, 0))) break gaps
-                }
-                if (dy > 0) {
-                    if (updatePointVisibility(game_state, p.add(0, -1))) break gaps
-                } else if (dy < 0) {
-                    if (updatePointVisibility(game_state, p.add(0, 1))) break gaps
-                }
-            }
-
+        if (
+            (Math.abs(dx) === Math.abs(dy) &&
+                !updatePointVisibility(game_state, p.add(-sx, -sy))) ||
+            (sx !== 0 &&
+                !updatePointVisibility(game_state, p.add(-sx, 0)) &&
+                sy !== 0 &&
+                !updatePointVisibility(game_state, p.add(0, -sy)))
+        )
             break check
-        }
 
-        const tileSeg = t.segment(player, p)
-
-        /*
-            a tile must be within the player's round field of view
-        */
-        if (t.segmentLength(tileSeg) >= (windowed.width - 1) / 2 + 0.5) break check
+        const seg = t.segment(player, p)
+        const line = t.lineFromSegment(seg)
 
         /*
             a tile must not have a wall segment between it and the player
         */
-        for (const wallSeg of wall_segments) {
-            if (t.segmentsIntersecting(tileSeg, wallSeg)) break check
+        for (let x = player.x + sx; x !== p.x; x += sx) {
+            const y = t.getLineY(line, x),
+                p1 = t.vector(x, Math.floor(y)),
+                p2 = t.vector(x, Math.ceil(y))
+            if (!updatePointVisibility(game_state, p1) && !updatePointVisibility(game_state, p2))
+                break check
         }
+
+        for (let y = player.y + sy; y !== p.y; y += sy) {
+            const x = t.getLineX(line, y),
+                p1 = t.vector(Math.floor(x), y),
+                p2 = t.vector(Math.ceil(x), y)
+            if (!updatePointVisibility(game_state, p1) && !updatePointVisibility(game_state, p2))
+                break check
+        }
+
+        /*
+            a tile must be within the player's round field of view
+        */
+        if (t.segmentLength(seg) >= (windowed.width - 1) / 2 + 0.5) break check
 
         is_visible = true
     }

@@ -359,6 +359,25 @@ export function windowedMatrix(size: number, center: Vector): Matrix<Vector> {
     return new Matrix(size, size, (x, y) => new Vector(x, y).add(dVec))
 }
 
+class Line {
+    constructor(public a: number, public b: number, public c: number) {}
+
+    get 0() {
+        return this.a
+    }
+    get 1() {
+        return this.b
+    }
+    get 2() {
+        return this.c
+    }
+    *[Symbol.iterator]() {
+        yield this.a
+        yield this.b
+        yield this.c
+    }
+}
+
 /*
     general form: ax + by + c = 0
     slope-intercept form: y = sx + i
@@ -366,18 +385,26 @@ export function windowedMatrix(size: number, center: Vector): Matrix<Vector> {
     normal: a = -s, b = 1, c = -i
     vertical: a = 1, b = 0, c = -x
 */
-export const segmentToGeneralForm = (seg: Segment): [a: number, b: number, c: number] => {
+export const lineFromSegment = (seg: Segment): Line => {
     if (seg.x1 === seg.x2) {
-        return [1, 0, -seg.x1]
+        return new Line(1, 0, -seg.x1)
     }
     const s = (seg.y2 - seg.y1) / (seg.x2 - seg.x1)
     const i = seg.y1 - s * seg.x1
-    return [-s, 1, -i]
+    return new Line(-s, 1, -i)
+}
+
+export function getLineX(line: Line, y: number) {
+    return (-line.b * y - line.c) / line.a
+}
+
+export function getLineY(line: Line, x: number) {
+    return (-line.a * x - line.c) / line.b
 }
 
 export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
-    const [a1, b1, c1] = segmentToGeneralForm(seg1)
-    const [a2, b2, c2] = segmentToGeneralForm(seg2)
+    const [a1, b1, c1] = lineFromSegment(seg1)
+    const [a2, b2, c2] = lineFromSegment(seg2)
 
     // check if parallel
     if (a1 === a2 && b1 === b2) {
