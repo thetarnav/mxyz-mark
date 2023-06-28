@@ -42,7 +42,7 @@ export type GameState = {
     wall_segments: t.Segment[]
     shallow_flood: Set<t.VecString>
     windowed: t.Matrix<t.Vector>
-    visible: Set<t.VecString>
+    visible: Map<number, boolean>
     turn: number
     progress_to_flood_update: number
     in_shrine: boolean
@@ -328,95 +328,94 @@ export function findWallSegments(matrix: MazeMatrix): t.Segment[] {
     return wallSegments
 }
 
-export function findVisiblePoints(game_state: GameState): Set<t.VecString> {
-    const { maze_state, player, windowed, wall_segments } = game_state
+function updatePointVisibility(game_state: GameState, p: t.Vector): boolean {
+    const { maze_state, player, visible, windowed, wall_segments } = game_state
 
-    /*
-        player and all wall-less tiles around him are visible
-    */
-    const visibleSet = new Set(
-            t
-                .getRing(player, 1)
-                .filter(p => isVisible(maze_state, p))
-                .concat(player)
-                .map(p => p.toString()),
-        ),
-        radius = (windowed.width - 1) / 2,
-        windowedPlayerVec = t.vector(radius, radius)
+    if (!maze_state.inBounds(p)) return false
 
-    /*
-        check points closer to the player first
-        so that we can detect gaps between visible tiles
-    */
-    for (let r = 2; r <= radius; r++) {
-        ring: for (const wPoint of t.getRing(windowedPlayerVec, r)) {
-            const p = windowed.get(wPoint)
+    const i = maze_state.i(p)
+    let is_visible = visible.get(i)
+    if (is_visible !== undefined) return is_visible
+    is_visible = false
 
-            /*
-                walls are not visible
-            */
-            if (!p || !isVisible(maze_state, p)) continue
+    check: {
+        /*
+            walls are not visible
+        */
+        if (!isVisible(maze_state, p)) break check
 
-            /*
-                don't allow for gaps between visible tiles
-                at least one neighbor must be visible
-            */
-            gaps: {
-                /*
-                    X @ X
-                */
-                if (p.x > player.x) {
-                    if (visibleSet.has(p.add(-1, 0).toString())) break gaps
-                } else if (p.x < player.x) {
-                    if (visibleSet.has(p.add(1, 0).toString())) break gaps
-                }
+        /*
+            don't allow for gaps between visible tiles
+            at least one neighbor must be visible
+        */
+        gaps: {
+            const dx = p.x - player.x,
+                dy = p.y - player.y
 
-                /*
-                    X
-                    @
-                    X
-                */
-                if (p.y > player.y) {
-                    if (visibleSet.has(p.add(0, -1).toString())) break gaps
-                } else if (p.y < player.y) {
-                    if (visibleSet.has(p.add(0, 1).toString())) break gaps
-                }
-
+            if (Math.abs(dx) === Math.abs(dy)) {
                 /*
                     X   X
                       @
                     X   X
                 */
-                if (p.x > player.x && p.y > player.y) {
-                    if (visibleSet.has(p.add(-1, -1).toString())) break gaps
-                } else if (p.x < player.x && p.y < player.y) {
-                    if (visibleSet.has(p.add(1, 1).toString())) break gaps
-                } else if (p.x > player.x && p.y < player.y) {
-                    if (visibleSet.has(p.add(-1, 1).toString())) break gaps
-                } else if (p.x < player.x && p.y > player.y) {
-                    if (visibleSet.has(p.add(1, -1).toString())) break gaps
+                const x = -Math.sign(dx),
+                    y = -Math.sign(dy)
+                if (updatePointVisibility(game_state, p.add(x, y))) break gaps
+            } else {
+                /*
+                      X
+                    X @ X
+                      X
+                */
+                if (dx > 0) {
+                    if (updatePointVisibility(game_state, p.add(-1, 0))) break gaps
+                } else if (dx < 0) {
+                    if (updatePointVisibility(game_state, p.add(1, 0))) break gaps
                 }
-
-                continue
+                if (dy > 0) {
+                    if (updatePointVisibility(game_state, p.add(0, -1))) break gaps
+                } else if (dy < 0) {
+                    if (updatePointVisibility(game_state, p.add(0, 1))) break gaps
+                }
             }
 
-            const tileSeg = t.segment(player, p)
-
-            /*
-                a tile must be within the player's round field of view
-            */
-            if (t.segmentLength(tileSeg) >= radius + 0.5) continue
-
-            /*
-                a tile must not have a wall segment between it and the player
-            */
-            for (const wallSeg of wall_segments) {
-                if (t.segmentsIntersecting(tileSeg, wallSeg)) continue ring
-            }
-
-            visibleSet.add(p.toString())
+            break check
         }
+
+        const tileSeg = t.segment(player, p)
+
+        /*
+            a tile must be within the player's round field of view
+        */
+        if (t.segmentLength(tileSeg) >= (windowed.width - 1) / 2 + 0.5) break check
+
+        /*
+            a tile must not have a wall segment between it and the player
+        */
+        for (const wallSeg of wall_segments) {
+            if (t.segmentsIntersecting(tileSeg, wallSeg)) break check
+        }
+
+        is_visible = true
     }
 
-    return visibleSet
+    visible.set(i, is_visible)
+    return is_visible
+}
+
+export function updateVisiblePoints(game_state: GameState): void {
+    const { maze_state, player, windowed } = game_state
+
+    /*
+        player and all wall-less tiles around him are visible
+    */
+    game_state.visible = new Map(
+        t
+            .getRing(player, 1)
+            .filter(p => isVisible(maze_state, p))
+            .concat(player)
+            .map(p => [maze_state.i(p), true]),
+    )
+
+    for (const p of windowed) updatePointVisibility(game_state, windowed.get(p)!)
 }

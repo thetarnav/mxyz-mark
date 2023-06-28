@@ -14,7 +14,7 @@ import {
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
     WINDOW_SIZE,
-    findVisiblePoints,
+    updateVisiblePoints,
     BOARD_SIZE,
     isFlooded,
     ALL_SHRINE_CENTERS,
@@ -31,7 +31,7 @@ function updateState(game_state: GameState, player: t.Vector) {
 
     game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
 
-    game_state.visible = findVisiblePoints(game_state)
+    updateVisiblePoints(game_state)
 
     game_state.in_shrine = ALL_SHRINE_CENTERS.some(
         center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
@@ -81,9 +81,9 @@ const Game = () => {
         wall_segments: null!,
         turn: 0,
         progress_to_flood_update: 0,
-        shallow_flood: new Set<t.VecString>(),
+        shallow_flood: new Set(),
         windowed: null!,
-        visible: new Set<t.VecString>(),
+        visible: new Map(),
         in_shrine: false,
     }
 
@@ -153,13 +153,12 @@ const Game = () => {
             if (fov_vec.equals(minimap_finish)) return 'bg-amber'
         }
 
-        const vec_str = vec.toString()
         const vec_state = maze_state.get(vec)
 
-        if (vec_state && game_state.visible.has(vec_str)) {
+        if (vec_state && game_state.visible.get(maze_state.i(vec))) {
             if (game_state.player.equals(vec)) return 'bg-white'
             if (vec_state.flooded) return 'bg-red-5'
-            if (game_state.shallow_flood.has(vec_str)) {
+            if (game_state.shallow_flood.has(vec.toString())) {
                 for (const neighbor of t.eachPointDirection(vec, maze_state)) {
                     if (isFlooded(maze_state, neighbor)) return 'bg-orange-5'
                 }

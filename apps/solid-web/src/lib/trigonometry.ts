@@ -334,6 +334,13 @@ export class Matrix<T> {
     }
 }
 
+// export const move_vec_index = (width: number, i: number, x: number, y: number) => {
+//     const ix = i % width,
+//         iy = Math.floor(Math.abs(i / width)) * Math.sign(i)
+//     if (i % width < x || i % width >= width - x) return undefined
+//     i += x + y * width
+// }
+
 export function* eachPointDirection<T>(point: Vector | number, matrix: Matrix<T>) {
     for (const dir of DIRECTION_POINTS) {
         const next = matrix.go(point, dir)
