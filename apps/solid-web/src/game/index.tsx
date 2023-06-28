@@ -18,7 +18,7 @@ import {
     BOARD_SIZE,
     isFlooded,
     ALL_SHRINE_CENTERS,
-    GameState,
+    Game_State,
 } from './state'
 
 // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
@@ -26,7 +26,7 @@ import {
 const vecToMinimap = (vec: t.Vector) =>
     vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
-function updateState(game_state: GameState, player: t.Vector) {
+function updateState(game_state: Game_State, player: t.Vector) {
     game_state.player = player
 
     game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
@@ -38,7 +38,7 @@ function updateState(game_state: GameState, player: t.Vector) {
     )
 }
 
-function expandFlood(game_state: GameState) {
+function expandFlood(game_state: Game_State) {
     const { maze_state } = game_state
 
     game_state.turn++
@@ -70,8 +70,20 @@ function expandFlood(game_state: GameState) {
     }
 }
 
+function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknown) {
+    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+        throw new Error('invalid input')
+    }
+    const vec = t.vector(x, y)
+    if (!game_state.maze_state.inBounds(vec)) {
+        throw new Error('out of bounds')
+    }
+    updateState(game_state, vec)
+    s.trigger(game_state.turn_signal)
+}
+
 const Game = () => {
-    const game_state: GameState = {
+    const game_state: Game_State = {
         /*
             place player in center of a random corner quadrant
         */
@@ -85,6 +97,8 @@ const Game = () => {
         windowed: null!,
         visible: new Map(),
         in_shrine: false,
+        turn_signal: s.signal(),
+        show_invisible: false,
     }
 
     /*
@@ -104,24 +118,14 @@ const Game = () => {
         game_state.wall_segments = findWallSegments(game_state.maze_state)
     }
 
-    const turn_signal = s.signal()
-
     const trackGameState = () => {
-        turn_signal.get()
+        game_state.turn_signal.get()
         return game_state
     }
 
     if (import.meta.env.DEV) {
         ;(window as any).$tp = (x: unknown, y: unknown) => {
-            if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
-                throw new Error('invalid input')
-            }
-            const vec = t.vector(x, y)
-            if (!game_state.maze_state.inBounds(vec)) {
-                throw new Error('out of bounds')
-            }
-            updateState(game_state, vec)
-            s.trigger(turn_signal)
+            setAbsolutePlayerPosition(game_state, x, y)
         }
     }
 
@@ -138,7 +142,7 @@ const Game = () => {
 
         updateState(game_state, vec)
         expandFlood(game_state)
-        s.trigger(turn_signal)
+        s.trigger(game_state.turn_signal)
     })
 
     const minimap_finish = vecToMinimap(game_state.finish)
@@ -183,8 +187,48 @@ const Game = () => {
                 )}
             </MatrixGrid>
             <div class="fixed right-12 top-12">
-                <p>{trackGameState().player + ''}</p>
+                {solid.untrack(() => {
+                    let input1!: HTMLInputElement
+                    let input2!: HTMLInputElement
+                    return (
+                        <form
+                            onSubmit={e => {
+                                e.preventDefault()
+                                const x = input1.valueAsNumber
+                                const y = input2.valueAsNumber
+                                setAbsolutePlayerPosition(game_state, x, y)
+                            }}
+                            class="space-x-2"
+                            onKeyDown={e => {
+                                if (e.key !== 'Enter') e.stopPropagation()
+                            }}
+                        >
+                            <input
+                                ref={input1}
+                                value={trackGameState().player.x}
+                                class="w-12"
+                                type="number"
+                            />
+                            <input
+                                ref={input2}
+                                value={trackGameState().player.y}
+                                class="w-12"
+                                type="number"
+                            />
+                            <button class="hidden" />
+                        </form>
+                    )
+                })}
                 <p>turn: {trackGameState().turn}</p>
+                <button
+                    onClick={() => {
+                        game_state.show_invisible = !game_state.show_invisible
+                        updateState(game_state, game_state.player)
+                        s.trigger(game_state.turn_signal)
+                    }}
+                >
+                    {trackGameState().show_invisible ? 'hide' : 'show'} invisible
+                </button>
             </div>
         </>
     )

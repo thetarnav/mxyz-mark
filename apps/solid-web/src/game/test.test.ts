@@ -1,6 +1,6 @@
 import * as t from 'src/lib/trigonometry'
 import * as v from 'vitest'
-import { MazeMatrix, findWallSegments } from './state'
+import { Maze_Matrix, findWallSegments } from './state'
 
 v.describe('findWallSegments', () => {
     v.test('finds all wall segments', () => {
@@ -19,7 +19,7 @@ v.describe('findWallSegments', () => {
         const W = WALLS[0].length
         const H = WALLS.length
 
-        const matrix: MazeMatrix = new t.Matrix(W, H, (x, y) => ({
+        const matrix: Maze_Matrix = new t.Matrix(W, H, (x, y) => ({
             wall: !!WALLS[H - 1 - y][x],
             flooded: false,
             tinted: false,

@@ -5,8 +5,23 @@ body {
 
 button {
     --at-apply: text-white bg-transparent cursor-pointer;
-    --at-apply: border-white border-1 border-solid rounded-md;
+    --at-apply: border-gray-6 border-1 border-solid rounded-md;
     --at-apply: px-2 py-1;
     --at-apply: 'hover:border-primary';
+    --at-apply: 'focus:border-white';
     --at-apply: 'active:bg-primary active:focus:bg-primary active:text-black active:border-primary';
+}
+
+input {
+    --at-apply: text-white bg-transparent;
+    --at-apply: border-gray-6 border-1 border-solid rounded-md;
+    --at-apply: px-2 py-1;
+    --at-apply: 'hover:border-primary';
+    --at-apply: 'focus:border-white';
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
