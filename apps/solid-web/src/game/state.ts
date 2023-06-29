@@ -2,7 +2,7 @@ import * as t from 'src/lib/trigonometry'
 import * as s from 'src/lib/signal'
 
 export const N_TILES = 36
-export const TILE_SIZE = 3
+export const TILE_SIZE = 2
 export const GRID_SIZE = TILE_SIZE + 1
 export const BOARD_SIZE = N_TILES * GRID_SIZE - 1 // -1 for omitted last wall
 export const WINDOW_SIZE = 15
@@ -13,7 +13,7 @@ export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 export const SHRINE_CENTER = t.vector(Math.floor(SHRINE_SIZE / 2 - 1))
 
 export const maze_center = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
-export const maze_center_origin = maze_center.subtract(Math.floor(WINDOW_SIZE / 2))
+export const maze_center_origin = maze_center.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
 
 export const corner_shrine_corners = t.quadrants.reduce((acc, quadrand) => {
     acc[quadrand] = t.quadrand_to_vec[quadrand]
@@ -68,56 +68,47 @@ export const isVisible = (maze_state: Maze_Matrix, p: t.Vector) => {
 export const shrine_structure_paths = {
     Corner: [
         t.vector(0, 0),
-        t.vector(4, 4),
-        t.vector(3, 4),
-        t.vector(4, 3),
-        t.vector(3, 5),
-        t.vector(5, 3),
-        t.vector(3, 6),
-        t.vector(6, 3),
+        t.vector(10, 10),
+        t.vector(0, 10),
+        t.vector(10, 0),
+
+        t.vector(2, 2),
+        t.vector(3, 2),
+        t.vector(2, 3),
+
+        t.vector(1, 5),
+
+        t.vector(2, 8),
         t.vector(3, 8),
+        t.vector(2, 7),
+
+        t.vector(5, 1),
+
+        t.vector(8, 2),
         t.vector(8, 3),
-        t.vector(3, 9),
-        t.vector(9, 3),
-        t.vector(0, 11),
-        t.vector(1, 11),
-        t.vector(3, 11),
-        t.vector(0, 14),
-        t.vector(11, 0),
-        t.vector(11, 1),
-        t.vector(11, 3),
-        t.vector(14, 0),
-        t.vector(14, 14),
+        t.vector(7, 2),
     ],
     Circle: [
         t.vector(0, 0),
-        t.vector(0, 14),
-        t.vector(14, 0),
-        t.vector(14, 14),
-        //
-        t.vector(3, 4),
-        t.vector(4, 4),
-        t.vector(5, 4),
-        t.vector(4, 3),
-        t.vector(4, 5),
-        //
-        t.vector(9, 4),
-        t.vector(10, 4),
-        t.vector(11, 4),
-        t.vector(10, 3),
-        t.vector(10, 5),
-        //
-        t.vector(3, 10),
-        t.vector(4, 10),
-        t.vector(5, 10),
-        t.vector(4, 9),
-        t.vector(4, 11),
-        //
-        t.vector(9, 10),
         t.vector(10, 10),
-        t.vector(11, 10),
-        t.vector(10, 9),
-        t.vector(10, 11),
+        t.vector(0, 10),
+        t.vector(10, 0),
+
+        t.vector(2, 2),
+        t.vector(3, 2),
+        t.vector(2, 3),
+
+        t.vector(2, 8),
+        t.vector(3, 8),
+        t.vector(2, 7),
+
+        t.vector(8, 2),
+        t.vector(8, 3),
+        t.vector(7, 2),
+
+        t.vector(8, 8),
+        t.vector(7, 8),
+        t.vector(8, 7),
     ],
 } satisfies Record<string, t.Pointable[]>
 
@@ -128,19 +119,19 @@ function isWallsPointWall(
         [t.Direction.Down]: boolean
     }>,
 ): boolean {
-    const tileP = t.vector(p.x % GRID_SIZE, p.y % GRID_SIZE)
-    // tiles
-    if (tileP.x < TILE_SIZE && tileP.y < TILE_SIZE) return false
+    const tile_p = t.vector(p.x % GRID_SIZE, p.y % GRID_SIZE)
     // wall joints
-    if (tileP.x === TILE_SIZE && tileP.y === TILE_SIZE) return true
+    if (tile_p.x === TILE_SIZE && tile_p.y === TILE_SIZE) return false // will be handled later
+    // tiles
+    if (tile_p.x < TILE_SIZE && tile_p.y < TILE_SIZE) return false
     // vertical walls
-    if (tileP.x === TILE_SIZE) {
-        const mazeP = t.vector((p.x - TILE_SIZE) / GRID_SIZE, (p.y - tileP.y) / GRID_SIZE)
-        return walls.get(mazeP)![t.Direction.Right]
+    if (tile_p.x === TILE_SIZE) {
+        const walls_p = t.vector((p.x - TILE_SIZE) / GRID_SIZE, (p.y - tile_p.y) / GRID_SIZE)
+        return walls.get(walls_p)![t.Direction.Right]
     }
     // horizontal walls
-    const mazeP = t.vector((p.x - tileP.x) / GRID_SIZE, (p.y - TILE_SIZE) / GRID_SIZE + 1)
-    return walls.get(mazeP)![t.Direction.Down]
+    const walls_p = t.vector((p.x - tile_p.x) / GRID_SIZE, (p.y - TILE_SIZE) / GRID_SIZE + 1)
+    return walls.get(walls_p)![t.Direction.Down]
 }
 
 export function generateInitMazeState(): Maze_Matrix {
@@ -169,9 +160,6 @@ export function generateInitMazeState(): Maze_Matrix {
         ignoredVectorsSet.add(vec.toString())
     }
 
-    /*
-        use strings instead of vectors for === comparison
-    */
     const stack = [...ignoredVectorsSet],
         directions: t.Direction[] = []
 
@@ -240,6 +228,33 @@ export function generateInitMazeState(): Maze_Matrix {
             tinted: false,
         }
     })
+
+    /*
+        round the tunnel corners
+    */
+    for (const i of state) {
+        const p = state.vec(i)
+        if (p.x % GRID_SIZE === TILE_SIZE && p.y % GRID_SIZE === TILE_SIZE) {
+            const l = p.go(t.Direction.Left),
+                u = p.go(t.Direction.Up),
+                r = p.go(t.Direction.Right),
+                d = p.go(t.Direction.Down),
+                u_wall = isWall(state, u),
+                l_wall = isWall(state, l),
+                r_wall = isWall(state, r),
+                d_wall = isWall(state, d)
+
+            if ((u_wall && d_wall) || (l_wall && r_wall) || Math.random() < 0.5) {
+                state.get(p)!.wall = true
+            }
+            // @ts-expect-error we adding booleans
+            else if (u_wall + l_wall + r_wall + d_wall > 1) {
+                const from = u_wall ? u : d
+                const p = from.go(l_wall ? t.Direction.Left : t.Direction.Right)
+                state.get(p)!.wall = true
+            }
+        }
+    }
 
     for (const q of t.quadrants) {
         const corner = corner_shrine_corners[q]
