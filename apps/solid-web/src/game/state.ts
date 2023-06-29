@@ -341,6 +341,11 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
             sy = Math.sign(dy)
 
         /*
+            round window corners
+        */
+        if (t.distance(p, player) >= (windowed.width - 1) / 2 + 0.5) break check
+
+        /*
             don't allow for gaps between visible tiles
             at least one neighbor must be visible
         */
@@ -354,11 +359,11 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
         )
             break check
 
-        const seg = t.segment(player, p)
-        const line = t.lineFromSegment(seg)
+        const seg = t.segment(player, p),
+            line = t.lineFromSegment(seg)
 
         /*
-            a tile must not have a wall segment between it and the player
+            path from the tile to the player cannot be blocked by invisible tiles
         */
         for (let x = player.x + sx; x !== p.x; x += sx) {
             const y = t.getLineY(line, x),
@@ -375,11 +380,6 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
             if (!updatePointVisibility(game_state, p1) && !updatePointVisibility(game_state, p2))
                 break check
         }
-
-        /*
-            a tile must be within the player's round field of view
-        */
-        if (t.segmentLength(seg) >= (windowed.width - 1) / 2 + 0.5) break check
 
         is_visible = true
     }
