@@ -375,23 +375,23 @@ const tintMazeTiles = (state: t.Matrix<Maze_Tile_State>) => {
     const stack = Array.from(state)
 
     while (stack.length) {
-        const idx = stack.pop()!
-        const p = state.vec(idx)
-        const p_possible = possibles[idx]
+        const idx = stack.pop()!,
+            p_possible = possibles[idx]
 
         if (p_possible.size === 0) continue
 
-        const pick = t.pick_random(Array.from(p_possible))
+        const pick = t.pick_random(Array.from(p_possible)),
+            p = state.vec(idx),
+            p_state = state.get(p)!
+
+        p_state.tint = pick
         p_possible.clear()
 
-        const p_state = state.get(p)!
-        p_state.tint = pick
-
         for (const n of t.vec_neighbors(p)) {
-            const n_i = state.i(n)
-            if (!(n_i in possibles)) continue
+            const n_idx = state.idx(n)
+            if (n_idx < 0 || n_idx >= state.length) continue
 
-            const n_possible = possibles[n_i]
+            const n_possible = possibles[n_idx]
             if (n_possible.size === 0) continue
 
             for (const t of n_possible) {
@@ -400,9 +400,9 @@ const tintMazeTiles = (state: t.Matrix<Maze_Tile_State>) => {
                 }
             }
 
-            for (let stack_i = stack.length - 1; stack_i >= 0; stack_i--) {
-                if (possibles[stack[stack_i]].size >= n_possible.size) {
-                    stack.splice(stack_i + 1, 0, n_i)
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (possibles[stack[i]].size >= n_possible.size) {
+                    stack.splice(i + 1, 0, n_idx)
                     break
                 }
             }
@@ -415,7 +415,7 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
 
     if (!maze.inBounds(p)) return false
 
-    const i = maze.i(p)
+    const i = maze.idx(p)
     let is_visible = visible.get(i)
     if (is_visible !== undefined) return is_visible
     is_visible = false
@@ -489,15 +489,15 @@ export function updateVisiblePoints(game_state: Game_State): void {
     /*
         player and all wall-less tiles around him are visible
     */
-    game_state.visible = new Map([[maze.i(player), true]])
+    game_state.visible = new Map([[maze.idx(player), true]])
 
     for (let x = -1; x <= 1; x += 2) {
         const p = player.add(x, 0)
-        if (isVisible(maze, p)) game_state.visible.set(maze.i(p), true)
+        if (isVisible(maze, p)) game_state.visible.set(maze.idx(p), true)
     }
     for (let y = -1; y <= 1; y += 2) {
         const p = player.add(0, y)
-        if (isVisible(maze, p)) game_state.visible.set(maze.i(p), true)
+        if (isVisible(maze, p)) game_state.visible.set(maze.idx(p), true)
     }
 
     for (const p of windowed) updatePointVisibility(game_state, windowed.get(p)!)

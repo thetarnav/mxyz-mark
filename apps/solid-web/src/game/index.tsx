@@ -128,7 +128,7 @@ const Game = () => {
 
         const vec_state = maze.get(vec)
 
-        if (vec_state && game_state.visible.get(maze.i(vec))) {
+        if (vec_state && game_state.visible.get(maze.idx(vec))) {
             if (game_state.player.equals(vec)) return 'bg-white'
             if (vec_state.flooded) return 'bg-red-5'
             if (game_state.shallow_flood.has(vec.toString())) {

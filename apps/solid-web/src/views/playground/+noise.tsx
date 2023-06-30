@@ -31,7 +31,7 @@ export default function Noise(): JSX.Element {
                 continue
 
             for (const d of randomIterate(DIRECTION_AND_CORNER_POINTS)) {
-                const j = result.i(result.go(i, d)!)
+                const j = result.idx(result.go(i, d)!)
 
                 if (result.get(j)) continue
 

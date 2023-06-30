@@ -307,7 +307,7 @@ export class Matrix<T> {
         if (typeof point === 'number') point = this.vec(point)
         return this.inBounds(point) ? this.#values[point.x][point.y] : undefined
     }
-    i(point: Pointable) {
+    idx(point: Pointable) {
         return Matrix.i(this.width, point)
     }
     vec(i: number) {

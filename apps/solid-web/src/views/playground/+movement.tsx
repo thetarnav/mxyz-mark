@@ -37,7 +37,7 @@ export default function Movement(): JSX.Element {
         s.update(position, p => {
             const newPos = matrix.go(p, direction)
             if (!newPos) return p
-            const i = matrix.i(newPos)
+            const i = matrix.idx(newPos)
             return matrix.get(i) ? p : i
         })
     })
@@ -97,7 +97,7 @@ export default function Movement(): JSX.Element {
                         <Grid matrix={windowed.value} offset={playerVec.value.add(-1, -1)}>
                             {vec => (
                                 <Cell
-                                    isPlayer={isPlayer(matrix.i(vec()))}
+                                    isPlayer={isPlayer(matrix.idx(vec()))}
                                     isWall={matrix.get(vec()) !== false}
                                 />
                             )}
@@ -139,9 +139,9 @@ export default function Movement(): JSX.Element {
                     X @ X
                   */
                                     if (point.x > player.x) {
-                                        if (visibleSet.has(matrix.i(point.add(-1, 0)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(-1, 0)))) break gaps
                                     } else if (point.x < player.x) {
-                                        if (visibleSet.has(matrix.i(point.add(1, 0)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(1, 0)))) break gaps
                                     }
 
                                     /*
@@ -150,9 +150,9 @@ export default function Movement(): JSX.Element {
                     X
                   */
                                     if (point.y > player.y) {
-                                        if (visibleSet.has(matrix.i(point.add(0, -1)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(0, -1)))) break gaps
                                     } else if (point.y < player.y) {
-                                        if (visibleSet.has(matrix.i(point.add(0, 1)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(0, 1)))) break gaps
                                     }
 
                                     /*
@@ -161,13 +161,14 @@ export default function Movement(): JSX.Element {
                     X   X
                   */
                                     if (point.x > player.x && point.y > player.y) {
-                                        if (visibleSet.has(matrix.i(point.add(-1, -1)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(-1, -1))))
+                                            break gaps
                                     } else if (point.x < player.x && point.y < player.y) {
-                                        if (visibleSet.has(matrix.i(point.add(1, 1)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(1, 1)))) break gaps
                                     } else if (point.x > player.x && point.y < player.y) {
-                                        if (visibleSet.has(matrix.i(point.add(-1, 1)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(-1, 1)))) break gaps
                                     } else if (point.x < player.x && point.y > player.y) {
-                                        if (visibleSet.has(matrix.i(point.add(1, -1)))) break gaps
+                                        if (visibleSet.has(matrix.idx(point.add(1, -1)))) break gaps
                                     }
 
                                     continue
@@ -182,7 +183,7 @@ export default function Movement(): JSX.Element {
                                     if (t.segmentsIntersecting(tileSeg, wallSeg)) continue points
                                 }
 
-                                visibleSet.add(matrix.i(point))
+                                visibleSet.add(matrix.idx(point))
                             }
 
                             return visibleSet
