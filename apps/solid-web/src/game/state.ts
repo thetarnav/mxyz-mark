@@ -1,7 +1,7 @@
 import * as t from 'src/lib/trigonometry'
 import * as s from 'src/lib/signal'
 
-export const N_TILES = 36
+export const N_TILES = 40
 export const TILE_SIZE = 2
 export const GRID_SIZE = TILE_SIZE + 1
 export const BOARD_SIZE = N_TILES * GRID_SIZE - 1 // -1 for omitted last wall
@@ -12,8 +12,8 @@ export const SHRINE_RADIUS_TILES = 2
 export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 export const SHRINE_CENTER = t.vector(Math.floor(SHRINE_SIZE / 2 - 1))
 
-export const maze_center = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
-export const maze_center_origin = maze_center.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
+export const MAZE_CENTER = t.vector(1, 1).multiply(Math.floor(BOARD_SIZE / 2))
+export const MAZE_CENTER_ORIGIN = MAZE_CENTER.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
 
 export const corner_shrine_corners = t.quadrants.reduce((acc, quadrand) => {
     acc[quadrand] = t.quadrand_to_vec[quadrand]
@@ -27,19 +27,22 @@ export const corner_shrine_centers = t.quadrants.reduce((acc, quadrand) => {
     return acc
 }, {} as Record<t.Quadrand, t.Vector>)
 
-export const ALL_SHRINE_CENTERS = [maze_center, ...Object.values(corner_shrine_centers)]
+export const ALL_SHRINE_CENTERS = [MAZE_CENTER, ...Object.values(corner_shrine_centers)]
+
+export const TINTS = [0, 1, 2, 3] as const
+export type Tint = (typeof TINTS)[number]
 
 export type Maze_Tile_State = {
     wall: boolean
     flooded: boolean
-    tinted: boolean
+    tint: Tint
 }
 export type Maze_Matrix = t.Matrix<Maze_Tile_State>
 
 export type Game_State = {
     player: t.Vector
     finish: t.Vector
-    maze_state: Maze_Matrix
+    maze: Maze_Matrix
     windowed: t.Matrix<t.Vector>
     visible: Map<number, boolean>
     shallow_flood: Set<t.VecString>
@@ -48,6 +51,37 @@ export type Game_State = {
     in_shrine: boolean
     turn_signal: s.Signal<undefined>
     show_invisible: boolean
+    show_walls: boolean
+}
+
+export const initGameState = (): Game_State => {
+    const game_state: Game_State = {
+        player: MAZE_CENTER,
+        finish: null!,
+        maze: null!,
+        turn: 0,
+        progress_to_flood_update: 0,
+        shallow_flood: new Set(),
+        windowed: null!,
+        visible: new Map(),
+        in_shrine: false,
+        turn_signal: s.signal(),
+        show_invisible: false,
+        show_walls: false,
+    }
+
+    const starting_q = t.randomInt(4)
+    const finish_q = (starting_q + 2) % 4 // opposite of start
+    const flood_start_q = // corner shrine adjacent to start
+        t.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
+
+    game_state.player = corner_shrine_centers[starting_q as t.Quadrand]
+    game_state.finish = corner_shrine_centers[finish_q as t.Quadrand]
+    game_state.shallow_flood.add(corner_shrine_centers[flood_start_q as t.Quadrand].toString())
+
+    game_state.maze = generateInitMazeState()
+
+    return game_state
 }
 
 export const isWall = (maze_state: Maze_Matrix, p: t.Vector) => {
@@ -219,13 +253,13 @@ export function generateInitMazeState(): Maze_Matrix {
     /*
         turn the walls info into a state matrix grid
     */
-    const state = new t.Matrix(BOARD_SIZE, BOARD_SIZE, (x, y) => {
+    const state = new t.Matrix(BOARD_SIZE, BOARD_SIZE, (x, y): Maze_Tile_State => {
         const p = t.vector(x, y)
 
         return {
             wall: isWallsPointWall(p, walls),
             flooded: false,
-            tinted: false,
+            tint: 0,
         }
     })
 
@@ -293,8 +327,8 @@ export function generateInitMazeState(): Maze_Matrix {
     /*
         Clear walls inside the center shrine
     */
-    const bottomLeft = maze_center.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
-    const topRight = maze_center.add(SHRINE_RADIUS_TILES * GRID_SIZE)
+    const bottomLeft = MAZE_CENTER.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
+    const topRight = MAZE_CENTER.add(SHRINE_RADIUS_TILES * GRID_SIZE)
     for (const vec of t.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
         state.get(vec)!.wall = false
     }
@@ -323,27 +357,73 @@ export function generateInitMazeState(): Maze_Matrix {
     }
 
     for (const vec of shrine_structure_paths.Circle) {
-        state.get(vec.add(maze_center_origin))!.wall = true
+        state.get(vec.add(MAZE_CENTER_ORIGIN))!.wall = true
     }
+
+    tintMazeTiles(state)
 
     return state
 }
 
+const tintMazeTiles = (state: t.Matrix<Maze_Tile_State>) => {
+    /*
+        Wave Function Collapse-ish tinting
+    */
+
+    const possibles = Array.from({ length: state.length }, () => new Set(TINTS))
+
+    const stack = Array.from(state)
+
+    while (stack.length) {
+        const idx = stack.pop()!
+        const p = state.vec(idx)
+        const p_possible = possibles[idx]
+
+        if (p_possible.size === 0) continue
+
+        const pick = t.pick_random(Array.from(p_possible))
+        p_possible.clear()
+
+        const p_state = state.get(p)!
+        p_state.tint = pick
+
+        for (const n of t.vec_neighbors(p)) {
+            const n_i = state.i(n)
+            if (!(n_i in possibles)) continue
+
+            const n_possible = possibles[n_i]
+            if (n_possible.size === 0) continue
+
+            for (const t of n_possible) {
+                if (t > pick + 1 || t < pick - 1) {
+                    n_possible.delete(t)
+                }
+            }
+
+            for (let stack_i = stack.length - 1; stack_i >= 0; stack_i--) {
+                if (possibles[stack[stack_i]].size >= n_possible.size) {
+                    stack.splice(stack_i + 1, 0, n_i)
+                    break
+                }
+            }
+        }
+    }
+}
+
 function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
-    const { maze_state, player, visible, windowed } = game_state
+    const { maze, player, visible, windowed } = game_state
 
-    if (!maze_state.inBounds(p)) return false
+    if (!maze.inBounds(p)) return false
 
-    const i = maze_state.i(p)
+    const i = maze.i(p)
     let is_visible = visible.get(i)
     if (is_visible !== undefined) return is_visible
     is_visible = false
 
     check: {
-        /*
-            walls are not visible
-        */
-        if (!isVisible(maze_state, p)) break check
+        const p_state = maze.get(p)!
+
+        if (!game_state.show_walls && p_state.wall) break check
 
         if (game_state.show_invisible) {
             is_visible = true
@@ -404,20 +484,20 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
 }
 
 export function updateVisiblePoints(game_state: Game_State): void {
-    const { maze_state, player, windowed } = game_state
+    const { maze, player, windowed } = game_state
 
     /*
         player and all wall-less tiles around him are visible
     */
-    game_state.visible = new Map([[maze_state.i(player), true]])
+    game_state.visible = new Map([[maze.i(player), true]])
 
     for (let x = -1; x <= 1; x += 2) {
         const p = player.add(x, 0)
-        if (isVisible(maze_state, p)) game_state.visible.set(maze_state.i(p), true)
+        if (isVisible(maze, p)) game_state.visible.set(maze.i(p), true)
     }
     for (let y = -1; y <= 1; y += 2) {
         const p = player.add(0, y)
-        if (isVisible(maze_state, p)) game_state.visible.set(maze_state.i(p), true)
+        if (isVisible(maze, p)) game_state.visible.set(maze.i(p), true)
     }
 
     for (const p of windowed) updatePointVisibility(game_state, windowed.get(p)!)

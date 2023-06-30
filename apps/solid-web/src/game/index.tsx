@@ -7,9 +7,6 @@ import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trigonometry'
 import { createDirectionMovement } from './held-direction'
 import {
-    corner_shrine_centers,
-    generateInitMazeState,
-    maze_center,
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
     WINDOW_SIZE,
@@ -18,6 +15,8 @@ import {
     isFlooded,
     ALL_SHRINE_CENTERS,
     Game_State,
+    initGameState,
+    Tint,
 } from './state'
 
 // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
@@ -38,7 +37,7 @@ function updateState(game_state: Game_State, player: t.Vector) {
 }
 
 function expandFlood(game_state: Game_State) {
-    const { maze_state } = game_state
+    const { maze: maze_state } = game_state
 
     game_state.turn++
     game_state.progress_to_flood_update += game_state.turn / 1000
@@ -74,7 +73,7 @@ function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknow
         throw new Error('invalid input')
     }
     const vec = t.vector(x, y)
-    if (!game_state.maze_state.inBounds(vec)) {
+    if (!game_state.maze.inBounds(vec)) {
         throw new Error('out of bounds')
     }
     updateState(game_state, vec)
@@ -82,48 +81,14 @@ function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknow
 }
 
 const Game = () => {
-    const game_state: Game_State = {
-        /*
-            place player in center of a random corner quadrant
-        */
-        player: maze_center,
-        finish: null!,
-        maze_state: null!,
-        turn: 0,
-        progress_to_flood_update: 0,
-        shallow_flood: new Set(),
-        windowed: null!,
-        visible: new Map(),
-        in_shrine: false,
-        turn_signal: s.signal(),
-        show_invisible: false,
-    }
+    const game_state = initGameState()
 
-    /*
-        Init game state
-    */
-    {
-        const starting_q = t.randomInt(4)
-        const finish_q = (starting_q + 2) % 4 // opposite of start
-        const flood_start_q = // corner shrine adjacent to start
-            t.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
-
-        game_state.player = corner_shrine_centers[starting_q as t.Quadrand]
-        game_state.finish = corner_shrine_centers[finish_q as t.Quadrand]
-        game_state.shallow_flood.add(corner_shrine_centers[flood_start_q as t.Quadrand].toString())
-
-        game_state.maze_state = generateInitMazeState()
-    }
-
+    /**
+     * Game state is not a reactive proxy, so we need to track it manually
+     */
     const trackGameState = () => {
         game_state.turn_signal.get()
         return game_state
-    }
-
-    if (import.meta.env.DEV) {
-        ;(window as any).$tp = (x: unknown, y: unknown) => {
-            setAbsolutePlayerPosition(game_state, x, y)
-        }
     }
 
     updateState(game_state, game_state.player)
@@ -133,9 +98,9 @@ const Game = () => {
             move player in direction if possible
         */
         const vec = game_state.player.go(direction)
-        const vec_state = game_state.maze_state.get(vec)
+        const vec_state = game_state.maze.get(vec)
 
-        if (!vec_state || vec_state.wall || vec_state.flooded) return
+        if (!game_state.show_walls && (!vec_state || vec_state.wall || vec_state.flooded)) return
 
         updateState(game_state, vec)
         expandFlood(game_state)
@@ -144,9 +109,16 @@ const Game = () => {
 
     const minimap_finish = vecToMinimap(game_state.finish)
 
+    const TINT_TO_CLASS: Record<Tint, string> = {
+        0: 'bg-stone bg-opacity-25',
+        1: 'bg-stone bg-opacity-30',
+        2: 'bg-stone bg-opacity-35',
+        3: 'bg-stone bg-opacity-40',
+    }
+
     const getTileClass = (vec: t.Vector, fov_idx: number): string => {
         const game_state = trackGameState()
-        const { maze_state } = game_state
+        const { maze } = game_state
 
         if (game_state.in_shrine) {
             const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
@@ -154,18 +126,19 @@ const Game = () => {
             if (fov_vec.equals(minimap_finish)) return 'bg-amber'
         }
 
-        const vec_state = maze_state.get(vec)
+        const vec_state = maze.get(vec)
 
-        if (vec_state && game_state.visible.get(maze_state.i(vec))) {
+        if (vec_state && game_state.visible.get(maze.i(vec))) {
             if (game_state.player.equals(vec)) return 'bg-white'
             if (vec_state.flooded) return 'bg-red-5'
             if (game_state.shallow_flood.has(vec.toString())) {
-                for (const neighbor of t.eachPointDirection(vec, maze_state)) {
-                    if (isFlooded(maze_state, neighbor)) return 'bg-orange-5'
+                for (const neighbor of t.eachPointDirection(vec, maze)) {
+                    if (isFlooded(maze, neighbor)) return 'bg-orange-5'
                 }
                 return 'bg-orange'
             }
-            return 'bg-stone-7'
+
+            return TINT_TO_CLASS[vec_state.tint]
         }
 
         return 'bg-transparent'
@@ -183,7 +156,7 @@ const Game = () => {
                     />
                 )}
             </MatrixGrid>
-            <div class="fixed right-12 top-12">
+            <div class="fixed right-12 top-12 flex flex-col space-y-2">
                 {solid.untrack(() => {
                     let input1!: HTMLInputElement
                     let input2!: HTMLInputElement
@@ -217,6 +190,15 @@ const Game = () => {
                     )
                 })}
                 <p>turn: {trackGameState().turn}</p>
+                <button
+                    onClick={() => {
+                        game_state.show_walls = !game_state.show_walls
+                        updateState(game_state, game_state.player)
+                        s.trigger(game_state.turn_signal)
+                    }}
+                >
+                    {trackGameState().show_walls ? 'hide' : 'show'} walls
+                </button>
                 <button
                     onClick={() => {
                         game_state.show_invisible = !game_state.show_invisible

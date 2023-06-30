@@ -2,6 +2,8 @@ export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFrom = (min: number, max: number) =>
     Math.floor(Math.random() * (max - min)) + min
 
+export const pick_random = <T>(arr: readonly T[]) => arr[randomInt(arr.length)]
+
 export const remainder = (a: number, b: number) => ((a % b) + b) % b
 
 export const toRadian = (degrees: number) => (degrees * Math.PI) / 180
@@ -163,6 +165,10 @@ export const flip_vector = (vec: Pointable, center: Pointable = ZERO_VEC) => {
 
 export const vec_equals = (a: Pointable, b: Pointable) =>
     number_equals(a.x, b.x) && number_equals(a.y, b.y)
+
+export const vec_neighbors = (vec: Vector) => {
+    return DIRECTIONS_H_V.map(d => vec.go(d))
+}
 
 /**
  * Quadrants are reversed from the normal cartesian plane
