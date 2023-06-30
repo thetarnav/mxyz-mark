@@ -228,8 +228,10 @@ export class Segment {
         }
     }
 
-    add(vec: Vector): Segment {
-        return new Segment(this.start.add(vec), this.end.add(vec))
+    add(vec: Vector): Segment
+    add(x: number, y?: number): Segment
+    add(a: any, b?: any): Segment {
+        return new Segment(this.start.add(a, b), this.end.add(a, b))
     }
 
     toJSON() {

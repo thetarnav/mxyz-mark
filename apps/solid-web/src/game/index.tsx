@@ -100,7 +100,7 @@ const Game = () => {
         const vec = game_state.player.go(direction)
         const vec_state = game_state.maze.get(vec)
 
-        if (!game_state.show_walls && (!vec_state || vec_state.wall || vec_state.flooded)) return
+        if (!game_state.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
 
         updateState(game_state, vec)
         expandFlood(game_state)
@@ -109,11 +109,18 @@ const Game = () => {
 
     const minimap_finish = vecToMinimap(game_state.finish)
 
-    const TINT_TO_CLASS: Record<Tint, string> = {
-        0: 'bg-stone bg-opacity-25',
-        1: 'bg-stone bg-opacity-30',
-        2: 'bg-stone bg-opacity-35',
-        3: 'bg-stone bg-opacity-40',
+    const TINT_TO_FLOOR_CLASS: Record<Tint, string> = {
+        0: 'bg-stone bg-opacity-20',
+        1: 'bg-stone bg-opacity-24',
+        2: 'bg-stone bg-opacity-28',
+        3: 'bg-stone bg-opacity-32',
+    }
+
+    const TINT_TO_WALL_CLASS: Record<Tint, string> = {
+        0: 'bg-#d4dece bg-opacity-40',
+        1: 'bg-#d4dece bg-opacity-45',
+        2: 'bg-#d4dece bg-opacity-50',
+        3: 'bg-#d4dece bg-opacity-55',
     }
 
     const getTileClass = (vec: t.Vector, fov_idx: number): string => {
@@ -130,6 +137,7 @@ const Game = () => {
 
         if (vec_state && game_state.visible.get(maze.idx(vec))) {
             if (game_state.player.equals(vec)) return 'bg-white'
+            if (vec_state.wall) return TINT_TO_WALL_CLASS[vec_state.tint]
             if (vec_state.flooded) return 'bg-red-5'
             if (game_state.shallow_flood.has(vec.toString())) {
                 for (const neighbor of t.eachPointDirection(vec, maze)) {
@@ -138,7 +146,7 @@ const Game = () => {
                 return 'bg-orange'
             }
 
-            return TINT_TO_CLASS[vec_state.tint]
+            return TINT_TO_FLOOR_CLASS[vec_state.tint]
         }
 
         return 'bg-transparent'
@@ -192,12 +200,11 @@ const Game = () => {
                 <p>turn: {trackGameState().turn}</p>
                 <button
                     onClick={() => {
-                        game_state.show_walls = !game_state.show_walls
-                        updateState(game_state, game_state.player)
+                        game_state.noclip = !game_state.noclip
                         s.trigger(game_state.turn_signal)
                     }}
                 >
-                    {trackGameState().show_walls ? 'hide' : 'show'} walls
+                    {trackGameState().noclip ? 'disable' : 'enable'} noclip
                 </button>
                 <button
                     onClick={() => {
