@@ -31,8 +31,15 @@ export const corner_shrine_centers = t.quadrants.reduce((acc, quadrand) => {
 
 export const ALL_SHRINE_CENTERS = [MAZE_CENTER, ...Object.values(corner_shrine_centers)]
 
-export const TINTS = [0, 1, 2, 3] as const
-export type Tint = (typeof TINTS)[number]
+export const N_TINTS = 4
+
+type Enumerate<N extends number, Acc extends number[] = []> = Acc['length'] extends N
+    ? Acc[number]
+    : Enumerate<N, [...Acc, Acc['length']]>
+
+export type Tint = Enumerate<typeof N_TINTS>
+
+export const toTint = (n: number): Tint => t.clamp(n, 0, N_TINTS - 1) as Tint
 
 export type Maze_Tile_State = {
     wall: boolean
@@ -276,6 +283,8 @@ export function generateInitMazeState(): Maze_Matrix {
         }
     })
 
+    tintMazeTiles(state)
+
     /*
         round the tunnel corners
     */
@@ -313,27 +322,29 @@ export function generateInitMazeState(): Maze_Matrix {
             .segment(t.ZERO_VEC, t.vector(SHRINE_SIZE - 2))
             .add(corner)
             .points()) {
-            state.get(vec)!.wall = false
+            const vec_state = state.get(vec)!
+            vec_state.wall = false
         }
 
         /*
             Make corner shrine exits (one on each maze-facing edge)
         */
-
         for (let i = 0; i < TILE_SIZE; i++) {
             const base = t.vector(2 * GRID_SIZE + i, SHRINE_SIZE - 1)
 
             let p = base.rotate(t.quadrand_to_rotation[q], SHRINE_CENTER).round().add(corner)
+            let p_state = state.get(p)!
 
-            state.get(p)!.wall = false
+            p_state.wall = false
 
             p = base
                 .flip(t.vector(SHRINE_CENTER.x, SHRINE_SIZE - 1))
                 .rotate(t.quadrand_to_rotation[q] - t.toRadian(90), SHRINE_CENTER)
                 .round()
                 .add(corner)
+            p_state = state.get(p)!
 
-            state.get(p)!.wall = false
+            p_state.wall = false
         }
     }
 
@@ -359,11 +370,11 @@ export function generateInitMazeState(): Maze_Matrix {
         add shrine structures
     */
     for (const q of t.quadrants) {
-        const corner = corner_shrine_corners[q]
-        const structure = shrine_structure_paths.Corner
-        const rotation = t.quadrand_to_rotation[q]
+        const corner = corner_shrine_corners[q],
+            wall_structure = shrine_structure_paths.Corner,
+            rotation = t.quadrand_to_rotation[q]
 
-        for (let vec of structure) {
+        for (let vec of wall_structure) {
             vec = vec.rotate(rotation, SHRINE_CENTER).add(corner).round()
             state.get(vec)!.wall = true
         }
@@ -373,21 +384,22 @@ export function generateInitMazeState(): Maze_Matrix {
         state.get(vec.add(MAZE_CENTER_ORIGIN))!.wall = true
     }
 
-    tintMazeTiles(state)
-
     return state
 }
 
-const tintMazeTiles = (state: t.Matrix<Maze_Tile_State>) => {
+const tintMazeTiles = (maze_state: t.Matrix<Maze_Tile_State>) => {
     /*
         Wave Function Collapse-ish tinting
     */
 
-    const possibles = Array.from({ length: state.length * 2 }, (_, i) =>
-        i % 2 === 0 ? 0 : TINTS.length - 1,
-    )
+    const possibles: number[] = new Array(maze_state.length)
+    const stack: number[] = new Array(maze_state.length)
 
-    const stack = Array.from(state)
+    for (let i = 0; i < maze_state.length; i++) {
+        possibles[i * 2] = 0
+        possibles[i * 2 + 1] = N_TINTS - 1
+        stack[i] = i
+    }
 
     while (stack.length) {
         const idx = stack.pop()!,
@@ -396,15 +408,15 @@ const tintMazeTiles = (state: t.Matrix<Maze_Tile_State>) => {
 
         if (possibles[to] - possibles[from] === 0) continue
 
-        const pick = t.randomIntFrom(possibles[from], possibles[to] + 1),
-            p = state.vec(idx),
-            p_state = state.get(p)!
+        const pick = t.randomIntFrom(possibles[from], possibles[to] + 1) as Tint,
+            p = maze_state.vec(idx),
+            p_state = maze_state.get(p)!
 
-        p_state.tint = possibles[from] = possibles[to] = pick as Tint
+        p_state.tint = possibles[from] = possibles[to] = pick
 
         for (const n of t.vec_neighbors(p)) {
-            const n_idx = state.idx(n)
-            if (n_idx < 0 || n_idx >= state.length) continue
+            const n_idx = maze_state.idx(n)
+            if (!(n_idx in possibles)) continue
 
             const n_from = n_idx * 2,
                 n_to = n_from + 1
