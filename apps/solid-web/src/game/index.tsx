@@ -109,18 +109,23 @@ const Game = () => {
 
     const minimap_finish = vecToMinimap(game_state.finish)
 
-    const TINT_TO_FLOOR_CLASS: Record<Tint, string> = {
-        0: 'bg-stone bg-opacity-20',
-        1: 'bg-stone bg-opacity-24',
-        2: 'bg-stone bg-opacity-28',
-        3: 'bg-stone bg-opacity-32',
+    const TINT_TO_FLOOR_OPACITY: Record<Tint, string> = {
+        0: 'bg-opacity-20',
+        1: 'bg-opacity-24',
+        2: 'bg-opacity-28',
+        3: 'bg-opacity-32',
     }
-
-    const TINT_TO_WALL_CLASS: Record<Tint, string> = {
-        0: 'bg-#d4dece bg-opacity-40',
-        1: 'bg-#d4dece bg-opacity-45',
-        2: 'bg-#d4dece bg-opacity-50',
-        3: 'bg-#d4dece bg-opacity-55',
+    const TINT_TO_WALL_OPACITY: Record<Tint, string> = {
+        0: 'bg-opacity-40',
+        1: 'bg-opacity-45',
+        2: 'bg-opacity-50',
+        3: 'bg-opacity-55',
+    }
+    const TINT_TO_FLOOD_OPACITY: Record<Tint, string> = {
+        0: 'bg-opacity-70',
+        1: 'bg-opacity-75',
+        2: 'bg-opacity-80',
+        3: 'bg-opacity-85',
     }
 
     const getTileClass = (vec: t.Vector, fov_idx: number): string => {
@@ -136,17 +141,25 @@ const Game = () => {
             vec_state = maze.get(vec)
 
         if (vec_state && game_state.visible.get(maze.idx(vec))) {
-            if (game_state.player.equals(vec)) return 'bg-white'
-            if (vec_state.wall) return TINT_TO_WALL_CLASS[vec_state.tint]
-            if (vec_state.flooded) return 'bg-red-5'
+            if (game_state.player.equals(vec)) {
+                return 'bg-white'
+            }
+            if (vec_state.wall) {
+                return `bg-#d4dece ${TINT_TO_WALL_OPACITY[vec_state.tint]}`
+            }
+            if (vec_state.flooded) {
+                return `bg-red-6 ${TINT_TO_FLOOD_OPACITY[vec_state.tint]}`
+            }
             if (game_state.shallow_flood.has(vec.toString())) {
                 for (const neighbor of t.eachPointDirection(vec, maze)) {
-                    if (isFlooded(maze, neighbor)) return 'bg-orange-5'
+                    if (isFlooded(maze, neighbor)) {
+                        return `bg-orange-6 ${TINT_TO_FLOOD_OPACITY[vec_state.tint]}`
+                    }
                 }
-                return 'bg-orange'
+                return `bg-orange-4 ${TINT_TO_FLOOD_OPACITY[vec_state.tint]}`
             }
 
-            return TINT_TO_FLOOR_CLASS[vec_state.tint]
+            return `bg-stone ${TINT_TO_FLOOR_OPACITY[vec_state.tint]}`
         }
 
         return 'bg-transparent'
