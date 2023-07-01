@@ -125,7 +125,6 @@ const Game = () => {
 
     const getTileClass = (vec: t.Vector, fov_idx: number): string => {
         const game_state = trackGameState()
-        const { maze } = game_state
 
         if (game_state.in_shrine) {
             const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
@@ -133,7 +132,8 @@ const Game = () => {
             if (fov_vec.equals(minimap_finish)) return 'bg-amber'
         }
 
-        const vec_state = maze.get(vec)
+        const { maze } = game_state,
+            vec_state = maze.get(vec)
 
         if (vec_state && game_state.visible.get(maze.idx(vec))) {
             if (game_state.player.equals(vec)) return 'bg-white'

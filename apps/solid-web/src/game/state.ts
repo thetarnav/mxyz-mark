@@ -1,7 +1,7 @@
 import * as t from 'src/lib/trigonometry'
 import * as s from 'src/lib/signal'
 
-export const N_TILES = 40
+export const N_TILES = 36
 export const TILE_SIZE = 2
 export const GRID_SIZE = TILE_SIZE + 1
 export const OUTER_WALL_SIZE = 1
@@ -383,38 +383,44 @@ const tintMazeTiles = (state: t.Matrix<Maze_Tile_State>) => {
         Wave Function Collapse-ish tinting
     */
 
-    const possibles = Array.from({ length: state.length }, () => new Set(TINTS))
+    const possibles = Array.from({ length: state.length * 2 }, (_, i) =>
+        i % 2 === 0 ? 0 : TINTS.length - 1,
+    )
 
     const stack = Array.from(state)
 
     while (stack.length) {
         const idx = stack.pop()!,
-            p_possible = possibles[idx]
+            from = idx * 2,
+            to = from + 1
 
-        if (p_possible.size === 0) continue
+        if (possibles[to] - possibles[from] === 0) continue
 
-        const pick = t.pick_random(Array.from(p_possible)),
+        const pick = t.randomIntFrom(possibles[from], possibles[to] + 1),
             p = state.vec(idx),
             p_state = state.get(p)!
 
-        p_state.tint = pick
-        p_possible.clear()
+        p_state.tint = possibles[from] = possibles[to] = pick as Tint
 
         for (const n of t.vec_neighbors(p)) {
             const n_idx = state.idx(n)
             if (n_idx < 0 || n_idx >= state.length) continue
 
-            const n_possible = possibles[n_idx]
-            if (n_possible.size === 0) continue
+            const n_from = n_idx * 2,
+                n_to = n_from + 1
+            if (possibles[n_to] - possibles[n_from] === 0) continue
 
-            for (const t of n_possible) {
-                if (t > pick + 1 || t < pick - 1) {
-                    n_possible.delete(t)
-                }
-            }
+            possibles[n_from] = Math.max(possibles[n_from], pick - 1)
+            possibles[n_to] = Math.min(possibles[n_to], pick + 1)
+            const range = possibles[n_to] - possibles[n_from]
 
             for (let i = stack.length - 1; i >= 0; i--) {
-                if (possibles[stack[i]].size >= n_possible.size) {
+                const s_idx = stack[i],
+                    s_from = s_idx * 2,
+                    s_to = s_from + 1,
+                    i_range = possibles[s_to] - possibles[s_from]
+
+                if (range <= i_range) {
                     stack.splice(i + 1, 0, n_idx)
                     break
                 }
