@@ -1,12 +1,12 @@
-import solid from 'solid-start/vite'
+import solid from 'vite-plugin-solid'
 import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vitest/config'
-import solidStyled from 'vite-plugin-solid-styled'
-// @ts-ignore
-import staticAdapter from 'solid-start-static'
 import devtools from 'solid-devtools/vite'
 
 export default defineConfig({
+    server: {
+        port: 3000,
+    },
     resolve: {
         alias: {
             src: '/src',
@@ -16,21 +16,7 @@ export default defineConfig({
         devtools({
             autoname: true,
         }),
-        solid({
-            adapter: staticAdapter(),
-            prerenderRoutes: [
-                '/',
-                '/playground/',
-                '/playground/noise',
-                '/playground/maze',
-                '/playground/movement',
-            ],
-        }),
-        solidStyled({
-            filter: {
-                include: 'src/**/*.{ts,js,tsx,jsx}',
-            },
-        }),
+        solid(),
         // config in ../uno.config.ts
         UnoCSS(),
     ],

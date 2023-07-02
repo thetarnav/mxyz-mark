@@ -3,7 +3,7 @@
     "compilerOptions": {
         "jsxImportSource": "solid-js",
         "jsx": "preserve",
-        "types": ["@total-typescript/ts-reset", "solid-start/env", "vite/client"],
+        "types": ["@total-typescript/ts-reset", "vite/client"],
         "baseUrl": "./"
     }
 }

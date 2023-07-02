@@ -2,7 +2,7 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "installCommand": "pnpm i",
     "buildCommand": "pnpm -dir apps/solid run build",
-    "outputDirectory": "apps/solid/dist/public",
+    "outputDirectory": "apps/solid/dist",
     "public": true,
     "github": { "silent": true }
 }

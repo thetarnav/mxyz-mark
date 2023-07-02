@@ -3,33 +3,21 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "solid-start dev",
-        "build": "solid-start build",
-        "preview": "vite preview --outDir dist/public",
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
         "test": "vitest"
     },
     "dependencies": {
         "@solid-primitives/event-listener": "^2.2.13",
-        "@solid-primitives/lifecycle": "^0.0.100",
-        "@solid-primitives/range": "^0.1.14",
-        "@solid-primitives/static-store": "^0.0.4",
         "@solid-primitives/utils": "^6.2.0",
-        "@solidjs/meta": "^0.28.5",
-        "@solidjs/router": "^0.8.2",
         "@unocss/reset": "^0.53.4",
         "clsx": "^1.2.1",
-        "solid-js": "^1.7.7",
-        "solid-start": "^0.2.26",
-        "solid-styled": "^0.9.0",
-        "undici": "^5.22.1"
+        "solid-js": "^1.7.7"
     },
     "devDependencies": {
-        "esbuild": "^0.18.10",
-        "postcss": "^8.4.24",
         "solid-devtools": "^0.27.3",
-        "solid-start-node": "^0.2.26",
-        "solid-start-static": "^0.2.26",
-        "vite-plugin-solid-styled": "^0.9.1"
+        "vite-plugin-solid": "^2.7.0"
     },
     "engines": {
         "node": ">=18"

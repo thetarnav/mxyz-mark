@@ -1,6 +1,4 @@
-import { isHydrated } from '@solid-primitives/lifecycle'
 import * as solid from 'solid-js'
-import { Title } from 'solid-start'
 import * as s from 'src/lib/signal'
 import * as t from 'src/lib/trigonometry'
 import { createDirectionMovement } from './held-direction'
@@ -115,60 +113,6 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
     return `color-mix(in lch, ${color} ${p}%, transparent)`
 }
 
-const Game = () => {
-    const game_state = initGameState()
-
-    /**
-     * Game state is not a reactive proxy, so we need to track it manually
-     */
-    const trackGameState = () => {
-        game_state.turn_signal.get()
-        return game_state
-    }
-
-    updateState(game_state, game_state.player)
-
-    createDirectionMovement(direction => {
-        /*
-            move player in direction if possible
-        */
-        const vec = game_state.player.go(direction)
-        const vec_state = game_state.maze.get(vec)
-
-        if (!game_state.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
-
-        updateState(game_state, vec)
-        expandFlood(game_state)
-        s.trigger(game_state.turn_signal)
-    })
-
-    return (
-        <main class="center-child h-screen w-screen">
-            <div
-                style={`
-                    width: min(80vw, 50vh);
-                `}
-            >
-                <MatrixGrid matrix={trackGameState().windowed}>
-                    {(vec, fovIndex) => (
-                        <div
-                            class="flex items-center justify-center"
-                            style={{
-                                'background-color': getTileBgColor(
-                                    trackGameState(),
-                                    vec(),
-                                    fovIndex,
-                                ),
-                            }}
-                        />
-                    )}
-                </MatrixGrid>
-            </div>
-            {import.meta.env.DEV && <DevTools state={trackGameState()} />}
-        </main>
-    )
-}
-
 const DevTools = (props: { state: Game_State }) => {
     return (
         <div class="fixed right-12 top-12 flex flex-col space-y-2">
@@ -260,11 +204,56 @@ export const MatrixGrid = <T,>(props: {
     )
 }
 
-export default function Home(): solid.JSX.Element {
+export const Game = () => {
+    const game_state = initGameState()
+
+    /**
+     * Game state is not a reactive proxy, so we need to track it manually
+     */
+    const trackGameState = () => {
+        game_state.turn_signal.get()
+        return game_state
+    }
+
+    updateState(game_state, game_state.player)
+
+    createDirectionMovement(direction => {
+        /*
+            move player in direction if possible
+        */
+        const vec = game_state.player.go(direction)
+        const vec_state = game_state.maze.get(vec)
+
+        if (!game_state.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
+
+        updateState(game_state, vec)
+        expandFlood(game_state)
+        s.trigger(game_state.turn_signal)
+    })
+
     return (
-        <>
-            <Title>mxyz mark solid</Title>
-            {isHydrated() && <Game />}
-        </>
+        <main class="center-child h-screen w-screen">
+            <div
+                style={`
+                    width: min(80vw, 50vh);
+                `}
+            >
+                <MatrixGrid matrix={trackGameState().windowed}>
+                    {(vec, fovIndex) => (
+                        <div
+                            class="flex items-center justify-center"
+                            style={{
+                                'background-color': getTileBgColor(
+                                    trackGameState(),
+                                    vec(),
+                                    fovIndex,
+                                ),
+                            }}
+                        />
+                    )}
+                </MatrixGrid>
+            </div>
+            {import.meta.env.DEV && <DevTools state={trackGameState()} />}
+        </main>
     )
 }
