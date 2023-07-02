@@ -39,8 +39,6 @@ type Enumerate<N extends number, Acc extends number[] = []> = Acc['length'] exte
 
 export type Tint = Enumerate<typeof N_TINTS>
 
-export const toTint = (n: number): Tint => t.clamp(n, 0, N_TINTS - 1) as Tint
-
 export type Maze_Tile_State = {
     wall: boolean
     flooded: boolean
@@ -81,6 +79,62 @@ export const isFlooded = (maze_state: Maze_Matrix, p: t.Vector) => {
 export const isVisible = (maze_state: Maze_Matrix, p: t.Vector) => {
     const state = maze_state.get(p)
     return !!state && !state.wall
+}
+
+export function updateState(game_state: Game_State, player: t.Vector) {
+    game_state.player = player
+
+    game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
+
+    updateVisiblePoints(game_state)
+
+    game_state.in_shrine = ALL_SHRINE_CENTERS.some(
+        center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
+    )
+}
+
+export function expandFlood(game_state: Game_State) {
+    const { maze: maze_state } = game_state
+
+    game_state.turn++
+    game_state.progress_to_flood_update += game_state.turn / 1000
+    const expand_times = Math.floor(game_state.progress_to_flood_update)
+    game_state.progress_to_flood_update -= expand_times
+
+    for (let i = 0; i < expand_times; i++) {
+        for (const pos_str of t.randomIterate([...game_state.shallow_flood])) {
+            for (const neighbor of t.eachPointDirection(t.Vector.fromStr(pos_str), maze_state)) {
+                const neighbor_state = maze_state.get(neighbor)
+                if (!neighbor_state) continue
+
+                const neighbor_str = neighbor.toString()
+                if (
+                    neighbor_state.wall ||
+                    neighbor_state.flooded ||
+                    game_state.shallow_flood.has(neighbor_str)
+                )
+                    continue
+
+                game_state.shallow_flood.add(neighbor_str)
+                return
+            }
+
+            game_state.shallow_flood.delete(pos_str)
+            maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
+        }
+    }
+}
+
+export function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknown) {
+    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+        throw new Error('invalid input')
+    }
+    const vec = t.vector(x, y)
+    if (!game_state.maze.inBounds(vec)) {
+        throw new Error('out of bounds')
+    }
+    updateState(game_state, vec)
+    s.trigger(game_state.turn_signal)
 }
 
 function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
@@ -177,60 +231,4 @@ export function updateVisiblePoints(game_state: Game_State): void {
     }
 
     for (const p of windowed) updatePointVisibility(game_state, windowed.get(p)!)
-}
-
-export function updateState(game_state: Game_State, player: t.Vector) {
-    game_state.player = player
-
-    game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
-
-    updateVisiblePoints(game_state)
-
-    game_state.in_shrine = ALL_SHRINE_CENTERS.some(
-        center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
-    )
-}
-
-export function expandFlood(game_state: Game_State) {
-    const { maze: maze_state } = game_state
-
-    game_state.turn++
-    game_state.progress_to_flood_update += game_state.turn / 1000
-    const expand_times = Math.floor(game_state.progress_to_flood_update)
-    game_state.progress_to_flood_update -= expand_times
-
-    for (let i = 0; i < expand_times; i++) {
-        for (const pos_str of t.randomIterate([...game_state.shallow_flood])) {
-            for (const neighbor of t.eachPointDirection(t.Vector.fromStr(pos_str), maze_state)) {
-                const neighbor_state = maze_state.get(neighbor)
-                if (!neighbor_state) continue
-
-                const neighbor_str = neighbor.toString()
-                if (
-                    neighbor_state.wall ||
-                    neighbor_state.flooded ||
-                    game_state.shallow_flood.has(neighbor_str)
-                )
-                    continue
-
-                game_state.shallow_flood.add(neighbor_str)
-                return
-            }
-
-            game_state.shallow_flood.delete(pos_str)
-            maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
-        }
-    }
-}
-
-export function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknown) {
-    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
-        throw new Error('invalid input')
-    }
-    const vec = t.vector(x, y)
-    if (!game_state.maze.inBounds(vec)) {
-        throw new Error('out of bounds')
-    }
-    updateState(game_state, vec)
-    s.trigger(game_state.turn_signal)
 }

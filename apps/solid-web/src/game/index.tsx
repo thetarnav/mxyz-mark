@@ -143,17 +143,27 @@ const Game = () => {
     })
 
     return (
-        <>
-            <MatrixGrid matrix={trackGameState().windowed}>
-                {(vec, fovIndex) => (
-                    <div
-                        class="flex items-center justify-center"
-                        style={{
-                            'background-color': getTileBgColor(trackGameState(), vec(), fovIndex),
-                        }}
-                    />
-                )}
-            </MatrixGrid>
+        <main class="center-child h-screen w-screen">
+            <div
+                style={`
+                    width: min(80vw, 50vh);
+                `}
+            >
+                <MatrixGrid matrix={trackGameState().windowed}>
+                    {(vec, fovIndex) => (
+                        <div
+                            class="flex items-center justify-center"
+                            style={{
+                                'background-color': getTileBgColor(
+                                    trackGameState(),
+                                    vec(),
+                                    fovIndex,
+                                ),
+                            }}
+                        />
+                    )}
+                </MatrixGrid>
+            </div>
             <div class="fixed right-12 top-12 flex flex-col space-y-2">
                 {solid.untrack(() => {
                     let input1!: HTMLInputElement
@@ -206,7 +216,7 @@ const Game = () => {
                     {trackGameState().show_invisible ? 'hide' : 'show'} invisible
                 </button>
             </div>
-        </>
+        </main>
     )
 }
 
@@ -231,10 +241,11 @@ export const MatrixGrid = <T,>(props: {
     return (
         <div
             class="wrapper grid"
-            style={{
-                'grid-template-columns': `repeat(${props.matrix.width + ''}, 2rem)`,
-                'grid-template-rows': `repeat(${props.matrix.height + ''}, 2rem)`,
-            }}
+            style={`
+                grid-template-columns: repeat(${props.matrix.width + ''}, 1fr);
+                grid-template-rows: repeat(${props.matrix.height + ''}, 1fr);
+                aspect-ratio: ${props.matrix.width / props.matrix.height};
+            `}
         >
             <solid.Index each={reordered()}>
                 {item => props.children(() => item().item, item().index)}
@@ -247,27 +258,7 @@ export default function Home(): solid.JSX.Element {
     return (
         <>
             <Title>mxyz mark solid</Title>
-            {/* <nav class="z-999 absolute left-4 top-4 flex flex-col">
-                <div>
-                    <A
-                        href="/"
-                        class="underline-dashed font-semibold hover:underline"
-                        activeClass="text-primary"
-                    >
-                        mxyz mark solid
-                    </A>
-                </div>
-                <div>
-                    <A
-                        href="/playground"
-                        class="underline-dashed hover:underline"
-                        activeClass="text-primary"
-                    >
-                        /playground
-                    </A>
-                </div>
-            </nav> */}
-            <main class="flex flex-col items-center gap-24 py-24">{isHydrated() && <Game />}</main>
+            {isHydrated() && <Game />}
         </>
     )
 }
