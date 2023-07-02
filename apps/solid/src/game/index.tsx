@@ -115,7 +115,7 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
 
 const DevTools = (props: { state: Game_State }) => {
     return (
-        <div class="fixed right-12 top-12 flex flex-col space-y-2">
+        <div class="fixed right-6 top-6 flex flex-col space-y-2">
             {solid.untrack(() => {
                 let input1!: HTMLInputElement
                 let input2!: HTMLInputElement
@@ -127,7 +127,7 @@ const DevTools = (props: { state: Game_State }) => {
                             const y = input2.valueAsNumber
                             setAbsolutePlayerPosition(props.state, x, y)
                         }}
-                        class="space-x-2"
+                        class="space-x-1"
                         onKeyDown={e => {
                             if (e.key !== 'Enter') e.stopPropagation()
                         }}
@@ -210,10 +210,10 @@ export const Game = () => {
     /**
      * Game state is not a reactive proxy, so we need to track it manually
      */
-    const trackGameState = () => {
+    const game_state_sig = s.reactive(() => {
         game_state.turn_signal.get()
         return game_state
-    }
+    })
 
     updateState(game_state, game_state.player)
 
@@ -231,29 +231,52 @@ export const Game = () => {
         s.trigger(game_state.turn_signal)
     })
 
+    const show_menu = s.memo(
+        s.map(
+            game_state_sig,
+            ({ player, start, finish }) => player.equals(start) || player.equals(finish),
+        ),
+    )
+
     return (
-        <main class="center-child h-screen w-screen">
-            <div
-                style={`
-                    width: min(80vw, 50vh);
-                `}
-            >
-                <MatrixGrid matrix={trackGameState().windowed}>
-                    {(vec, fovIndex) => (
-                        <div
-                            class="flex items-center justify-center"
-                            style={{
-                                'background-color': getTileBgColor(
-                                    trackGameState(),
-                                    vec(),
-                                    fovIndex,
-                                ),
-                            }}
-                        />
-                    )}
-                </MatrixGrid>
-            </div>
-            {import.meta.env.DEV && <DevTools state={trackGameState()} />}
-        </main>
+        <>
+            <main class="center-child h-screen w-screen">
+                <div
+                    class="transition-600 flex items-center justify-center delay-200"
+                    style={{
+                        transform: show_menu.value ? '' : 'translateX(-25%) translateZ(0.001px)',
+                    }}
+                >
+                    <div
+                        class="center-child transition-600 delay-200"
+                        style={{
+                            width: 'min(80vw, 50vh)',
+                            opacity: show_menu.value ? 1 : 0,
+                        }}
+                    >
+                        Hello, welcome to MXYZ Mark!
+                    </div>
+                    <div class="center-child">
+                        <div style="width: min(80vw, 50vh)">
+                            <MatrixGrid matrix={game_state_sig.value.windowed}>
+                                {(vec, fovIndex) => (
+                                    <div
+                                        class="flex items-center justify-center"
+                                        style={{
+                                            'background-color': getTileBgColor(
+                                                game_state_sig.value,
+                                                vec(),
+                                                fovIndex,
+                                            ),
+                                        }}
+                                    />
+                                )}
+                            </MatrixGrid>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            {import.meta.env.DEV && <DevTools state={game_state_sig.value} />}
+        </>
     )
 }
