@@ -107,12 +107,6 @@ const getTileDisplayAs = (
         if (game_state.player.equals(vec)) {
             return Tile_Display_As.Player
         }
-        if (vec.equals(game_state.start)) {
-            return Tile_Display_As.Start
-        }
-        if (vec.equals(game_state.finish)) {
-            return Tile_Display_As.Finish
-        }
         if (vec_state.wall) {
             return Tile_Display_As.Wall
         }
@@ -126,6 +120,12 @@ const getTileDisplayAs = (
                 }
             }
             return Tile_Display_As.Flood_Shallow
+        }
+        if (vec.equals(game_state.start)) {
+            return Tile_Display_As.Start
+        }
+        if (vec.equals(game_state.finish)) {
+            return Tile_Display_As.Finish
         }
         return Tile_Display_As.Floor
     }
