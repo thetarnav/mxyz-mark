@@ -2,78 +2,18 @@ import { isHydrated } from '@solid-primitives/lifecycle'
 import * as solid from 'solid-js'
 import { Title } from 'solid-start'
 import * as s from 'src/lib/signal'
-import { MatrixGrid } from 'src/lib/state'
 import * as t from 'src/lib/trigonometry'
 import { createDirectionMovement } from './held-direction'
 import {
-    SHRINE_RADIUS_TILES,
-    GRID_SIZE,
     WINDOW_SIZE,
-    updateVisiblePoints,
     isFlooded,
-    ALL_SHRINE_CENTERS,
     Game_State,
-    initGameState,
     Tint,
+    updateState,
+    expandFlood,
+    setAbsolutePlayerPosition,
 } from './state'
-
-// const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
-
-function updateState(game_state: Game_State, player: t.Vector) {
-    game_state.player = player
-
-    game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
-
-    updateVisiblePoints(game_state)
-
-    game_state.in_shrine = ALL_SHRINE_CENTERS.some(
-        center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
-    )
-}
-
-function expandFlood(game_state: Game_State) {
-    const { maze: maze_state } = game_state
-
-    game_state.turn++
-    game_state.progress_to_flood_update += game_state.turn / 1000
-    const expand_times = Math.floor(game_state.progress_to_flood_update)
-    game_state.progress_to_flood_update -= expand_times
-
-    for (let i = 0; i < expand_times; i++) {
-        for (const pos_str of t.randomIterate([...game_state.shallow_flood])) {
-            for (const neighbor of t.eachPointDirection(t.Vector.fromStr(pos_str), maze_state)) {
-                const neighbor_state = maze_state.get(neighbor)
-                if (!neighbor_state) continue
-
-                const neighbor_str = neighbor.toString()
-                if (
-                    neighbor_state.wall ||
-                    neighbor_state.flooded ||
-                    game_state.shallow_flood.has(neighbor_str)
-                )
-                    continue
-
-                game_state.shallow_flood.add(neighbor_str)
-                return
-            }
-
-            game_state.shallow_flood.delete(pos_str)
-            maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
-        }
-    }
-}
-
-function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknown) {
-    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
-        throw new Error('invalid input')
-    }
-    const vec = t.vector(x, y)
-    if (!game_state.maze.inBounds(vec)) {
-        throw new Error('out of bounds')
-    }
-    updateState(game_state, vec)
-    s.trigger(game_state.turn_signal)
-}
+import { initGameState } from './init'
 
 export enum Tile_Display_As {
     Invisible,
@@ -267,6 +207,39 @@ const Game = () => {
                 </button>
             </div>
         </>
+    )
+}
+
+export const MatrixGrid = <T,>(props: {
+    matrix: t.Matrix<T>
+    children: (item: solid.Accessor<T>, index: number) => solid.JSX.Element
+}) => {
+    const reordered = solid.createMemo(() => {
+        const { matrix } = props,
+            { width, height } = matrix,
+            arr: { index: number; item: T }[] = []
+        // display items in reverse y order
+        // [1,2,3,4,5,6,7,8,9] | 3 -> [7,8,9,4,5,6,1,2,3]
+        for (const i of matrix) {
+            const point = matrix.vec(i)
+            const reorderedI = (height - 1 - point.y) * width + point.x
+            arr.push({ index: reorderedI, item: matrix.get(reorderedI)! })
+        }
+        return arr
+    })
+
+    return (
+        <div
+            class="wrapper grid"
+            style={{
+                'grid-template-columns': `repeat(${props.matrix.width + ''}, 2rem)`,
+                'grid-template-rows': `repeat(${props.matrix.height + ''}, 2rem)`,
+            }}
+        >
+            <solid.Index each={reordered()}>
+                {item => props.children(() => item().item, item().index)}
+            </solid.Index>
+        </div>
     )
 }
 
