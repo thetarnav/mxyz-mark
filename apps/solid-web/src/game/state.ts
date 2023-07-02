@@ -50,6 +50,7 @@ export type Maze_Matrix = t.Matrix<Maze_Tile_State>
 
 export type Game_State = {
     player: t.Vector
+    start: t.Vector
     finish: t.Vector
     minimap_finish: t.Vector
     maze: Maze_Matrix
@@ -67,6 +68,7 @@ export type Game_State = {
 export const initGameState = (): Game_State => {
     const game_state: Game_State = {
         player: MAZE_CENTER,
+        start: null!,
         finish: null!,
         minimap_finish: null!,
         maze: null!,
@@ -86,7 +88,7 @@ export const initGameState = (): Game_State => {
     const flood_start_q = // corner shrine adjacent to start
         t.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
 
-    game_state.player = corner_shrine_centers[starting_q as t.Quadrand]
+    game_state.start = game_state.player = corner_shrine_centers[starting_q as t.Quadrand]
     game_state.finish = corner_shrine_centers[finish_q as t.Quadrand]
     game_state.shallow_flood.add(corner_shrine_centers[flood_start_q as t.Quadrand].toString())
 

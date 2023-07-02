@@ -15,7 +15,6 @@ import {
     Game_State,
     initGameState,
     Tint,
-    vecToMinimap,
 } from './state'
 
 // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
@@ -81,11 +80,12 @@ export enum Tile_Display_As {
     Floor,
     Wall,
     Player,
+    Start,
+    Finish,
+    Minimap_Finish,
     Flood_Shallow,
     Flood_Deep,
     Flood_Gradient,
-    Minimap_Player,
-    Minimap_Finish,
 }
 
 const getTileDisplayAs = (
@@ -95,9 +95,6 @@ const getTileDisplayAs = (
 ): Tile_Display_As => {
     if (game_state.in_shrine) {
         const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
-        if (vecToMinimap(game_state.player).equals(fov_vec)) {
-            return Tile_Display_As.Minimap_Player
-        }
         if (fov_vec.equals(game_state.minimap_finish)) {
             return Tile_Display_As.Minimap_Finish
         }
@@ -109,6 +106,12 @@ const getTileDisplayAs = (
     if (vec_state && game_state.visible.get(maze.idx(vec))) {
         if (game_state.player.equals(vec)) {
             return Tile_Display_As.Player
+        }
+        if (vec.equals(game_state.start)) {
+            return Tile_Display_As.Start
+        }
+        if (vec.equals(game_state.finish)) {
+            return Tile_Display_As.Finish
         }
         if (vec_state.wall) {
             return Tile_Display_As.Wall
@@ -124,7 +127,6 @@ const getTileDisplayAs = (
             }
             return Tile_Display_As.Flood_Shallow
         }
-
         return Tile_Display_As.Floor
     }
 
@@ -136,11 +138,12 @@ export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
     [Tile_Display_As.Floor]: '#AE9E8A',
     [Tile_Display_As.Wall]: '#AE9E8A',
     [Tile_Display_As.Player]: '#FFF',
+    [Tile_Display_As.Start]: '#7D8C63',
+    [Tile_Display_As.Finish]: '#9E7900',
+    [Tile_Display_As.Minimap_Finish]: '#F7B544',
     [Tile_Display_As.Flood_Shallow]: '#F59A50',
     [Tile_Display_As.Flood_Gradient]: '#FF7D2B',
     [Tile_Display_As.Flood_Deep]: '#F15927',
-    [Tile_Display_As.Minimap_Player]: 'rgb(74, 222, 128)',
-    [Tile_Display_As.Minimap_Finish]: 'rgba(251, 191, 36)',
 }
 
 const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
@@ -151,9 +154,10 @@ const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
         case Tile_Display_As.Flood_Shallow:
         case Tile_Display_As.Flood_Deep:
         case Tile_Display_As.Flood_Gradient:
+        case Tile_Display_As.Finish:
             return 0.7 + 0.05 * tint
         case Tile_Display_As.Player:
-        case Tile_Display_As.Minimap_Player:
+        case Tile_Display_As.Start:
         case Tile_Display_As.Minimap_Finish:
             return 1
         case Tile_Display_As.Invisible:
