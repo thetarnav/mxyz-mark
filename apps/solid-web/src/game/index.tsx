@@ -164,59 +164,65 @@ const Game = () => {
                     )}
                 </MatrixGrid>
             </div>
-            <div class="fixed right-12 top-12 flex flex-col space-y-2">
-                {solid.untrack(() => {
-                    let input1!: HTMLInputElement
-                    let input2!: HTMLInputElement
-                    return (
-                        <form
-                            onSubmit={e => {
-                                e.preventDefault()
-                                const x = input1.valueAsNumber
-                                const y = input2.valueAsNumber
-                                setAbsolutePlayerPosition(game_state, x, y)
-                            }}
-                            class="space-x-2"
-                            onKeyDown={e => {
-                                if (e.key !== 'Enter') e.stopPropagation()
-                            }}
-                        >
-                            <input
-                                ref={input1}
-                                value={trackGameState().player.x}
-                                class="w-12"
-                                type="number"
-                            />
-                            <input
-                                ref={input2}
-                                value={trackGameState().player.y}
-                                class="w-12"
-                                type="number"
-                            />
-                            <button class="hidden" />
-                        </form>
-                    )
-                })}
-                <p>turn: {trackGameState().turn}</p>
-                <button
-                    onClick={() => {
-                        game_state.noclip = !game_state.noclip
-                        s.trigger(game_state.turn_signal)
-                    }}
-                >
-                    {trackGameState().noclip ? 'disable' : 'enable'} noclip
-                </button>
-                <button
-                    onClick={() => {
-                        game_state.show_invisible = !game_state.show_invisible
-                        updateState(game_state, game_state.player)
-                        s.trigger(game_state.turn_signal)
-                    }}
-                >
-                    {trackGameState().show_invisible ? 'hide' : 'show'} invisible
-                </button>
-            </div>
+            {import.meta.env.DEV && <DevTools state={trackGameState()} />}
         </main>
+    )
+}
+
+const DevTools = (props: { state: Game_State }) => {
+    return (
+        <div class="fixed right-12 top-12 flex flex-col space-y-2">
+            {solid.untrack(() => {
+                let input1!: HTMLInputElement
+                let input2!: HTMLInputElement
+                return (
+                    <form
+                        onSubmit={e => {
+                            e.preventDefault()
+                            const x = input1.valueAsNumber
+                            const y = input2.valueAsNumber
+                            setAbsolutePlayerPosition(props.state, x, y)
+                        }}
+                        class="space-x-2"
+                        onKeyDown={e => {
+                            if (e.key !== 'Enter') e.stopPropagation()
+                        }}
+                    >
+                        <input
+                            ref={input1}
+                            value={props.state.player.x}
+                            class="w-12"
+                            type="number"
+                        />
+                        <input
+                            ref={input2}
+                            value={props.state.player.y}
+                            class="w-12"
+                            type="number"
+                        />
+                        <button class="hidden" />
+                    </form>
+                )
+            })}
+            <p>turn: {props.state.turn}</p>
+            <button
+                onClick={() => {
+                    props.state.noclip = !props.state.noclip
+                    s.trigger(props.state.turn_signal)
+                }}
+            >
+                {props.state.noclip ? 'disable' : 'enable'} noclip
+            </button>
+            <button
+                onClick={() => {
+                    props.state.show_invisible = !props.state.show_invisible
+                    updateState(props.state, props.state.player)
+                    s.trigger(props.state.turn_signal)
+                }}
+            >
+                {props.state.show_invisible ? 'hide' : 'show'} invisible
+            </button>
+        </div>
     )
 }
 
