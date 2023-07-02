@@ -1,5 +1,4 @@
 import { isHydrated } from '@solid-primitives/lifecycle'
-import clsx from 'clsx'
 import * as solid from 'solid-js'
 import { Title } from 'solid-start'
 import * as s from 'src/lib/signal'
@@ -11,18 +10,15 @@ import {
     GRID_SIZE,
     WINDOW_SIZE,
     updateVisiblePoints,
-    BOARD_SIZE,
     isFlooded,
     ALL_SHRINE_CENTERS,
     Game_State,
     initGameState,
     Tint,
+    vecToMinimap,
 } from './state'
 
 // const tileToVec = (tile: t.Vector) => tile.multiply(GRID_SIZE).add(1, 1)
-
-const vecToMinimap = (vec: t.Vector) =>
-    vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
 function updateState(game_state: Game_State, player: t.Vector) {
     game_state.player = player
@@ -80,6 +76,101 @@ function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y: unknow
     s.trigger(game_state.turn_signal)
 }
 
+export enum Tile_Display_As {
+    Invisible,
+    Floor,
+    Wall,
+    Player,
+    Flood_Shallow,
+    Flood_Deep,
+    Flood_Gradient,
+    Minimap_Player,
+    Minimap_Finish,
+}
+
+const getTileDisplayAs = (
+    game_state: Game_State,
+    vec: t.Vector,
+    fov_idx: number,
+): Tile_Display_As => {
+    if (game_state.in_shrine) {
+        const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
+        if (vecToMinimap(game_state.player).equals(fov_vec)) {
+            return Tile_Display_As.Minimap_Player
+        }
+        if (fov_vec.equals(game_state.minimap_finish)) {
+            return Tile_Display_As.Minimap_Finish
+        }
+    }
+
+    const { maze } = game_state,
+        vec_state = maze.get(vec)
+
+    if (vec_state && game_state.visible.get(maze.idx(vec))) {
+        if (game_state.player.equals(vec)) {
+            return Tile_Display_As.Player
+        }
+        if (vec_state.wall) {
+            return Tile_Display_As.Wall
+        }
+        if (vec_state.flooded) {
+            return Tile_Display_As.Flood_Deep
+        }
+        if (game_state.shallow_flood.has(vec.toString())) {
+            for (const neighbor of t.eachPointDirection(vec, maze)) {
+                if (isFlooded(maze, neighbor)) {
+                    return Tile_Display_As.Flood_Gradient
+                }
+            }
+            return Tile_Display_As.Flood_Shallow
+        }
+
+        return Tile_Display_As.Floor
+    }
+
+    return Tile_Display_As.Invisible
+}
+
+export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
+    [Tile_Display_As.Invisible]: 'transparent',
+    [Tile_Display_As.Floor]: '#AE9E8A',
+    [Tile_Display_As.Wall]: '#AE9E8A',
+    [Tile_Display_As.Player]: '#FFF',
+    [Tile_Display_As.Flood_Shallow]: '#F59A50',
+    [Tile_Display_As.Flood_Gradient]: '#FF7D2B',
+    [Tile_Display_As.Flood_Deep]: '#F15927',
+    [Tile_Display_As.Minimap_Player]: 'rgb(74, 222, 128)',
+    [Tile_Display_As.Minimap_Finish]: 'rgba(251, 191, 36)',
+}
+
+const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
+    switch (tile) {
+        case Tile_Display_As.Floor:
+            return 0.2 + 0.04 * tint
+        case Tile_Display_As.Wall:
+        case Tile_Display_As.Flood_Shallow:
+        case Tile_Display_As.Flood_Deep:
+        case Tile_Display_As.Flood_Gradient:
+            return 0.7 + 0.05 * tint
+        case Tile_Display_As.Player:
+        case Tile_Display_As.Minimap_Player:
+        case Tile_Display_As.Minimap_Finish:
+            return 1
+        case Tile_Display_As.Invisible:
+            return 0
+    }
+}
+
+const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number): string => {
+    const display_as = getTileDisplayAs(game_state, vec, fov_idx),
+        color = DISPLAY_TILE_TO_COLOR[display_as],
+        vec_state = game_state.maze.get(vec),
+        tint = vec_state ? vec_state.tint : 0,
+        opacity = getDisplayAsOpacity(display_as, tint),
+        p = Math.round(opacity * 100)
+    return `color-mix(in lch, ${color} ${p}%, transparent)`
+}
+
 const Game = () => {
     const game_state = initGameState()
 
@@ -107,73 +198,15 @@ const Game = () => {
         s.trigger(game_state.turn_signal)
     })
 
-    const minimap_finish = vecToMinimap(game_state.finish)
-
-    const TINT_TO_FLOOR_OPACITY: Record<Tint, string> = {
-        0: 'bg-opacity-20',
-        1: 'bg-opacity-24',
-        2: 'bg-opacity-28',
-        3: 'bg-opacity-32',
-    }
-    const TINT_TO_WALL_OPACITY: Record<Tint, string> = {
-        0: 'bg-opacity-40',
-        1: 'bg-opacity-45',
-        2: 'bg-opacity-50',
-        3: 'bg-opacity-55',
-    }
-    const TINT_TO_FLOOD_OPACITY: Record<Tint, string> = {
-        0: 'bg-opacity-70',
-        1: 'bg-opacity-75',
-        2: 'bg-opacity-80',
-        3: 'bg-opacity-85',
-    }
-
-    const getTileClass = (vec: t.Vector, fov_idx: number): string => {
-        const game_state = trackGameState()
-
-        if (game_state.in_shrine) {
-            const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
-            if (vecToMinimap(game_state.player).equals(fov_vec)) return 'bg-primary'
-            if (fov_vec.equals(minimap_finish)) return 'bg-amber'
-        }
-
-        const { maze } = game_state,
-            vec_state = maze.get(vec)
-
-        if (vec_state && game_state.visible.get(maze.idx(vec))) {
-            if (game_state.player.equals(vec)) {
-                return 'bg-white'
-            }
-            if (vec_state.wall) {
-                return `bg-#d4dece ${TINT_TO_WALL_OPACITY[vec_state.tint]}`
-            }
-            if (vec_state.flooded) {
-                return `bg-red-6 ${TINT_TO_FLOOD_OPACITY[vec_state.tint]}`
-            }
-            if (game_state.shallow_flood.has(vec.toString())) {
-                for (const neighbor of t.eachPointDirection(vec, maze)) {
-                    if (isFlooded(maze, neighbor)) {
-                        return `bg-orange-6 ${TINT_TO_FLOOD_OPACITY[vec_state.tint]}`
-                    }
-                }
-                return `bg-orange-4 ${TINT_TO_FLOOD_OPACITY[vec_state.tint]}`
-            }
-
-            return `bg-stone ${TINT_TO_FLOOR_OPACITY[vec_state.tint]}`
-        }
-
-        return 'bg-transparent'
-    }
-
     return (
         <>
             <MatrixGrid matrix={trackGameState().windowed}>
                 {(vec, fovIndex) => (
                     <div
-                        class={clsx(
-                            'flex items-center justify-center',
-                            getTileClass(vec(), fovIndex),
-                        )}
+                        class="flex items-center justify-center"
+                        style={{
+                            'background-color': getTileBgColor(trackGameState(), vec(), fovIndex),
+                        }}
                     />
                 )}
             </MatrixGrid>

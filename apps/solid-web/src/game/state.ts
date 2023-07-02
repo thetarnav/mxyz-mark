@@ -51,6 +51,7 @@ export type Maze_Matrix = t.Matrix<Maze_Tile_State>
 export type Game_State = {
     player: t.Vector
     finish: t.Vector
+    minimap_finish: t.Vector
     maze: Maze_Matrix
     windowed: t.Matrix<t.Vector>
     visible: Map<number, boolean>
@@ -67,6 +68,7 @@ export const initGameState = (): Game_State => {
     const game_state: Game_State = {
         player: MAZE_CENTER,
         finish: null!,
+        minimap_finish: null!,
         maze: null!,
         turn: 0,
         progress_to_flood_update: 0,
@@ -90,8 +92,13 @@ export const initGameState = (): Game_State => {
 
     game_state.maze = generateInitMazeState()
 
+    game_state.minimap_finish = vecToMinimap(game_state.finish)
+
     return game_state
 }
+
+export const vecToMinimap = (vec: t.Vector) =>
+    vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
 export const isWall = (maze_state: Maze_Matrix, p: t.Vector) => {
     const state = maze_state.get(p)
