@@ -2,7 +2,7 @@ import { solid, ease, s, t } from 'src/lib'
 import { createDirectionMovement } from './held-direction'
 import { initGameState } from './init'
 import { getWelcomeMessage } from './messages'
-import { expandFlood, isFlooded, setAbsolutePlayerPosition, updateState } from './state'
+import { expandFlood, setAbsolutePlayerPosition, updateState } from './state'
 import { Game_State, Tile_Display_As, Tint, WINDOW_RADIUS, WINDOW_SIZE } from './types'
 
 const getTileDisplayAs = (
@@ -31,11 +31,6 @@ const getTileDisplayAs = (
             return Tile_Display_As.Flood_Deep
         }
         if (game_state.shallow_flood.has(vec.toString())) {
-            for (const neighbor of t.eachPointDirection(vec, maze)) {
-                if (isFlooded(maze, neighbor)) {
-                    return Tile_Display_As.Flood_Gradient
-                }
-            }
             return Tile_Display_As.Flood_Shallow
         }
         if (vec.equals(game_state.start)) {
@@ -59,7 +54,6 @@ export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
     [Tile_Display_As.Finish]: '#9E7900',
     [Tile_Display_As.Minimap_Finish]: '#F7B544',
     [Tile_Display_As.Flood_Shallow]: '#F59A50',
-    [Tile_Display_As.Flood_Gradient]: '#FF7D2B',
     [Tile_Display_As.Flood_Deep]: '#F15927',
 }
 
@@ -70,7 +64,6 @@ const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
         case Tile_Display_As.Wall:
         case Tile_Display_As.Flood_Shallow:
         case Tile_Display_As.Flood_Deep:
-        case Tile_Display_As.Flood_Gradient:
         case Tile_Display_As.Finish:
             return 0.7 + 0.05 * tint
         case Tile_Display_As.Player:

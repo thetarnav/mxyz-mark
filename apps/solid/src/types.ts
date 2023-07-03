@@ -74,5 +74,4 @@ export enum Tile_Display_As {
     Minimap_Finish,
     Flood_Shallow,
     Flood_Deep,
-    Flood_Gradient,
 }
