@@ -85,13 +85,13 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
         opacity = getDisplayAsOpacity(display_as, tint) * easing,
         p = Math.round(opacity * 100)
 
-    return `color-mix(in hsl, ${color} ${p}%, transparent)`
+    return `color-mix(in hsl, ${color} calc(${p}% * (${easing} - var(--flicker))), transparent)`
 }
 
 const DevTools = (props: { state: Game_State }) => {
     return (
         <div class="fixed right-6 top-6 flex flex-col space-y-2">
-            {solid.untrack(() => {
+            {(() => {
                 let input1!: HTMLInputElement
                 let input2!: HTMLInputElement
                 return (
@@ -122,7 +122,7 @@ const DevTools = (props: { state: Game_State }) => {
                         <button class="hidden" />
                     </form>
                 )
-            })}
+            })()}
             <p>turn: {props.state.turn}</p>
             <button
                 onClick={() => {
@@ -213,13 +213,27 @@ export const Game = () => {
         ),
     )
 
+    let container!: HTMLDivElement
+    let flicker_mod = 0
+    const frame = () => {
+        const prev = flicker_mod
+        flicker_mod = t.bounce(flicker_mod + Math.random() * 0.06 - 0.03, 0, 0.4)
+        if (Math.abs(flicker_mod - prev) > 0.01) {
+            container.style.setProperty('--flicker', flicker_mod + '')
+        }
+        raf = requestAnimationFrame(frame)
+    }
+    let raf = requestAnimationFrame(frame)
+    solid.onCleanup(() => cancelAnimationFrame(raf))
+
     return (
         <>
             <main class="center-child h-screen w-screen">
                 <div
+                    ref={container}
                     class="grid delay-200"
                     style={{
-                        '--width': 'min(80vw, 40rem)',
+                        '--width': 'min(80vw, 48rem)',
                         '--gap': '3rem',
                         'grid-gap': 'var(--gap)',
                         width: 'var(--width)',
@@ -236,29 +250,23 @@ export const Game = () => {
                     >
                         {(() => {
                             const welcome = getWelcomeMessage()
+                            const DirectionKey = (props: { direction: t.Direction }) => (
+                                <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
+                                    {props.direction}
+                                </div>
+                            )
                             return (
                                 <div>
                                     <p>{welcome.greeting}</p>
                                     <p class="mt-3">{welcome.explanation}</p>
-                                    {(() => {
-                                        const DirectionKey = (props: {
-                                            direction: t.Direction
-                                        }) => (
-                                            <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
-                                                {props.direction}
-                                            </div>
-                                        )
-                                        return (
-                                            <div class="mt-6 flex w-max flex-col items-center gap-1">
-                                                <DirectionKey direction={t.Direction.Up} />
-                                                <div class="flex gap-1">
-                                                    <DirectionKey direction={t.Direction.Left} />
-                                                    <DirectionKey direction={t.Direction.Down} />
-                                                    <DirectionKey direction={t.Direction.Right} />
-                                                </div>
-                                            </div>
-                                        )
-                                    })()}
+                                    <div class="mt-6 flex w-max flex-col items-center gap-1">
+                                        <DirectionKey direction={t.Direction.Up} />
+                                        <div class="flex gap-1">
+                                            <DirectionKey direction={t.Direction.Left} />
+                                            <DirectionKey direction={t.Direction.Down} />
+                                            <DirectionKey direction={t.Direction.Right} />
+                                        </div>
+                                    </div>
                                     <p class="mt-6">{welcome.farewell}</p>
                                 </div>
                             )

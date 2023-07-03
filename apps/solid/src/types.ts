@@ -5,7 +5,7 @@ export const TILE_SIZE = 2
 export const GRID_SIZE = TILE_SIZE + 1
 export const OUTER_WALL_SIZE = 1
 export const BOARD_SIZE = N_TILES * GRID_SIZE + OUTER_WALL_SIZE // +1 for first wall
-export const WINDOW_SIZE = 15
+export const WINDOW_SIZE = 17
 export const WINDOW_RADIUS = Math.floor(WINDOW_SIZE / 2)
 
 export const SHRINE_SIZE_TILES = 4
