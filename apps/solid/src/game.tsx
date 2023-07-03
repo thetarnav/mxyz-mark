@@ -1,31 +1,9 @@
-import * as solid from 'solid-js'
-import * as s from 'src/lib/signal'
-import * as t from 'src/lib/trigonometry'
+import { solid, ease, s, t } from 'src/lib'
 import { createDirectionMovement } from './held-direction'
-import {
-    WINDOW_SIZE,
-    isFlooded,
-    Game_State,
-    Tint,
-    updateState,
-    expandFlood,
-    setAbsolutePlayerPosition,
-} from './state'
 import { initGameState } from './init'
 import { getWelcomeMessage } from './messages'
-
-export enum Tile_Display_As {
-    Invisible,
-    Floor,
-    Wall,
-    Player,
-    Start,
-    Finish,
-    Minimap_Finish,
-    Flood_Shallow,
-    Flood_Deep,
-    Flood_Gradient,
-}
+import { expandFlood, isFlooded, setAbsolutePlayerPosition, updateState } from './state'
+import { Game_State, Tile_Display_As, Tint, WINDOW_RADIUS, WINDOW_SIZE } from './types'
 
 const getTileDisplayAs = (
     game_state: Game_State,
@@ -109,9 +87,12 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
         color = DISPLAY_TILE_TO_COLOR[display_as],
         vec_state = game_state.maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
-        opacity = getDisplayAsOpacity(display_as, tint),
+        d = t.distance(vec, game_state.player),
+        easing = ease.outSine(t.clamp(1 - d / WINDOW_RADIUS, 0, 1)),
+        opacity = getDisplayAsOpacity(display_as, tint) * easing,
         p = Math.round(opacity * 100)
-    return `color-mix(in lch, ${color} ${p}%, transparent)`
+
+    return `color-mix(in hsl, ${color} ${p}%, transparent)`
 }
 
 const DevTools = (props: { state: Game_State }) => {

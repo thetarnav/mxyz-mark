@@ -1,26 +1,25 @@
 import * as t from 'src/lib/trigonometry'
 import * as s from 'src/lib/signal'
+import { isWall, vecToMinimap } from './state'
 import {
-    BOARD_SIZE,
-    GRID_SIZE,
     Game_State,
     MAZE_CENTER,
-    MAZE_CENTER_ORIGIN,
+    corner_shrine_centers,
+    N_TILES,
+    SHRINE_SIZE_TILES,
+    SHRINE_RADIUS_TILES,
+    BOARD_SIZE,
+    GRID_SIZE,
+    TILE_SIZE,
     Maze_Matrix,
     Maze_Tile_State,
-    N_TILES,
-    N_TINTS,
-    SHRINE_CENTER,
-    SHRINE_RADIUS_TILES,
-    SHRINE_SIZE,
-    SHRINE_SIZE_TILES,
-    TILE_SIZE,
-    Tint,
-    corner_shrine_centers,
     corner_shrine_corners,
-    isWall,
-    vecToMinimap,
-} from './state'
+    SHRINE_SIZE,
+    SHRINE_CENTER,
+    MAZE_CENTER_ORIGIN,
+    N_TINTS,
+    Tint,
+} from './types'
 
 export const initGameState = (): Game_State => {
     const game_state: Game_State = {
