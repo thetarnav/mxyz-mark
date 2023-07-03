@@ -9,6 +9,7 @@ export default defineConfig({
             primary: '#DE311B',
             bone: '#DFDACF',
             wall: '#ae9e8a',
+            'cold-black': '#131516',
             gray: {
                 50: '#fafafa',
                 100: '#f5f5f5',

@@ -4,12 +4,12 @@ html {
 }
 
 *::selection {
-    --at-apply: bg-wall text-stone-9;
+    --at-apply: bg-wall text-cold-black;
 }
 
 body {
     /* background-color: #111; */
-    --at-apply: bg-stone-9;
+    --at-apply: bg-cold-black;
     font-family: 'VT323', monospace;
     animation: fade-in 0.5s ease-in-out;
 }
@@ -33,7 +33,7 @@ input {
 }
 
 button {
-    --at-apply: 'active:bg-primary active:focus:bg-primary active:text-stone-9 active:border-primary';
+    --at-apply: 'active:bg-primary active:focus:bg-primary active:text-cold-black active:border-primary';
 }
 
 /* Disable number input arrows */
