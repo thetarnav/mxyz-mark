@@ -1,5 +1,5 @@
 import messages from './messages.json'
-import * as t from 'src/lib/trigonometry'
+import { t } from 'src/lib'
 
 export const getWelcomeMessage = () => {
     const welcomeMessage = t.pickRandom(messages.welcome)

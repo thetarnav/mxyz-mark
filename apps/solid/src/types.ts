@@ -1,5 +1,4 @@
-import * as t from 'src/lib/trigonometry'
-import * as s from 'src/lib/signal'
+import { s, t } from 'src/lib'
 
 export const N_TILES = 36
 export const TILE_SIZE = 2

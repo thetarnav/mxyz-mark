@@ -1,5 +1,4 @@
-import * as t from 'src/lib/trigonometry'
-import * as s from 'src/lib/signal'
+import { s, t } from 'src/lib'
 import { isWall, vecToMinimap } from './state'
 import {
     Game_State,
