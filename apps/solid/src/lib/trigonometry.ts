@@ -41,10 +41,10 @@ export function* randomIterate<T>(arr: readonly T[]) {
 }
 
 export const enum Direction {
-    Right = 'RIGHT',
-    Left = 'LEFT',
-    Down = 'DOWN',
-    Up = 'UP',
+    Up = '^',
+    Down = 'v',
+    Right = '>',
+    Left = '<',
 }
 
 export const DIRECTIONS_H_V = [

@@ -1,24 +1,29 @@
 html {
     font-size: 22px;
+    --at-apply: text-bone;
+}
+
+*::selection {
+    --at-apply: bg-wall text-stone-9;
 }
 
 body {
     /* background-color: #111; */
-    --at-apply: text-white bg-stone-9;
+    --at-apply: bg-stone-9;
     font-family: 'VT323', monospace;
 }
 
 button,
 input {
-    --at-apply: text-white bg-transparent cursor-pointer;
-    --at-apply: border-gray-6 border-1 border-solid rounded-md;
-    --at-apply: px-1 py-0.5;
+    --at-apply: bg-transparent cursor-pointer;
+    --at-apply: border-wall border-2 border-solid;
+    --at-apply: px-1;
     --at-apply: 'hover:border-primary';
-    --at-apply: 'focus:border-white';
+    --at-apply: 'focus:border-bone';
 }
 
 button {
-    --at-apply: 'active:bg-primary active:focus:bg-primary active:text-black active:border-primary';
+    --at-apply: 'active:bg-primary active:focus:bg-primary active:text-stone-9 active:border-primary';
 }
 
 /* Disable number input arrows */

@@ -75,7 +75,7 @@ export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
     [Tile_Display_As.Invisible]: 'transparent',
     [Tile_Display_As.Floor]: '#AE9E8A',
     [Tile_Display_As.Wall]: '#AE9E8A',
-    [Tile_Display_As.Player]: '#FFF',
+    [Tile_Display_As.Player]: '#DFDACF',
     [Tile_Display_As.Start]: '#7D8C63',
     [Tile_Display_As.Finish]: '#9E7900',
     [Tile_Display_As.Minimap_Finish]: '#F7B544',
@@ -242,22 +242,51 @@ export const Game = () => {
         <>
             <main class="center-child h-screen w-screen">
                 <div
-                    class="transition-600 flex items-center justify-center delay-200"
+                    class="grid delay-200"
                     style={{
-                        transform: show_menu.value ? '' : 'translateX(-25%) translateZ(0.001px)',
+                        '--width': 'min(80vw, 40rem)',
+                        '--gap': '3rem',
+                        'grid-gap': 'var(--gap)',
+                        width: 'var(--width)',
+                        'grid-template': '1fr / 1fr 1fr',
+                        translate: show_menu.value
+                            ? ''
+                            : 'calc(-0.25 * var(--width) - var(--gap) / 2) 0 0.001px',
+                        transition: 'translate 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                 >
                     <div
                         class="center-child transition-600 delay-200"
-                        style={{
-                            width: 'min(80vw, 50vh)',
-                            opacity: show_menu.value ? 1 : 0,
-                        }}
+                        style={{ opacity: show_menu.value ? 1 : 0 }}
                     >
-                        Hello, welcome to MXYZ Mark!
+                        <div>
+                            <p>I'm glad you're here again.</p>
+                            <p class="mt-3">
+                                You have an ability to move around pressing the arrow keys. Please
+                                use it to find the exit while you still can.
+                            </p>
+                            {(() => {
+                                const DirectionKey = (props: { direction: t.Direction }) => (
+                                    <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
+                                        {props.direction}
+                                    </div>
+                                )
+                                return (
+                                    <div class="mt-6 flex w-max flex-col items-center gap-1">
+                                        <DirectionKey direction={t.Direction.Up} />
+                                        <div class="flex gap-1">
+                                            <DirectionKey direction={t.Direction.Left} />
+                                            <DirectionKey direction={t.Direction.Down} />
+                                            <DirectionKey direction={t.Direction.Right} />
+                                        </div>
+                                    </div>
+                                )
+                            })()}
+                            <p class="mt-6">Good luck.</p>
+                        </div>
                     </div>
                     <div class="center-child">
-                        <div style="width: min(80vw, 50vh)">
+                        <div class="w-full">
                             <MatrixGrid matrix={game_state_sig.value.windowed}>
                                 {(vec, fovIndex) => (
                                     <div

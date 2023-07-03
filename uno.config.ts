@@ -7,6 +7,8 @@ export default defineConfig({
     theme: {
         colors: {
             primary: '#DE311B',
+            bone: '#DFDACF',
+            wall: '#ae9e8a',
             gray: {
                 50: '#fafafa',
                 100: '#f5f5f5',
