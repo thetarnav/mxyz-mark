@@ -1,0 +1,49 @@
+{
+    "welcome": [
+        [
+            "I'm glad you're here again.",
+            "You have an ability to move around pressing the arrow keys. Please use it to find the exit while you still can.",
+            "Good luck."
+        ],
+        [
+            "Welcome back, wanderer.",
+            "Once again, you find yourself trapped within this labyrinthine maze. Use the arrow keys to navigate, and may fortune favor your escape.",
+            "May the path to salvation reveal itself to you."
+        ],
+        [
+            "Greetings, traveler.",
+            "You return to this desolate maze, where endless corridors stretch out before you. Only by utilizing the arrow keys can you hope to find an exit before it's too late.",
+            "May your steps lead you towards salvation."
+        ],
+        [
+            "Ah, you've returned.",
+            "Within this gloomy maze, you hold the power to maneuver using the arrow keys. Seek out the exit while the opportunity still lingers.",
+            "Fortune smiles upon the relentless. Best of luck."
+        ],
+        [
+            "Welcome, once more.",
+            "In this darkened maze, you possess the ability to traverse its winding pathways with the arrow keys. Seek out the exit, for time is fleeting.",
+            "May fate guide your steps."
+        ],
+        [
+            "Greetings, seeker.",
+            "Once again, you must tread through this labyrinthine realm. Employ the arrow keys to uncover the exit, before the cycle of endless wandering consumes you.",
+            "May the light guide your way."
+        ],
+        [
+            "Ah, you've returned to this forsaken place.",
+            "In this twisted maze, your movement lies within the grasp of the arrow keys. Seek the exit, lest you forever wander in this eternal loop.",
+            "May the winds of fate be in your favor."
+        ],
+        [
+            "Welcome back, restless soul.",
+            "Within this enigmatic maze, the arrow keys are your only means of escape. Search for the exit, for time grows short.",
+            "May your resolve endure."
+        ],
+        [
+            "Greetings, wanderer.",
+            "You've returned to this haunting maze, where the arrow keys hold the key to your freedom. Seek the exit, for every step could be your last.",
+            "May hope guide your journey."
+        ]
+    ]
+}

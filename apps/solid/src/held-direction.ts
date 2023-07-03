@@ -1,5 +1,5 @@
-import * as t from '../lib/trigonometry'
-import * as s from '../lib/signal'
+import * as t from './lib/trigonometry'
+import * as s from './lib/signal'
 import * as solid from 'solid-js'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 

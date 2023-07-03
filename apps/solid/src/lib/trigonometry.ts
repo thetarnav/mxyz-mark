@@ -5,7 +5,7 @@ export const randomIntFrom = (min: number, max: number) =>
 export const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max)
 
-export const pick_random = <T>(arr: readonly T[]) => arr[randomInt(arr.length)]
+export const pickRandom = <T>(arr: readonly T[]) => arr[randomInt(arr.length)]
 
 export const remainder = (a: number, b: number) => ((a % b) + b) % b
 

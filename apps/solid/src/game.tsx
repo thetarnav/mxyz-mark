@@ -12,6 +12,7 @@ import {
     setAbsolutePlayerPosition,
 } from './state'
 import { initGameState } from './init'
+import { getWelcomeMessage } from './messages'
 
 export enum Tile_Display_As {
     Invisible,
@@ -252,38 +253,42 @@ export const Game = () => {
                         translate: show_menu.value
                             ? ''
                             : 'calc(-0.25 * var(--width) - var(--gap) / 2) 0 0.001px',
-                        transition: 'translate 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'translate 0.6s ease-in-out',
                     }}
                 >
                     <div
                         class="center-child transition-600 delay-200"
                         style={{ opacity: show_menu.value ? 1 : 0 }}
                     >
-                        <div>
-                            <p>I'm glad you're here again.</p>
-                            <p class="mt-3">
-                                You have an ability to move around pressing the arrow keys. Please
-                                use it to find the exit while you still can.
-                            </p>
-                            {(() => {
-                                const DirectionKey = (props: { direction: t.Direction }) => (
-                                    <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
-                                        {props.direction}
-                                    </div>
-                                )
-                                return (
-                                    <div class="mt-6 flex w-max flex-col items-center gap-1">
-                                        <DirectionKey direction={t.Direction.Up} />
-                                        <div class="flex gap-1">
-                                            <DirectionKey direction={t.Direction.Left} />
-                                            <DirectionKey direction={t.Direction.Down} />
-                                            <DirectionKey direction={t.Direction.Right} />
-                                        </div>
-                                    </div>
-                                )
-                            })()}
-                            <p class="mt-6">Good luck.</p>
-                        </div>
+                        {(() => {
+                            const welcome = getWelcomeMessage()
+                            return (
+                                <div>
+                                    <p>{welcome.greeting}</p>
+                                    <p class="mt-3">{welcome.explanation}</p>
+                                    {(() => {
+                                        const DirectionKey = (props: {
+                                            direction: t.Direction
+                                        }) => (
+                                            <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
+                                                {props.direction}
+                                            </div>
+                                        )
+                                        return (
+                                            <div class="mt-6 flex w-max flex-col items-center gap-1">
+                                                <DirectionKey direction={t.Direction.Up} />
+                                                <div class="flex gap-1">
+                                                    <DirectionKey direction={t.Direction.Left} />
+                                                    <DirectionKey direction={t.Direction.Down} />
+                                                    <DirectionKey direction={t.Direction.Right} />
+                                                </div>
+                                            </div>
+                                        )
+                                    })()}
+                                    <p class="mt-6">{welcome.farewell}</p>
+                                </div>
+                            )
+                        })()}
                     </div>
                     <div class="center-child">
                         <div class="w-full">
