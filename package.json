@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "format": "prettier --ignore-path .gitignore -w ./apps/solid uno.config.ts"
+        "format": "prettier --ignore-path .gitignore -w ./apps/solid/**/*.{ts,tsx,json,html,css} uno.config.ts"
     },
     "devDependencies": {
         "@total-typescript/ts-reset": "^0.4.2",
