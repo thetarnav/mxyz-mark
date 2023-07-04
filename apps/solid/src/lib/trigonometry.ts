@@ -166,6 +166,20 @@ export const quadrand_to_rotation: Record<Quadrand, number> = {
     [Quadrand.Top_Left]: (3 * math.PI) / 2,
 }
 
+export const OPPOSITE_QUADRANTS: Record<Quadrand, Quadrand> = {
+    [Quadrand.Bottom_Left]: Quadrand.Top_Right,
+    [Quadrand.Bottom_Right]: Quadrand.Top_Left,
+    [Quadrand.Top_Right]: Quadrand.Bottom_Left,
+    [Quadrand.Top_Left]: Quadrand.Bottom_Right,
+}
+
+export const ADJACENT_QUADRANTS: Record<Quadrand, Quadrand[]> = {
+    [Quadrand.Bottom_Left]: [Quadrand.Bottom_Right, Quadrand.Top_Left],
+    [Quadrand.Bottom_Right]: [Quadrand.Bottom_Left, Quadrand.Top_Right],
+    [Quadrand.Top_Right]: [Quadrand.Bottom_Right, Quadrand.Top_Left],
+    [Quadrand.Top_Left]: [Quadrand.Bottom_Left, Quadrand.Top_Right],
+}
+
 export class Segment {
     constructor(public start: Vector, public end: Vector) {}
     get x1() {

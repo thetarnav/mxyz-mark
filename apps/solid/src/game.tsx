@@ -1,8 +1,16 @@
 import { solid, ease, s, trig, math } from 'src/lib'
-import { createDirectionMovement } from './held-direction'
-import { COLORS, Game_State, Tint, WINDOW_RADIUS, WINDOW_SIZE, initGameState } from './init'
+import { createDirectionMovement } from './held_direction'
+import {
+    COLORS,
+    Game_State,
+    Tint,
+    WINDOW_RADIUS,
+    WINDOW_SIZE,
+    initGameState,
+    setUnknownPlayerPosition,
+} from './state'
 import { getWelcomeMessage } from './messages'
-import { expandFlood, setAbsolutePlayerPosition, updateState } from './state'
+import { movePlayerInDirection, updateState } from './state'
 
 export enum Tile_Display_As {
     Invisible,
@@ -109,7 +117,7 @@ const FLICKER_MAX = 0.36
 const FLICKER_VAR = '--flicker'
 
 export const Game = () => {
-    const game_state = initGameState(math.randomInt(4) as trig.Quadrand, 0)
+    const game_state = initGameState()
 
     /**
      * Game state is not a reactive proxy, so we need to track it manually
@@ -119,20 +127,8 @@ export const Game = () => {
         return game_state
     })
 
-    updateState(game_state, game_state.player)
-
     createDirectionMovement(direction => {
-        /*
-            move player in direction if possible
-        */
-        const vec = game_state.player.go(direction)
-        const vec_state = game_state.maze.get(vec)
-
-        if (!game_state.dev.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
-
-        updateState(game_state, vec)
-        expandFlood(game_state)
-        s.trigger(game_state.turn_signal)
+        movePlayerInDirection(game_state, direction)
     })
 
     const show_menu = s.memo(
@@ -257,7 +253,7 @@ const DevTools = (props: { state: Game_State }) => {
                     e.preventDefault()
                     const x = input1.valueAsNumber
                     const y = input2.valueAsNumber
-                    setAbsolutePlayerPosition(props.state, x, y)
+                    setUnknownPlayerPosition(props.state, x, y)
                 }}
                 class="space-x-1"
                 onKeyDown={e => {

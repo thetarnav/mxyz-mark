@@ -1,130 +1,18 @@
-import { math, s, t, trig } from './lib'
+import {
+    Maze_Config,
+    SHRINE_SIZE_TILES,
+    SHRINE_RADIUS_TILES,
+    GRID_SIZE,
+    TILE_SIZE,
+    Maze_Matrix,
+    Maze_Tile_State,
+    SHRINE_SIZE,
+    SHRINE_CENTER,
+    N_TINTS,
+    Tint,
+} from './state'
+import { trig, math } from './lib'
 import { isWall } from './state'
-import COLORS from '../../../data/colors.json'
-
-export { COLORS }
-
-export const N_TINTS = 4
-
-export type Tint = t.Enumerate<typeof N_TINTS>
-
-export type Maze_Config = {
-    n_tiles: number
-    size: number
-    center: trig.Vector
-    center_origin: trig.Vector
-    shrine_corners: Record<trig.Quadrand, trig.Vector>
-    shrine_centers: Record<trig.Quadrand, trig.Vector>
-}
-
-export type Maze_Tile_State = {
-    wall: boolean
-    flooded: boolean
-    tint: Tint
-}
-export type Maze_Matrix = trig.Matrix<Maze_Tile_State>
-
-export type Game_State = {
-    round: number
-    turn: number
-    maze_config: Maze_Config
-    maze: Maze_Matrix
-    player: trig.Vector
-    start_q: trig.Quadrand
-    start: trig.Vector
-    finish: trig.Vector
-    minimap_finish: trig.Vector
-    window: trig.Matrix<trig.Vector>
-    visible: Map<number, boolean>
-    shallow_flood: Set<trig.VecString>
-    progress_to_flood_update: number
-    in_shrine: boolean
-    turn_signal: s.Signal<undefined>
-    dev: {
-        show_invisible: boolean
-        hide_easing: boolean
-        noclip: boolean
-    }
-}
-
-export const TILE_SIZE = 2
-export const GRID_SIZE = TILE_SIZE + 1
-export const OUTER_WALL_SIZE = 1
-export const WINDOW_SIZE = 19
-export const WINDOW_RADIUS = Math.floor(WINDOW_SIZE / 2)
-
-export const SHRINE_SIZE_TILES = 4
-export const SHRINE_RADIUS_TILES = 2
-export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
-export const SHRINE_CENTER = trig.vector(Math.floor(SHRINE_SIZE / 2 - 1))
-
-export const initGameState = (start_q: trig.Quadrand, round: number): Game_State => {
-    const state: Game_State = {
-        round,
-        turn: 0,
-        maze_config: {
-            n_tiles: 0,
-            size: 0,
-            center: null!,
-            center_origin: null!,
-            shrine_centers: {} as any,
-            shrine_corners: {} as any,
-        },
-        maze: null!,
-        player: null!,
-        start_q,
-        start: null!,
-        finish: null!,
-        minimap_finish: null!,
-        progress_to_flood_update: 0,
-        shallow_flood: new Set(),
-        window: null!,
-        visible: new Map(),
-        in_shrine: false,
-        turn_signal: s.signal(),
-        dev: {
-            hide_easing: false,
-            show_invisible: false,
-            noclip: false,
-        },
-    }
-
-    state.maze_config.n_tiles = 24 + round * 2
-    state.maze_config.size = state.maze_config.n_tiles * GRID_SIZE + OUTER_WALL_SIZE // +1 for first wall
-    state.maze_config.center = trig.vector(math.floor(state.maze_config.size / 2))
-    state.maze_config.center_origin = state.maze_config.center.subtract(
-        Math.floor(SHRINE_SIZE / 2 - 1),
-    )
-
-    for (const q of trig.QUADRANTS) {
-        state.maze_config.shrine_corners[q] = trig.quadrand_to_vec[q]
-            .multiply(state.maze_config.n_tiles - SHRINE_SIZE_TILES)
-            .multiply(GRID_SIZE)
-            .add(1)
-    }
-
-    for (const q of trig.QUADRANTS) {
-        state.maze_config.shrine_centers[q] = state.maze_config.shrine_corners[q].add(SHRINE_CENTER)
-    }
-
-    const finish_q = (start_q + 2) % 4 // opposite of start
-    const flood_start_q = // corner shrine adjacent to start
-        math.remainder(start_q + (Math.random() > 0.5 ? 1 : -1), 4)
-
-    state.start = state.player = state.maze_config.shrine_centers[start_q]
-    state.finish = state.maze_config.shrine_centers[finish_q as trig.Quadrand]
-    state.shallow_flood.add(
-        state.maze_config.shrine_centers[flood_start_q as trig.Quadrand].toString(),
-    )
-
-    state.maze = generateMazeMatrix(state.maze_config)
-
-    state.minimap_finish = state.finish.map(xy =>
-        Math.round(math.mapRange(xy, 0, state.maze_config.size - 1, 0, WINDOW_SIZE - 1)),
-    )
-
-    return state
-}
 
 export const generateMazeWalls = (maze_state: Maze_Config) => {
     const walls = new trig.Matrix(maze_state.n_tiles, maze_state.n_tiles, () => ({
