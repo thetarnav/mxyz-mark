@@ -81,11 +81,146 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
         vec_state = game_state.maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
         d = t.distance(vec, game_state.player),
-        easing = ease.outSine(t.clamp(1 - d / WINDOW_RADIUS, 0, 1)),
-        opacity = getDisplayAsOpacity(display_as, tint) * easing,
+        easing = ease.inOutSine(t.clamp(1 - d / WINDOW_RADIUS, 0, 1)),
+        opacity = getDisplayAsOpacity(display_as, tint),
         p = Math.round(opacity * 100)
 
-    return `color-mix(in hsl, ${color} calc(${p}% * (${easing} - var(--flicker))), transparent)`
+    switch (display_as) {
+        case Tile_Display_As.Player:
+        case Tile_Display_As.Minimap_Finish:
+            return color
+        default:
+            return `color-mix(in hsl, ${color} calc(${p}% * (${easing} -  (1 - ${easing}) * var(${FLICKER_VAR}))), transparent)`
+    }
+}
+
+const FLICKER_TICK_AMOUNT = 0.016
+const FLICKER_TICK_MS = 16
+const FLICKER_MIN = -0.1
+const FLICKER_MAX = 0.2
+const FLICKER_VAR = '--flicker'
+
+export const Game = () => {
+    const game_state = initGameState()
+
+    /**
+     * Game state is not a reactive proxy, so we need to track it manually
+     */
+    const game_state_sig = s.reactive(() => {
+        game_state.turn_signal.get()
+        return game_state
+    })
+
+    updateState(game_state, game_state.player)
+
+    createDirectionMovement(direction => {
+        /*
+            move player in direction if possible
+        */
+        const vec = game_state.player.go(direction)
+        const vec_state = game_state.maze.get(vec)
+
+        if (!game_state.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
+
+        updateState(game_state, vec)
+        expandFlood(game_state)
+        s.trigger(game_state.turn_signal)
+    })
+
+    const show_menu = s.memo(
+        s.map(
+            game_state_sig,
+            ({ player, start, finish }) => player.equals(start) || player.equals(finish),
+        ),
+    )
+
+    let container!: HTMLDivElement
+    let flicker_mod = 0
+    let last_time = Date.now()
+    const frame = () => {
+        const now = Date.now()
+        const prev = flicker_mod
+        let tick = Math.random() * FLICKER_TICK_AMOUNT * 2 - FLICKER_TICK_AMOUNT
+        tick *= Math.min(1, (now - last_time) / FLICKER_TICK_MS)
+        last_time = now
+        flicker_mod = t.bounce(flicker_mod + tick, FLICKER_MIN, FLICKER_MAX)
+        if (Math.abs(flicker_mod - prev) > 0.01) {
+            container.style.setProperty(FLICKER_VAR, flicker_mod + '')
+        }
+        raf = requestAnimationFrame(frame)
+    }
+    let raf = requestAnimationFrame(frame)
+    solid.onCleanup(() => cancelAnimationFrame(raf))
+
+    return (
+        <>
+            <main class="center-child h-screen w-screen">
+                <div
+                    ref={container}
+                    class="grid delay-200"
+                    style={{
+                        '--width': 'min(80vw, 48rem)',
+                        '--gap': '3rem',
+                        'grid-gap': 'var(--gap)',
+                        width: 'var(--width)',
+                        'grid-template': '1fr / 1fr 1fr',
+                        translate: show_menu.value
+                            ? ''
+                            : 'calc(-0.25 * var(--width) - var(--gap) / 2) 0 0.001px',
+                        transition: 'translate 0.6s ease-in-out',
+                    }}
+                >
+                    <div
+                        class="center-child transition-600 delay-200"
+                        style={{ opacity: show_menu.value ? 1 : 0 }}
+                    >
+                        {(() => {
+                            const welcome = getWelcomeMessage()
+                            const DirectionKey = (props: { direction: t.Direction }) => (
+                                <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
+                                    {props.direction}
+                                </div>
+                            )
+                            return (
+                                <div>
+                                    <p>{welcome.greeting}</p>
+                                    <p class="mt-3">{welcome.explanation}</p>
+                                    <div class="mt-6 flex w-max flex-col items-center gap-1">
+                                        <DirectionKey direction={t.Direction.Up} />
+                                        <div class="flex gap-1">
+                                            <DirectionKey direction={t.Direction.Left} />
+                                            <DirectionKey direction={t.Direction.Down} />
+                                            <DirectionKey direction={t.Direction.Right} />
+                                        </div>
+                                    </div>
+                                    <p class="mt-6">{welcome.farewell}</p>
+                                </div>
+                            )
+                        })()}
+                    </div>
+                    <div class="center-child">
+                        <div class="w-full">
+                            <MatrixGrid matrix={game_state_sig.value.windowed}>
+                                {(vec, fovIndex) => (
+                                    <div
+                                        class="flex items-center justify-center"
+                                        style={{
+                                            'background-color': getTileBgColor(
+                                                game_state_sig.value,
+                                                vec(),
+                                                fovIndex,
+                                            ),
+                                        }}
+                                    />
+                                )}
+                            </MatrixGrid>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            {import.meta.env.DEV && <DevTools state={game_state_sig.value} />}
+        </>
+    )
 }
 
 const DevTools = (props: { state: Game_State }) => {
@@ -176,123 +311,5 @@ export const MatrixGrid = <T,>(props: {
                 {item => props.children(() => item().item, item().index)}
             </solid.Index>
         </div>
-    )
-}
-
-export const Game = () => {
-    const game_state = initGameState()
-
-    /**
-     * Game state is not a reactive proxy, so we need to track it manually
-     */
-    const game_state_sig = s.reactive(() => {
-        game_state.turn_signal.get()
-        return game_state
-    })
-
-    updateState(game_state, game_state.player)
-
-    createDirectionMovement(direction => {
-        /*
-            move player in direction if possible
-        */
-        const vec = game_state.player.go(direction)
-        const vec_state = game_state.maze.get(vec)
-
-        if (!game_state.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
-
-        updateState(game_state, vec)
-        expandFlood(game_state)
-        s.trigger(game_state.turn_signal)
-    })
-
-    const show_menu = s.memo(
-        s.map(
-            game_state_sig,
-            ({ player, start, finish }) => player.equals(start) || player.equals(finish),
-        ),
-    )
-
-    let container!: HTMLDivElement
-    let flicker_mod = 0
-    const frame = () => {
-        const prev = flicker_mod
-        flicker_mod = t.bounce(flicker_mod + Math.random() * 0.06 - 0.03, 0, 0.4)
-        if (Math.abs(flicker_mod - prev) > 0.01) {
-            container.style.setProperty('--flicker', flicker_mod + '')
-        }
-        raf = requestAnimationFrame(frame)
-    }
-    let raf = requestAnimationFrame(frame)
-    solid.onCleanup(() => cancelAnimationFrame(raf))
-
-    return (
-        <>
-            <main class="center-child h-screen w-screen">
-                <div
-                    ref={container}
-                    class="grid delay-200"
-                    style={{
-                        '--width': 'min(80vw, 48rem)',
-                        '--gap': '3rem',
-                        'grid-gap': 'var(--gap)',
-                        width: 'var(--width)',
-                        'grid-template': '1fr / 1fr 1fr',
-                        translate: show_menu.value
-                            ? ''
-                            : 'calc(-0.25 * var(--width) - var(--gap) / 2) 0 0.001px',
-                        transition: 'translate 0.6s ease-in-out',
-                    }}
-                >
-                    <div
-                        class="center-child transition-600 delay-200"
-                        style={{ opacity: show_menu.value ? 1 : 0 }}
-                    >
-                        {(() => {
-                            const welcome = getWelcomeMessage()
-                            const DirectionKey = (props: { direction: t.Direction }) => (
-                                <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
-                                    {props.direction}
-                                </div>
-                            )
-                            return (
-                                <div>
-                                    <p>{welcome.greeting}</p>
-                                    <p class="mt-3">{welcome.explanation}</p>
-                                    <div class="mt-6 flex w-max flex-col items-center gap-1">
-                                        <DirectionKey direction={t.Direction.Up} />
-                                        <div class="flex gap-1">
-                                            <DirectionKey direction={t.Direction.Left} />
-                                            <DirectionKey direction={t.Direction.Down} />
-                                            <DirectionKey direction={t.Direction.Right} />
-                                        </div>
-                                    </div>
-                                    <p class="mt-6">{welcome.farewell}</p>
-                                </div>
-                            )
-                        })()}
-                    </div>
-                    <div class="center-child">
-                        <div class="w-full">
-                            <MatrixGrid matrix={game_state_sig.value.windowed}>
-                                {(vec, fovIndex) => (
-                                    <div
-                                        class="flex items-center justify-center"
-                                        style={{
-                                            'background-color': getTileBgColor(
-                                                game_state_sig.value,
-                                                vec(),
-                                                fovIndex,
-                                            ),
-                                        }}
-                                    />
-                                )}
-                            </MatrixGrid>
-                        </div>
-                    </div>
-                </div>
-            </main>
-            {import.meta.env.DEV && <DevTools state={game_state_sig.value} />}
-        </>
     )
 }
