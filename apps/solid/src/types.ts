@@ -1,4 +1,7 @@
 import { s, t } from 'src/lib'
+import COLORS from '../../../data/colors.json'
+
+export { COLORS }
 
 export const N_TILES = 36
 export const TILE_SIZE = 2
@@ -76,4 +79,34 @@ export enum Tile_Display_As {
     Minimap_Finish,
     Flood_Shallow,
     Flood_Deep,
+}
+
+export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
+    [Tile_Display_As.Invisible]: 'transparent',
+    [Tile_Display_As.Floor]: COLORS.floor,
+    [Tile_Display_As.Wall]: COLORS.wall,
+    [Tile_Display_As.Player]: COLORS.bone,
+    [Tile_Display_As.Start]: COLORS.start,
+    [Tile_Display_As.Finish]: COLORS.finish,
+    [Tile_Display_As.Minimap_Finish]: COLORS.finish,
+    [Tile_Display_As.Flood_Shallow]: COLORS.flood_shallow,
+    [Tile_Display_As.Flood_Deep]: COLORS.flood_deep,
+}
+
+export const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
+    switch (tile) {
+        case Tile_Display_As.Floor:
+            return 0.2 + 0.04 * tint
+        case Tile_Display_As.Wall:
+        case Tile_Display_As.Flood_Shallow:
+        case Tile_Display_As.Flood_Deep:
+        case Tile_Display_As.Finish:
+            return 0.7 + 0.05 * tint
+        case Tile_Display_As.Player:
+        case Tile_Display_As.Start:
+        case Tile_Display_As.Minimap_Finish:
+            return 1
+        case Tile_Display_As.Invisible:
+            return 0
+    }
 }

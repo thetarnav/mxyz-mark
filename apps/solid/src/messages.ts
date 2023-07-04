@@ -1,4 +1,4 @@
-import messages from './messages.json'
+import messages from '../../../data/messages.json'
 import { math } from 'src/lib'
 
 export const getWelcomeMessage = () => {

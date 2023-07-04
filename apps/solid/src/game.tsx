@@ -3,7 +3,14 @@ import { createDirectionMovement } from './held-direction'
 import { initGameState } from './init'
 import { getWelcomeMessage } from './messages'
 import { expandFlood, setAbsolutePlayerPosition, updateState } from './state'
-import { Game_State, Tile_Display_As, Tint, WINDOW_RADIUS, WINDOW_SIZE } from './types'
+import {
+    DISPLAY_TILE_TO_COLOR,
+    Game_State,
+    Tile_Display_As,
+    WINDOW_RADIUS,
+    WINDOW_SIZE,
+    getDisplayAsOpacity,
+} from './types'
 
 const getTileDisplayAs = (
     game_state: Game_State,
@@ -43,36 +50,6 @@ const getTileDisplayAs = (
     }
 
     return Tile_Display_As.Invisible
-}
-
-export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
-    [Tile_Display_As.Invisible]: 'transparent',
-    [Tile_Display_As.Floor]: '#AE9E8A',
-    [Tile_Display_As.Wall]: '#AE9E8A',
-    [Tile_Display_As.Player]: '#DFDACF',
-    [Tile_Display_As.Start]: '#7D8C63',
-    [Tile_Display_As.Finish]: '#9E7900',
-    [Tile_Display_As.Minimap_Finish]: '#F7B544',
-    [Tile_Display_As.Flood_Shallow]: '#F59A50',
-    [Tile_Display_As.Flood_Deep]: '#F15927',
-}
-
-const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
-    switch (tile) {
-        case Tile_Display_As.Floor:
-            return 0.2 + 0.04 * tint
-        case Tile_Display_As.Wall:
-        case Tile_Display_As.Flood_Shallow:
-        case Tile_Display_As.Flood_Deep:
-        case Tile_Display_As.Finish:
-            return 0.7 + 0.05 * tint
-        case Tile_Display_As.Player:
-        case Tile_Display_As.Start:
-        case Tile_Display_As.Minimap_Finish:
-            return 1
-        case Tile_Display_As.Invisible:
-            return 0
-    }
 }
 
 const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number): string => {
