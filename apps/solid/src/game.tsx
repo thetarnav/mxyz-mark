@@ -81,23 +81,20 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
         vec_state = game_state.maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
         d = t.distance(vec, game_state.player),
-        easing = ease.inOutSine(t.clamp(1 - d / WINDOW_RADIUS, 0, 1)),
+        easing = ease.inOutSine(t.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
         opacity = getDisplayAsOpacity(display_as, tint),
         p = Math.round(opacity * 100)
 
-    switch (display_as) {
-        case Tile_Display_As.Player:
-        case Tile_Display_As.Minimap_Finish:
-            return color
-        default:
-            return `color-mix(in hsl, ${color} calc(${p}% * (${easing} -  (1 - ${easing}) * var(${FLICKER_VAR}))), transparent)`
-    }
+    if (game_state.dev.hide_easing || display_as === Tile_Display_As.Minimap_Finish)
+        return `color-mix(in hsl, ${color} ${p}%, transparent)`
+
+    return `color-mix(in hsl, ${color} calc(${p}% * (${easing} -  (1 - ${easing}) * var(${FLICKER_VAR}))), transparent)`
 }
 
-const FLICKER_TICK_AMOUNT = 0.016
+const FLICKER_TICK_AMOUNT = 0.018
 const FLICKER_TICK_MS = 16
-const FLICKER_MIN = -0.1
-const FLICKER_MAX = 0.2
+const FLICKER_MIN = -0.05
+const FLICKER_MAX = 0.36
 const FLICKER_VAR = '--flicker'
 
 export const Game = () => {
@@ -120,7 +117,7 @@ export const Game = () => {
         const vec = game_state.player.go(direction)
         const vec_state = game_state.maze.get(vec)
 
-        if (!game_state.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
+        if (!game_state.dev.noclip && (!vec_state || vec_state.wall || vec_state.flooded)) return
 
         updateState(game_state, vec)
         expandFlood(game_state)
@@ -159,7 +156,7 @@ export const Game = () => {
                     ref={container}
                     class="grid delay-200"
                     style={{
-                        '--width': 'min(80vw, 48rem)',
+                        '--width': 'min(85vw, 52rem)',
                         '--gap': '3rem',
                         'grid-gap': 'var(--gap)',
                         width: 'var(--width)',
@@ -200,7 +197,7 @@ export const Game = () => {
                     </div>
                     <div class="center-child">
                         <div class="w-full">
-                            <MatrixGrid matrix={game_state_sig.value.windowed}>
+                            <MatrixGrid matrix={game_state_sig.value.window}>
                                 {(vec, fovIndex) => (
                                     <div
                                         class="flex items-center justify-center"
@@ -224,58 +221,46 @@ export const Game = () => {
 }
 
 const DevTools = (props: { state: Game_State }) => {
-    return (
-        <div class="fixed right-6 top-6 flex flex-col space-y-2">
-            {(() => {
-                let input1!: HTMLInputElement
-                let input2!: HTMLInputElement
-                return (
-                    <form
-                        onSubmit={e => {
-                            e.preventDefault()
-                            const x = input1.valueAsNumber
-                            const y = input2.valueAsNumber
-                            setAbsolutePlayerPosition(props.state, x, y)
-                        }}
-                        class="space-x-1"
-                        onKeyDown={e => {
-                            if (e.key !== 'Enter') e.stopPropagation()
-                        }}
-                    >
-                        <input
-                            ref={input1}
-                            value={props.state.player.x}
-                            class="w-12"
-                            type="number"
-                        />
-                        <input
-                            ref={input2}
-                            value={props.state.player.y}
-                            class="w-12"
-                            type="number"
-                        />
-                        <button class="hidden" />
-                    </form>
-                )
-            })()}
-            <p>turn: {props.state.turn}</p>
+    let input1!: HTMLInputElement
+    let input2!: HTMLInputElement
+
+    const ToggleSetting = (btn_props: { setting: keyof Game_State['dev'] }) => {
+        const get = () => props.state.dev[btn_props.setting]
+        return (
             <button
                 onClick={() => {
-                    props.state.noclip = !props.state.noclip
-                    s.trigger(props.state.turn_signal)
-                }}
-            >
-                {props.state.noclip ? 'disable' : 'enable'} noclip
-            </button>
-            <button
-                onClick={() => {
-                    props.state.show_invisible = !props.state.show_invisible
+                    props.state.dev[btn_props.setting] = !get()
                     updateState(props.state, props.state.player)
                     s.trigger(props.state.turn_signal)
                 }}
             >
-                {props.state.show_invisible ? 'hide' : 'show'} invisible
+                {btn_props.setting} {get() ? 'on' : 'off'}
             </button>
+        )
+    }
+
+    return (
+        <div class="fixed right-6 top-6 flex flex-col space-y-2">
+            <form
+                onSubmit={e => {
+                    e.preventDefault()
+                    const x = input1.valueAsNumber
+                    const y = input2.valueAsNumber
+                    setAbsolutePlayerPosition(props.state, x, y)
+                }}
+                class="space-x-1"
+                onKeyDown={e => {
+                    if (e.key !== 'Enter') e.stopPropagation()
+                }}
+            >
+                <input ref={input1} value={props.state.player.x} class="w-12" type="number" />
+                <input ref={input2} value={props.state.player.y} class="w-12" type="number" />
+                <button class="hidden" />
+            </form>
+            <p>turn: {props.state.turn}</p>
+            <ToggleSetting setting="show_invisible" />
+            <ToggleSetting setting="hide_easing" />
+            <ToggleSetting setting="noclip" />
         </div>
     )
 }

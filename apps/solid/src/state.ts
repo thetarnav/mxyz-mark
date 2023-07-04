@@ -31,7 +31,7 @@ export const isVisible = (maze_state: Maze_Matrix, p: t.Vector) => {
 export function updateState(game_state: Game_State, player: t.Vector) {
     game_state.player = player
 
-    game_state.windowed = t.windowedMatrix(WINDOW_SIZE, player)
+    game_state.window = t.windowedMatrix(WINDOW_SIZE, player)
 
     updateVisiblePoints(game_state)
 
@@ -85,7 +85,7 @@ export function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y:
 }
 
 function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
-    const { maze, player, visible } = game_state
+    const { maze, player, visible, dev } = game_state
 
     if (!maze.inBounds(p)) return false
 
@@ -97,7 +97,7 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
     is_visible = false
 
     check: {
-        if (game_state.show_invisible) {
+        if (dev.show_invisible) {
             is_visible = true
             break check
         }
@@ -161,7 +161,7 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
 }
 
 export function updateVisiblePoints(game_state: Game_State): void {
-    const { maze, player, windowed } = game_state
+    const { maze, player, window: windowed } = game_state
 
     /*
         player and all wall-less tiles around him are visible

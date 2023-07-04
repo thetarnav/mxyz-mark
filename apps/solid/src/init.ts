@@ -30,12 +30,15 @@ export const initGameState = (): Game_State => {
         turn: 0,
         progress_to_flood_update: 0,
         shallow_flood: new Set(),
-        windowed: null!,
+        window: null!,
         visible: new Map(),
         in_shrine: false,
         turn_signal: s.signal(),
-        show_invisible: false,
-        noclip: false,
+        dev: {
+            hide_easing: false,
+            show_invisible: false,
+            noclip: false,
+        },
     }
 
     const starting_q = t.randomInt(4)

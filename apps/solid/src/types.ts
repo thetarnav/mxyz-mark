@@ -5,7 +5,7 @@ export const TILE_SIZE = 2
 export const GRID_SIZE = TILE_SIZE + 1
 export const OUTER_WALL_SIZE = 1
 export const BOARD_SIZE = N_TILES * GRID_SIZE + OUTER_WALL_SIZE // +1 for first wall
-export const WINDOW_SIZE = 17
+export const WINDOW_SIZE = 19
 export const WINDOW_RADIUS = Math.floor(WINDOW_SIZE / 2)
 
 export const SHRINE_SIZE_TILES = 4
@@ -52,15 +52,18 @@ export type Game_State = {
     finish: t.Vector
     minimap_finish: t.Vector
     maze: Maze_Matrix
-    windowed: t.Matrix<t.Vector>
+    window: t.Matrix<t.Vector>
     visible: Map<number, boolean>
     shallow_flood: Set<t.VecString>
     turn: number
     progress_to_flood_update: number
     in_shrine: boolean
     turn_signal: s.Signal<undefined>
-    show_invisible: boolean
-    noclip: boolean
+    dev: {
+        show_invisible: boolean
+        hide_easing: boolean
+        noclip: boolean
+    }
 }
 
 export enum Tile_Display_As {
