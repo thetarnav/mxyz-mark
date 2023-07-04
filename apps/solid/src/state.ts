@@ -1,4 +1,4 @@
-import { s, t } from 'src/lib'
+import { math, s, t } from 'src/lib'
 import {
     BOARD_SIZE,
     WINDOW_SIZE,
@@ -11,7 +11,7 @@ import {
 } from './types'
 
 export const vecToMinimap = (vec: t.Vector) =>
-    vec.map(xy => Math.round(t.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
+    vec.map(xy => Math.round(math.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
 
 export const isWall = (maze_state: Maze_Matrix, p: t.Vector) => {
     const state = maze_state.get(p)
@@ -49,7 +49,7 @@ export function expandFlood(game_state: Game_State) {
     game_state.progress_to_flood_update -= expand_times
 
     for (let i = 0; i < expand_times; i++) {
-        for (const pos_str of t.randomIterate([...game_state.shallow_flood])) {
+        for (const pos_str of math.randomIterate([...game_state.shallow_flood])) {
             for (const neighbor of t.eachPointDirection(t.Vector.fromStr(pos_str), maze_state)) {
                 const neighbor_state = maze_state.get(neighbor)
                 if (!neighbor_state) continue

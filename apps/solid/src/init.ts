@@ -1,4 +1,4 @@
-import { s, t } from 'src/lib'
+import { math, s, t } from 'src/lib'
 import { isWall, vecToMinimap } from './state'
 import {
     Game_State,
@@ -41,10 +41,10 @@ export const initGameState = (): Game_State => {
         },
     }
 
-    const starting_q = t.randomInt(4)
+    const starting_q = math.randomInt(4)
     const finish_q = (starting_q + 2) % 4 // opposite of start
     const flood_start_q = // corner shrine adjacent to start
-        t.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
+        math.remainder(starting_q + (Math.random() > 0.5 ? 1 : -1), 4)
 
     game_state.start = game_state.player = corner_shrine_centers[starting_q as t.Quadrand]
     game_state.finish = corner_shrine_centers[finish_q as t.Quadrand]
@@ -110,7 +110,7 @@ export const generateMazeWalls = () => {
             vectors below the index - mutated vectors
             vectors above the index - unvisited vectors
         */
-        const swap = t.randomIntFrom(i, stack.length),
+        const swap = math.randomIntFrom(i, stack.length),
             vecStr = stack[swap]
         let vec = t.vectorFromStr(vecStr)
         stack[swap] = stack[i]
@@ -130,7 +130,7 @@ export const generateMazeWalls = () => {
 
         if (directions.length === 0) continue
 
-        let dir = directions[t.randomInt(directions.length)]
+        let dir = directions[math.randomInt(directions.length)]
         if (dir === t.Direction.Up || dir === t.Direction.Left) {
             vec = walls.go(vec, dir)!
             dir = t.OPPOSITE_DIRECTION[dir]
@@ -305,7 +305,7 @@ export function generateInitMazeState(): Maze_Matrix {
     for (const vec of t.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
         state.get(vec)!.wall = false
     }
-    const exitTiles = Array.from({ length: 4 }, () => (1 + t.randomInt(2)) * GRID_SIZE)
+    const exitTiles = Array.from({ length: 4 }, () => (1 + math.randomInt(2)) * GRID_SIZE)
     for (let x = 0; x < TILE_SIZE; x++) {
         state.get({ x: bottomLeft.x + exitTiles[0] + x + 1, y: bottomLeft.y })!.wall = false
         state.get({ x: bottomLeft.x + exitTiles[1] + x + 1, y: topRight.y })!.wall = false
@@ -357,7 +357,7 @@ const tintMazeTiles = (maze_state: t.Matrix<Maze_Tile_State>) => {
 
         if (possibles[to] - possibles[from] === 0) continue
 
-        const pick = t.randomIntFrom(possibles[from], possibles[to] + 1) as Tint,
+        const pick = math.randomIntFrom(possibles[from], possibles[to] + 1) as Tint,
             p = maze_state.vec(idx),
             p_state = maze_state.get(p)!
 

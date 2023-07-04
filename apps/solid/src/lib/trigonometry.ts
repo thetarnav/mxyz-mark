@@ -1,54 +1,6 @@
-export const randomInt = (max: number) => Math.floor(Math.random() * max)
-export const randomIntFrom = (min: number, max: number) =>
-    Math.floor(Math.random() * (max - min)) + min
+import { math } from '.'
 
-export const clamp = (value: number, min: number, max: number) =>
-    Math.min(Math.max(value, min), max)
-
-export const pickRandom = <T>(arr: readonly T[]) => arr[randomInt(arr.length)]
-
-export const remainder = (a: number, b: number) => ((a % b) + b) % b
-
-export const wrap = (value: number, min: number, max: number) =>
-    remainder(value - min, max - min) + min
-
-export const bounce = (value: number, min: number, max: number) => {
-    const range = max - min,
-        remainder = wrap(value - min, 0, 2 * range),
-        distance = Math.abs(remainder - range)
-    return max - distance
-}
-
-export const toRadian = (degrees: number) => (degrees * Math.PI) / 180
-
-export const mapRange = (
-    value: number,
-    in_min: number,
-    in_max: number,
-    out_min: number,
-    out_max: number,
-) => ((value - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
-
-export const number_equals = (a: number, b: number) => Math.abs(a - b) < Number.EPSILON
-
-export const between = (a: number, b: number, c: number): boolean => {
-    if (a > c) [a, c] = [c, a]
-    return a - Number.EPSILON <= b && b <= c + Number.EPSILON
-}
-
-export const rangesIntersecting = (a1: number, b1: number, a2: number, b2: number) => {
-    if (a1 > b1) [a1, b1] = [b1, a1]
-    if (a2 > b2) [a2, b2] = [b2, a2]
-    return a1 <= b2 && a2 <= b1
-}
-
-export function* randomIterate<T>(arr: readonly T[]) {
-    const copy = arr.slice()
-    while (copy.length) {
-        const index = randomInt(copy.length)
-        yield copy.splice(index, 1)[0]
-    }
-}
+export const toRadian = (degrees: number) => (degrees * math.PI) / 180
 
 export const enum Direction {
     Up = '^',
@@ -141,7 +93,7 @@ export class Vector implements Pointable {
         return rotate(this, rad, center)
     }
     round(): Vector {
-        return new Vector(Math.round(this.x), Math.round(this.y))
+        return new Vector(math.round(this.x), math.round(this.y))
     }
     flip(center: Pointable = ZERO_VEC): Vector {
         return flip_vector(this, center)
@@ -165,8 +117,8 @@ export const vectorFromStr = (str: VecString) => {
 }
 
 export const rotate = (vec: Pointable, rad: number, center: Pointable = ZERO_VEC) => {
-    const cos = Math.cos(rad),
-        sin = Math.sin(rad),
+    const cos = math.cos(rad),
+        sin = math.sin(rad),
         x = center.x + (vec.x - center.x) * cos - (vec.y - center.y) * sin,
         y = center.y + (vec.x - center.x) * sin + (vec.y - center.y) * cos
     return new Vector(x, y)
@@ -177,7 +129,7 @@ export const flip_vector = (vec: Pointable, center: Pointable = ZERO_VEC) => {
 }
 
 export const vec_equals = (a: Pointable, b: Pointable) =>
-    number_equals(a.x, b.x) && number_equals(a.y, b.y)
+    math.numberEquals(a.x, b.x) && math.numberEquals(a.y, b.y)
 
 export const vec_neighbors = (vec: Vector) => {
     return DIRECTIONS_H_V.map(d => vec.go(d))
@@ -209,9 +161,9 @@ export const quadrand_to_vec: Record<Quadrand, Vector> = {
 
 export const quadrand_to_rotation: Record<Quadrand, number> = {
     [Quadrand.Bottom_Left]: 0,
-    [Quadrand.Bottom_Right]: Math.PI / 2,
-    [Quadrand.Top_Right]: Math.PI,
-    [Quadrand.Top_Left]: (3 * Math.PI) / 2,
+    [Quadrand.Bottom_Right]: math.PI / 2,
+    [Quadrand.Top_Right]: math.PI,
+    [Quadrand.Top_Left]: (3 * math.PI) / 2,
 }
 
 export class Segment {
@@ -260,7 +212,7 @@ export const segment = (start: Vector, end: Vector) => new Segment(start, end)
 export const segmentVector = (seg: Segment): Vector => new Vector(seg.x2 - seg.x1, seg.y2 - seg.y1)
 
 export const distance = (a: Pointable, b: Pointable) =>
-    Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
+    math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
 /*
     Pythagorean theorem
@@ -340,7 +292,7 @@ export class Matrix<T> {
     }
 
     static vec(width: number, i: number): Vector {
-        return new Vector(i % width, Math.floor(Math.abs(i / width)) * Math.sign(i))
+        return new Vector(i % width, math.floor(math.abs(i / width)) * math.sign(i))
     }
     static i(width: number, point: Pointable) {
         return point.x + point.y * width
@@ -368,7 +320,7 @@ export class Matrix<T> {
 
 // export const move_vec_index = (width: number, i: number, x: number, y: number) => {
 //     const ix = i % width,
-//         iy = Math.floor(Math.abs(i / width)) * Math.sign(i)
+//         iy = math.floor(math.abs(i / width)) * math.sign(i)
 //     if (i % width < x || i % width >= width - x) return undefined
 //     i += x + y * width
 // }
@@ -444,8 +396,8 @@ export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
         if (c1 === c2) {
             // check if overlapping
             return (
-                rangesIntersecting(seg1.x1, seg1.x2, seg2.x1, seg2.x2) &&
-                rangesIntersecting(seg1.y1, seg1.y2, seg2.y1, seg2.y2)
+                math.rangesIntersecting(seg1.x1, seg1.x2, seg2.x1, seg2.x2) &&
+                math.rangesIntersecting(seg1.y1, seg1.y2, seg2.y1, seg2.y2)
             )
         }
         return false
@@ -457,10 +409,10 @@ export function segmentsIntersecting(seg1: Segment, seg2: Segment): boolean {
     const y = (a2 * c1 - a1 * c2) / det
 
     return (
-        between(seg1.x1, x, seg1.x2) &&
-        between(seg2.x1, x, seg2.x2) &&
-        between(seg1.y1, y, seg1.y2) &&
-        between(seg2.y1, y, seg2.y2)
+        math.between(seg1.x1, x, seg1.x2) &&
+        math.between(seg2.x1, x, seg2.x2) &&
+        math.between(seg1.y1, y, seg1.y2) &&
+        math.between(seg2.y1, y, seg2.y2)
     )
 }
 

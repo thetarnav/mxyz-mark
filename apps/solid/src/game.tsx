@@ -1,4 +1,4 @@
-import { solid, ease, s, t } from 'src/lib'
+import { solid, ease, s, t, math } from 'src/lib'
 import { createDirectionMovement } from './held-direction'
 import { initGameState } from './init'
 import { getWelcomeMessage } from './messages'
@@ -81,7 +81,7 @@ const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number):
         vec_state = game_state.maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
         d = t.distance(vec, game_state.player),
-        easing = ease.inOutSine(t.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
+        easing = ease.inOutSine(math.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
         opacity = getDisplayAsOpacity(display_as, tint),
         p = Math.round(opacity * 100)
 
@@ -140,7 +140,7 @@ export const Game = () => {
         let tick = Math.random() * FLICKER_TICK_AMOUNT * 2 - FLICKER_TICK_AMOUNT
         tick *= Math.min(1, (now - last_time) / FLICKER_TICK_MS)
         last_time = now
-        flicker_mod = t.bounce(flicker_mod + tick, FLICKER_MIN, FLICKER_MAX)
+        flicker_mod = math.bounce(flicker_mod + tick, FLICKER_MIN, FLICKER_MAX)
         if (Math.abs(flicker_mod - prev) > 0.01) {
             container.style.setProperty(FLICKER_VAR, flicker_mod + '')
         }
