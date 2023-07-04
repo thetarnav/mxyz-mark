@@ -1,5 +1,6 @@
 export * as solid from 'solid-js'
+export * as t from './types'
 export * as math from './math'
 export * as ease from './ease'
-export * as t from './trigonometry'
+export * as trig from './trigonometry'
 export * as s from './signal'

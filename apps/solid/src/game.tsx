@@ -1,24 +1,58 @@
-import { solid, ease, s, t, math } from 'src/lib'
+import { solid, ease, s, trig, math } from 'src/lib'
 import { createDirectionMovement } from './held-direction'
-import { initGameState } from './init'
+import { COLORS, Game_State, Tint, WINDOW_RADIUS, WINDOW_SIZE, initGameState } from './init'
 import { getWelcomeMessage } from './messages'
 import { expandFlood, setAbsolutePlayerPosition, updateState } from './state'
-import {
-    DISPLAY_TILE_TO_COLOR,
-    Game_State,
-    Tile_Display_As,
-    WINDOW_RADIUS,
-    WINDOW_SIZE,
-    getDisplayAsOpacity,
-} from './types'
+
+export enum Tile_Display_As {
+    Invisible,
+    Floor,
+    Wall,
+    Player,
+    Start,
+    Finish,
+    Minimap_Finish,
+    Flood_Shallow,
+    Flood_Deep,
+}
+
+export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
+    [Tile_Display_As.Invisible]: 'transparent',
+    [Tile_Display_As.Floor]: COLORS.floor,
+    [Tile_Display_As.Wall]: COLORS.wall,
+    [Tile_Display_As.Player]: COLORS.bone,
+    [Tile_Display_As.Start]: COLORS.start,
+    [Tile_Display_As.Finish]: COLORS.finish,
+    [Tile_Display_As.Minimap_Finish]: COLORS.finish,
+    [Tile_Display_As.Flood_Shallow]: COLORS.flood_shallow,
+    [Tile_Display_As.Flood_Deep]: COLORS.flood_deep,
+}
+
+export const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
+    switch (tile) {
+        case Tile_Display_As.Floor:
+            return 0.2 + 0.04 * tint
+        case Tile_Display_As.Wall:
+        case Tile_Display_As.Flood_Shallow:
+        case Tile_Display_As.Flood_Deep:
+        case Tile_Display_As.Finish:
+            return 0.7 + 0.05 * tint
+        case Tile_Display_As.Player:
+        case Tile_Display_As.Start:
+        case Tile_Display_As.Minimap_Finish:
+            return 1
+        case Tile_Display_As.Invisible:
+            return 0
+    }
+}
 
 const getTileDisplayAs = (
     game_state: Game_State,
-    vec: t.Vector,
+    vec: trig.Vector,
     fov_idx: number,
 ): Tile_Display_As => {
     if (game_state.in_shrine) {
-        const fov_vec = t.Matrix.vec(WINDOW_SIZE, fov_idx)
+        const fov_vec = trig.Matrix.vec(WINDOW_SIZE, fov_idx)
         if (fov_vec.equals(game_state.minimap_finish)) {
             return Tile_Display_As.Minimap_Finish
         }
@@ -52,12 +86,12 @@ const getTileDisplayAs = (
     return Tile_Display_As.Invisible
 }
 
-const getTileBgColor = (game_state: Game_State, vec: t.Vector, fov_idx: number): string => {
+const getTileBgColor = (game_state: Game_State, vec: trig.Vector, fov_idx: number): string => {
     const display_as = getTileDisplayAs(game_state, vec, fov_idx),
         color = DISPLAY_TILE_TO_COLOR[display_as],
         vec_state = game_state.maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
-        d = t.distance(vec, game_state.player),
+        d = trig.distance(vec, game_state.player),
         easing = ease.inOutSine(math.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
         opacity = getDisplayAsOpacity(display_as, tint),
         p = Math.round(opacity * 100)
@@ -75,7 +109,7 @@ const FLICKER_MAX = 0.36
 const FLICKER_VAR = '--flicker'
 
 export const Game = () => {
-    const game_state = initGameState()
+    const game_state = initGameState(math.randomInt(4) as trig.Quadrand, 0)
 
     /**
      * Game state is not a reactive proxy, so we need to track it manually
@@ -150,7 +184,7 @@ export const Game = () => {
                     >
                         {(() => {
                             const welcome = getWelcomeMessage()
-                            const DirectionKey = (props: { direction: t.Direction }) => (
+                            const DirectionKey = (props: { direction: trig.Direction }) => (
                                 <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
                                     {props.direction}
                                 </div>
@@ -160,11 +194,11 @@ export const Game = () => {
                                     <p>{welcome.greeting}</p>
                                     <p class="mt-3">{welcome.explanation}</p>
                                     <div class="mt-6 flex w-max flex-col items-center gap-1">
-                                        <DirectionKey direction={t.Direction.Up} />
+                                        <DirectionKey direction={trig.Direction.Up} />
                                         <div class="flex gap-1">
-                                            <DirectionKey direction={t.Direction.Left} />
-                                            <DirectionKey direction={t.Direction.Down} />
-                                            <DirectionKey direction={t.Direction.Right} />
+                                            <DirectionKey direction={trig.Direction.Left} />
+                                            <DirectionKey direction={trig.Direction.Down} />
+                                            <DirectionKey direction={trig.Direction.Right} />
                                         </div>
                                     </div>
                                     <p class="mt-6">{welcome.farewell}</p>
@@ -243,7 +277,7 @@ const DevTools = (props: { state: Game_State }) => {
 }
 
 export const MatrixGrid = <T,>(props: {
-    matrix: t.Matrix<T>
+    matrix: trig.Matrix<T>
     children: (item: solid.Accessor<T>, index: number) => solid.JSX.Element
 }) => {
     const reordered = solid.createMemo(() => {

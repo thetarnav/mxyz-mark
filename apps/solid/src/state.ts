@@ -1,47 +1,48 @@
-import { math, s, t } from 'src/lib'
+import { math, s, trig } from 'src/lib'
 import {
-    BOARD_SIZE,
     WINDOW_SIZE,
     Maze_Matrix,
     Game_State,
-    ALL_SHRINE_CENTERS,
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
     WINDOW_RADIUS,
-} from './types'
+} from './init'
 
-export const vecToMinimap = (vec: t.Vector) =>
-    vec.map(xy => Math.round(math.mapRange(xy, 0, BOARD_SIZE - 1, 0, WINDOW_SIZE - 1)))
-
-export const isWall = (maze_state: Maze_Matrix, p: t.Vector) => {
+export const isWall = (maze_state: Maze_Matrix, p: trig.Vector) => {
     const state = maze_state.get(p)
     return !!(state && state.wall)
 }
 
-export const isFlooded = (maze_state: Maze_Matrix, p: t.Vector) => {
+export const isFlooded = (maze_state: Maze_Matrix, p: trig.Vector) => {
     const state = maze_state.get(p)
     return !!(state && state.flooded)
 }
 
-export const isVisible = (maze_state: Maze_Matrix, p: t.Vector) => {
+export const isVisible = (maze_state: Maze_Matrix, p: trig.Vector) => {
     const state = maze_state.get(p)
     return !!state && !state.wall
 }
 
-export function updateState(game_state: Game_State, player: t.Vector) {
-    game_state.player = player
+export function updateState(state: Game_State, player: trig.Vector) {
+    state.player = player
 
-    game_state.window = t.windowedMatrix(WINDOW_SIZE, player)
+    state.window = trig.windowedMatrix(WINDOW_SIZE, player)
 
-    updateVisiblePoints(game_state)
+    updateVisiblePoints(state)
 
-    game_state.in_shrine = ALL_SHRINE_CENTERS.some(
-        center => t.distance(player, center) < SHRINE_RADIUS_TILES * GRID_SIZE,
-    )
+    state.in_shrine = false
+    for (const vec of Object.values(state.maze_config.shrine_centers).concat(
+        state.maze_config.center,
+    )) {
+        if (trig.distance(player, vec) < SHRINE_RADIUS_TILES * GRID_SIZE) {
+            state.in_shrine = true
+            break
+        }
+    }
 }
 
 export function expandFlood(game_state: Game_State) {
-    const { maze: maze_state } = game_state
+    const { maze } = game_state
 
     game_state.turn++
     game_state.progress_to_flood_update += game_state.turn / 1000
@@ -50,8 +51,8 @@ export function expandFlood(game_state: Game_State) {
 
     for (let i = 0; i < expand_times; i++) {
         for (const pos_str of math.randomIterate([...game_state.shallow_flood])) {
-            for (const neighbor of t.eachPointDirection(t.Vector.fromStr(pos_str), maze_state)) {
-                const neighbor_state = maze_state.get(neighbor)
+            for (const neighbor of trig.eachPointDirection(trig.Vector.fromStr(pos_str), maze)) {
+                const neighbor_state = maze.get(neighbor)
                 if (!neighbor_state) continue
 
                 const neighbor_str = neighbor.toString()
@@ -67,7 +68,7 @@ export function expandFlood(game_state: Game_State) {
             }
 
             game_state.shallow_flood.delete(pos_str)
-            maze_state.get(t.Vector.fromStr(pos_str))!.flooded = true
+            maze.get(trig.Vector.fromStr(pos_str))!.flooded = true
         }
     }
 }
@@ -76,7 +77,7 @@ export function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y:
     if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
         throw new Error('invalid input')
     }
-    const vec = t.vector(x, y)
+    const vec = trig.vector(x, y)
     if (!game_state.maze.inBounds(vec)) {
         throw new Error('out of bounds')
     }
@@ -84,7 +85,7 @@ export function setAbsolutePlayerPosition(game_state: Game_State, x: unknown, y:
     s.trigger(game_state.turn_signal)
 }
 
-function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
+function updatePointVisibility(game_state: Game_State, p: trig.Vector): boolean {
     const { maze, player, visible, dev } = game_state
 
     if (!maze.inBounds(p)) return false
@@ -110,7 +111,7 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
         /*
             round window corners
         */
-        if (t.distance(p, player) >= WINDOW_RADIUS + 0.5) break check
+        if (trig.distance(p, player) >= WINDOW_RADIUS + 0.5) break check
 
         /*
             don't allow for gaps between visible tiles
@@ -126,24 +127,24 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
         )
             break check
 
-        const seg = t.segment(player, p),
-            line = t.lineFromSegment(seg)
+        const seg = trig.segment(player, p),
+            line = trig.lineFromSegment(seg)
 
         /*
             path from the tile to the player cannot be blocked by invisible tiles
         */
         for (let x = player.x + sx; x !== p.x; x += sx) {
-            const y = t.getLineY(line, x),
-                p1 = t.vector(x, Math.floor(y)),
-                p2 = t.vector(x, Math.ceil(y))
+            const y = trig.getLineY(line, x),
+                p1 = trig.vector(x, Math.floor(y)),
+                p2 = trig.vector(x, Math.ceil(y))
             if (!updatePointVisibility(game_state, p1) && !updatePointVisibility(game_state, p2))
                 break check
         }
 
         for (let y = player.y + sy; y !== p.y; y += sy) {
-            const x = t.getLineX(line, y),
-                p1 = t.vector(Math.floor(x), y),
-                p2 = t.vector(Math.ceil(x), y)
+            const x = trig.getLineX(line, y),
+                p1 = trig.vector(Math.floor(x), y),
+                p2 = trig.vector(Math.ceil(x), y)
             if (!updatePointVisibility(game_state, p1) && !updatePointVisibility(game_state, p2))
                 break check
         }
@@ -161,7 +162,7 @@ function updatePointVisibility(game_state: Game_State, p: t.Vector): boolean {
 }
 
 export function updateVisiblePoints(game_state: Game_State): void {
-    const { maze, player, window: windowed } = game_state
+    const { maze, player, window } = game_state
 
     /*
         player and all wall-less tiles around him are visible
@@ -177,5 +178,5 @@ export function updateVisiblePoints(game_state: Game_State): void {
         if (isVisible(maze, p)) game_state.visible.set(maze.idx(p), true)
     }
 
-    for (const p of windowed) updatePointVisibility(game_state, windowed.get(p)!)
+    for (const p of window) updatePointVisibility(game_state, window.get(p)!)
 }

@@ -1,28 +1,28 @@
-import { solid, s, t } from 'src/lib'
+import { solid, s, trig } from 'src/lib'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 
-export const DEFAULT_HELD_DIRECTION_STATE: Record<t.Direction, boolean> = {
-    [t.Direction.Up]: false,
-    [t.Direction.Right]: false,
-    [t.Direction.Down]: false,
-    [t.Direction.Left]: false,
+export const DEFAULT_HELD_DIRECTION_STATE: Record<trig.Direction, boolean> = {
+    [trig.Direction.Up]: false,
+    [trig.Direction.Right]: false,
+    [trig.Direction.Down]: false,
+    [trig.Direction.Left]: false,
 }
 
-export const KEY_TO_DIRECTION: { [K in string]?: t.Direction } = {
-    ArrowUp: t.Direction.Up,
-    w: t.Direction.Up,
-    ArrowRight: t.Direction.Right,
-    d: t.Direction.Right,
-    ArrowDown: t.Direction.Down,
-    s: t.Direction.Down,
-    ArrowLeft: t.Direction.Left,
-    a: t.Direction.Left,
+export const KEY_TO_DIRECTION: { [K in string]?: trig.Direction } = {
+    ArrowUp: trig.Direction.Up,
+    w: trig.Direction.Up,
+    ArrowRight: trig.Direction.Right,
+    d: trig.Direction.Right,
+    ArrowDown: trig.Direction.Down,
+    s: trig.Direction.Down,
+    ArrowLeft: trig.Direction.Left,
+    a: trig.Direction.Left,
 }
 
 export function createHeldDirection() {
     const directions = s.signal(DEFAULT_HELD_DIRECTION_STATE)
 
-    let lastDirection = t.Direction.Up
+    let lastDirection = trig.Direction.Up
     createEventListenerMap(window, {
         keydown(e) {
             const direction = KEY_TO_DIRECTION[e.key]
@@ -47,13 +47,13 @@ export function createHeldDirection() {
         s.map(directions, directions => {
             // prefer last direction
             const order =
-                lastDirection === t.Direction.Up || lastDirection === t.Direction.Down
-                    ? t.DIRECTIONS_V_H
-                    : t.DIRECTIONS_H_V
+                lastDirection === trig.Direction.Up || lastDirection === trig.Direction.Down
+                    ? trig.DIRECTIONS_V_H
+                    : trig.DIRECTIONS_H_V
 
             // only allow one direction at a time
             for (const direction of order) {
-                if (directions[direction] && !directions[t.OPPOSITE_DIRECTION[direction]]) {
+                if (directions[direction] && !directions[trig.OPPOSITE_DIRECTION[direction]]) {
                     return direction
                 }
             }
@@ -84,7 +84,7 @@ export function createThrottledTrigger(delay: number) {
     }
 }
 
-export function createDirectionMovement(onMove: (direction: t.Direction) => void) {
+export function createDirectionMovement(onMove: (direction: trig.Direction) => void) {
     const heldDirections = createHeldDirection()
 
     const scheduled = createThrottledTrigger(1000 / 6)

@@ -145,7 +145,7 @@ export const enum Quadrand {
     Top_Right = 2,
     Top_Left = 3,
 }
-export const quadrants = [
+export const QUADRANTS = [
     Quadrand.Bottom_Left,
     Quadrand.Bottom_Right,
     Quadrand.Top_Right,
@@ -272,7 +272,7 @@ export class Matrix<T> {
     }
     get(point: Pointable | number): T | undefined {
         if (typeof point === 'number') point = this.vec(point)
-        return this.inBounds(point) ? this.#values[point.x][point.y] : undefined
+        return this.#values[point.x]?.[point.y]
     }
     idx(point: Pointable) {
         return Matrix.i(this.width, point)
