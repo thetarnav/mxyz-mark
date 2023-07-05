@@ -1,11 +1,11 @@
 import {
-    Maze_Config,
+    MazeConfig,
     SHRINE_SIZE_TILES,
     SHRINE_RADIUS_TILES,
     GRID_SIZE,
     TILE_SIZE,
-    Maze_Matrix,
-    Maze_Tile_State,
+    MazeMatrix,
+    MazeTileState,
     SHRINE_SIZE,
     SHRINE_CENTER,
     N_TINTS,
@@ -14,7 +14,7 @@ import {
 import { trig, math } from './lib'
 import { isWall } from './state'
 
-export function generateMazeWalls(maze_state: Maze_Config) {
+export function generateMazeWalls(maze_state: MazeConfig) {
     const walls = new trig.Matrix(maze_state.n_tiles, maze_state.n_tiles, () => ({
         [trig.Direction.Right]: true,
         [trig.Direction.Down]: true,
@@ -154,7 +154,7 @@ function isWallsPointWall(
         [trig.Direction.Right]: boolean
         [trig.Direction.Down]: boolean
     }>,
-    maze_config: Maze_Config,
+    maze_config: MazeConfig,
 ): boolean {
     if (p.x === 0 || p.y === 0 || p.x === maze_config.size - 1 || p.y === maze_config.size - 1)
         return true
@@ -177,13 +177,13 @@ function isWallsPointWall(
     return walls.get(walls_p)![trig.Direction.Down]
 }
 
-export function generateMazeMatrix(maze_config: Maze_Config): Maze_Matrix {
+export function generateMazeMatrix(maze_config: MazeConfig): MazeMatrix {
     const walls = generateMazeWalls(maze_config)
 
     /*
         turn the walls info into a state matrix grid
     */
-    const state = new trig.Matrix(maze_config.size, maze_config.size, (x, y): Maze_Tile_State => {
+    const state = new trig.Matrix(maze_config.size, maze_config.size, (x, y): MazeTileState => {
         const p = trig.vector(x, y)
 
         return {
@@ -297,7 +297,7 @@ export function generateMazeMatrix(maze_config: Maze_Config): Maze_Matrix {
     return state
 }
 
-const tintMazeTiles = (maze_state: trig.Matrix<Maze_Tile_State>) => {
+const tintMazeTiles = (maze_state: trig.Matrix<MazeTileState>) => {
     /*
         Wave Function Collapse-ish tinting
     */

@@ -2,17 +2,16 @@ import { solid, ease, s, trig, math } from 'src/lib'
 import { createDirectionMovement } from './held_direction'
 import {
     COLORS,
-    Game_State,
+    GameState,
     Tint,
     WINDOW_RADIUS,
     WINDOW_SIZE,
-    initGameState,
     resetFloor,
     setUnknownPlayerPosition,
 } from './state'
-import { getWelcomeMessage } from './messages'
 import { movePlayerInDirection, updateState } from './state'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
+import { MenuMessages as MenuMessage, MenuMessagesNextFloor, MenuMessagesWelcome } from './messages'
 
 export enum Tile_Display_As {
     Invisible,
@@ -57,13 +56,13 @@ export function getDisplayAsOpacity(tile: Tile_Display_As, tint: Tint): number {
 }
 
 function getTileDisplayAs(
-    game_state: Game_State,
+    game_state: GameState,
     vec: trig.Vector,
     fov_idx: number,
 ): Tile_Display_As {
     if (game_state.in_shrine) {
         const fov_vec = trig.Matrix.vec(WINDOW_SIZE, fov_idx)
-        if (fov_vec.equals(game_state.minimap_finish)) {
+        if (fov_vec.equals(game_state.pos.minimap_finish)) {
             return Tile_Display_As.Minimap_Finish
         }
     }
@@ -72,7 +71,7 @@ function getTileDisplayAs(
         vec_state = maze.get(vec)
 
     if (vec_state && game_state.visible.get(maze.idx(vec))) {
-        if (game_state.player.equals(vec)) {
+        if (game_state.pos.player.equals(vec)) {
             return Tile_Display_As.Player
         }
         if (vec_state.wall) {
@@ -81,13 +80,13 @@ function getTileDisplayAs(
         if (vec_state.flooded) {
             return Tile_Display_As.Flood_Deep
         }
-        if (game_state.shallow_flood.has(vec.toString())) {
+        if (game_state.pos.shallow_flood.has(vec.toString())) {
             return Tile_Display_As.Flood_Shallow
         }
-        if (vec.equals(game_state.start)) {
+        if (vec.equals(game_state.pos.start)) {
             return Tile_Display_As.Start
         }
-        if (vec.equals(game_state.finish)) {
+        if (vec.equals(game_state.pos.finish)) {
             return Tile_Display_As.Finish
         }
         return Tile_Display_As.Floor
@@ -96,12 +95,12 @@ function getTileDisplayAs(
     return Tile_Display_As.Invisible
 }
 
-function getTileBgColor(game_state: Game_State, vec: trig.Vector, fov_idx: number): string {
+function getTileBgColor(game_state: GameState, vec: trig.Vector, fov_idx: number): string {
     const display_as = getTileDisplayAs(game_state, vec, fov_idx),
         color = DISPLAY_TILE_TO_COLOR[display_as],
         vec_state = game_state.maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
-        d = trig.distance(vec, game_state.player),
+        d = trig.distance(vec, game_state.pos.player),
         easing = ease.inOutSine(math.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
         opacity = getDisplayAsOpacity(display_as, tint),
         p = Math.round(opacity * 100)
@@ -119,7 +118,7 @@ const FLICKER_MAX = 0.36
 const FLICKER_VAR = '--flicker'
 
 export function Game() {
-    const game_state = initGameState()
+    const game_state = new GameState()
 
     /**
      * Game state is not a reactive proxy, so we need to track it manually
@@ -136,7 +135,7 @@ export function Game() {
     const show_menu = s.memo(
         s.map(
             game_state_sig,
-            ({ player, start, finish }) => player.equals(start) || player.equals(finish),
+            ({ pos }) => pos.player.equals(pos.start) || pos.player.equals(pos.finish),
         ),
     )
 
@@ -180,30 +179,7 @@ export function Game() {
                         class="center-child transition-600 delay-200"
                         style={{ opacity: show_menu.value ? 1 : 0 }}
                     >
-                        {(() => {
-                            const messages = getWelcomeMessage()
-                            return (
-                                <div>
-                                    <p>{messages.greeting}</p>
-                                    <p class="mt-3">{messages.arrows}</p>
-                                    <div class="mt-6 flex w-max flex-col items-center gap-1">
-                                        <kbd>{trig.Direction.Up}</kbd>
-                                        <div class="flex gap-1">
-                                            <kbd>{trig.Direction.Left}</kbd>
-                                            <kbd>{trig.Direction.Down}</kbd>
-                                            <kbd>{trig.Direction.Right}</kbd>
-                                        </div>
-                                    </div>
-                                    <p class="mt-6">
-                                        {(() => {
-                                            const parts = messages.reset.split('{{key}}')
-                                            return [parts[0], <kbd>R</kbd>, parts[1]]
-                                        })()}
-                                    </p>
-                                    <p class="mt-3">{messages.farewell}</p>
-                                </div>
-                            )
-                        })()}
+                        <MenuView messages={game_state_sig.value.menu_messages} />
                     </div>
                     <div class="center-child">
                         <div class="w-full">
@@ -225,14 +201,53 @@ export function Game() {
                     </div>
                 </div>
             </main>
-            <ResetControl
-                onReset={() => {
-                    resetFloor(game_state)
-                    s.trigger(game_state.turn_signal)
-                }}
-            />
+            <ResetControl onReset={() => resetFloor(game_state)} />
             {import.meta.env.DEV && <DevTools state={game_state_sig.value} />}
         </>
+    )
+}
+
+function MenuView(props: { messages: MenuMessage }) {
+    return (
+        <div>
+            <solid.Switch>
+                <solid.Match when={props.messages instanceof MenuMessagesWelcome && props.messages}>
+                    {messages => (
+                        <>
+                            <p>{messages().greeting}</p>
+                            <p class="mt-3">{messages().arrows}</p>
+                            <div class="mt-6 flex w-max flex-col items-center gap-1">
+                                <kbd>{trig.Direction.Up}</kbd>
+                                <div class="flex gap-1">
+                                    <kbd>{trig.Direction.Left}</kbd>
+                                    <kbd>{trig.Direction.Down}</kbd>
+                                    <kbd>{trig.Direction.Right}</kbd>
+                                </div>
+                            </div>
+                            <p class="mt-6">
+                                {(() => {
+                                    const parts = messages().reset.split('{{key}}')
+                                    return [parts[0], <kbd>R</kbd>, parts[1]]
+                                })()}
+                            </p>
+                        </>
+                    )}
+                </solid.Match>
+                <solid.Match
+                    when={props.messages instanceof MenuMessagesNextFloor && props.messages}
+                >
+                    {messages => (
+                        <p>
+                            {(() => {
+                                const parts = messages().congratulations.split('{{floor}}')
+                                return [parts[0], <span>{messages().new_floor}</span>, parts[1]]
+                            })()}
+                        </p>
+                    )}
+                </solid.Match>
+            </solid.Switch>
+            <p class="mt-3">{props.messages.farewell}</p>
+        </div>
     )
 }
 
@@ -275,17 +290,17 @@ const ResetControl = (props: { onReset: VoidFunction }) => {
     )
 }
 
-const DevTools = (props: { state: Game_State }) => {
+const DevTools = (props: { state: GameState }) => {
     let input1!: HTMLInputElement
     let input2!: HTMLInputElement
 
-    const ToggleSetting = (btn_props: { setting: keyof Game_State['dev'] }) => {
+    const ToggleSetting = (btn_props: { setting: keyof GameState['dev'] }) => {
         const get = () => props.state.dev[btn_props.setting]
         return (
             <button
                 onClick={() => {
                     props.state.dev[btn_props.setting] = !get()
-                    updateState(props.state, props.state.player)
+                    updateState(props.state)
                     s.trigger(props.state.turn_signal)
                 }}
             >
@@ -308,8 +323,8 @@ const DevTools = (props: { state: Game_State }) => {
                     if (e.key !== 'Enter') e.stopPropagation()
                 }}
             >
-                <input ref={input1} value={props.state.player.x} class="w-12" type="number" />
-                <input ref={input2} value={props.state.player.y} class="w-12" type="number" />
+                <input ref={input1} value={props.state.pos.player.x} class="w-12" type="number" />
+                <input ref={input2} value={props.state.pos.player.y} class="w-12" type="number" />
                 <button class="hidden" />
             </form>
             <p>turn: {props.state.turn}</p>
