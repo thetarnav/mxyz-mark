@@ -14,7 +14,7 @@ import {
 import { trig, math } from './lib'
 import { isWall } from './state'
 
-export const generateMazeWalls = (maze_state: Maze_Config) => {
+export function generateMazeWalls(maze_state: Maze_Config) {
     const walls = new trig.Matrix(maze_state.n_tiles, maze_state.n_tiles, () => ({
         [trig.Direction.Right]: true,
         [trig.Direction.Down]: true,

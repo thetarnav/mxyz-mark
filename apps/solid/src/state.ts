@@ -104,7 +104,7 @@ export function initMazeConfig(floor: number): Maze_Config {
     }
 }
 
-const getStartingPoints = function (
+function getStartingPoints(
     start_q: trig.Quadrand,
     maze_config: Maze_Config,
 ): {
@@ -123,7 +123,7 @@ const getStartingPoints = function (
     return { start, finish, minimap_finish, flood_start }
 }
 
-const updateStartingPoints = function (state: Game_State) {
+function updateStartingPoints(state: Game_State) {
     const starting_points = getStartingPoints(state.start_q, state.maze_config)
 
     state.start = state.player = starting_points.start
@@ -180,7 +180,7 @@ export function updateFloor(state: Game_State) {
     updateState(state, state.player)
 }
 
-export const resetFloor = function (state: Game_State) {
+export function resetFloor(state: Game_State) {
     state.maze = generateMazeMatrix(state.maze_config)
     state.progress_to_flood_update = 0
     state.turn = 1

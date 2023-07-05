@@ -38,7 +38,7 @@ export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
     [Tile_Display_As.Flood_Deep]: COLORS.flood_deep,
 }
 
-export const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number => {
+export function getDisplayAsOpacity(tile: Tile_Display_As, tint: Tint): number {
     switch (tile) {
         case Tile_Display_As.Floor:
             return 0.2 + 0.04 * tint
@@ -56,11 +56,11 @@ export const getDisplayAsOpacity = (tile: Tile_Display_As, tint: Tint): number =
     }
 }
 
-const getTileDisplayAs = (
+function getTileDisplayAs(
     game_state: Game_State,
     vec: trig.Vector,
     fov_idx: number,
-): Tile_Display_As => {
+): Tile_Display_As {
     if (game_state.in_shrine) {
         const fov_vec = trig.Matrix.vec(WINDOW_SIZE, fov_idx)
         if (fov_vec.equals(game_state.minimap_finish)) {
@@ -96,7 +96,7 @@ const getTileDisplayAs = (
     return Tile_Display_As.Invisible
 }
 
-const getTileBgColor = (game_state: Game_State, vec: trig.Vector, fov_idx: number): string => {
+function getTileBgColor(game_state: Game_State, vec: trig.Vector, fov_idx: number): string {
     const display_as = getTileDisplayAs(game_state, vec, fov_idx),
         color = DISPLAY_TILE_TO_COLOR[display_as],
         vec_state = game_state.maze.get(vec),
@@ -118,7 +118,7 @@ const FLICKER_MIN = -0.05
 const FLICKER_MAX = 0.36
 const FLICKER_VAR = '--flicker'
 
-export const Game = () => {
+export function Game() {
     const game_state = initGameState()
 
     /**
