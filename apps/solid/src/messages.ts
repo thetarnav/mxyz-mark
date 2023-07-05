@@ -2,10 +2,10 @@ import messages from '../../../data/messages.json'
 import { math } from 'src/lib'
 
 export const getWelcomeMessage = () => {
-    const welcomeMessage = math.pickRandom(messages.welcome)
     return {
-        greeting: welcomeMessage[0] ?? '',
-        explanation: welcomeMessage[1] ?? '',
-        farewell: welcomeMessage[2] ?? '',
+        greeting: math.pickRandom(messages.greeting) ?? '',
+        arrows: math.pickRandom(messages.arrows) ?? '',
+        reset: math.pickRandom(messages.reset) ?? '',
+        farewell: math.pickRandom(messages.farewell) ?? '',
     }
 }

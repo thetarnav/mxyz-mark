@@ -1,49 +1,46 @@
 {
-    "welcome": [
-        [
-            "I'm glad you're here again.",
-            "You have an ability to move around pressing the arrow keys. Please use it to find the exit while you still can.",
-            "Good luck."
-        ],
-        [
-            "Welcome back, wanderer.",
-            "Once again, you find yourself trapped within this labyrinthine maze. Use the arrow keys to navigate, and may fortune favor your escape.",
-            "May the path to salvation reveal itself to you."
-        ],
-        [
-            "Greetings, traveler.",
-            "You return to this desolate maze, where endless corridors stretch out before you. Only by utilizing the arrow keys can you hope to find an exit before it's too late.",
-            "May your steps lead you towards salvation."
-        ],
-        [
-            "Ah, you've returned.",
-            "Within this gloomy maze, you hold the power to maneuver using the arrow keys. Seek out the exit while the opportunity still lingers.",
-            "Fortune smiles upon the relentless. Best of luck."
-        ],
-        [
-            "Welcome, once more.",
-            "In this darkened maze, you possess the ability to traverse its winding pathways with the arrow keys. Seek out the exit, for time is fleeting.",
-            "May fate guide your steps."
-        ],
-        [
-            "Greetings, seeker.",
-            "Once again, you must tread through this labyrinthine realm. Employ the arrow keys to uncover the exit, before the cycle of endless wandering consumes you.",
-            "May the light guide your way."
-        ],
-        [
-            "Ah, you've returned to this forsaken place.",
-            "In this twisted maze, your movement lies within the grasp of the arrow keys. Seek the exit, lest you forever wander in this eternal loop.",
-            "May the winds of fate be in your favor."
-        ],
-        [
-            "Welcome back, restless soul.",
-            "Within this enigmatic maze, the arrow keys are your only means of escape. Search for the exit, for time grows short.",
-            "May your resolve endure."
-        ],
-        [
-            "Greetings, wanderer.",
-            "You've returned to this haunting maze, where the arrow keys hold the key to your freedom. Seek the exit, for every step could be your last.",
-            "May hope guide your journey."
-        ]
+    "greeting": [
+        "I'm glad you're here again.",
+        "Welcome back, wanderer.",
+        "Greetings, traveler.",
+        "Ah, you've returned.",
+        "Welcome, once more.",
+        "Greetings, seeker.",
+        "Ah, you've returned to this forsaken place.",
+        "Welcome back, restless soul.",
+        "Greetings, wanderer."
+    ],
+    "arrows": [
+        "You have an ability to move around pressing the arrow keys. Please use it to find the exit while you still can.",
+        "Once again, you find yourself trapped within this labyrinthine maze. Use the arrow keys to navigate, and may fortune favor your escape.",
+        "You return to this desolate maze, where endless corridors stretch out before you. Only by utilizing the arrow keys can you hope to find an exit before it's too late.",
+        "Within this gloomy maze, you hold the power to maneuver using the arrow keys. Seek out the exit while the opportunity still lingers.",
+        "In this darkened maze, you possess the ability to traverse its winding pathways with the arrow keys. Seek out the exit, for time is fleeting.",
+        "Once again, you must tread through this labyrinthine realm. Employ the arrow keys to uncover the exit, before the cycle of endless wandering consumes you.",
+        "In this twisted maze, your movement lies within the grasp of the arrow keys. Seek the exit, lest you forever wander in this eternal loop.",
+        "Within this enigmatic maze, the arrow keys are your only means of escape. Search for the exit, for time grows short.",
+        "You've returned to this haunting maze, where the arrow keys hold the key to your freedom. Seek the exit, for every step could be your last."
+    ],
+    "reset": [
+        "If you feel lost and scared, press {{key}} to return back here so you can try again.",
+        "When you're filled with confusion and fear, remember to press {{key}} to find your way back here and give it another try.",
+        "Should you find yourself lost and overwhelmed, don't forget to press {{key}} to come back here and start anew.",
+        "In moments of uncertainty and dread, keep in mind that pressing {{key}} will bring you back here, allowing you to make another attempt.",
+        "When the world feels dark and daunting, simply press {{key}} to return here and give yourself another chance.",
+        "If you ever feel disoriented and afraid, don't hesitate to press {{key}} and come back to this point, ready to try once more.",
+        "Amidst the confusion and anxiety, find solace in the fact that pressing {{key}} will bring you back here, giving you the opportunity to start afresh.",
+        "When uncertainty surrounds you and fear takes hold, remember that pressing {{key}} will lead you back here, where you can regroup and try again.",
+        "If you're overwhelmed by the unknown and a sense of dread, press {{key}} to return to this spot and begin your journey anew."
+    ],
+    "farewell": [
+        "Good luck.",
+        "May the path to salvation reveal itself to you.",
+        "May your steps lead you towards salvation.",
+        "Fortune smiles upon the relentless. Best of luck.",
+        "May fate guide your steps.",
+        "May the light guide your way.",
+        "May the winds of fate be in your favor.",
+        "May your resolve endure.",
+        "May hope guide your journey."
     ]
 }

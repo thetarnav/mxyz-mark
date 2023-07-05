@@ -181,11 +181,11 @@ export const Game = () => {
                         style={{ opacity: show_menu.value ? 1 : 0 }}
                     >
                         {(() => {
-                            const welcome = getWelcomeMessage()
+                            const messages = getWelcomeMessage()
                             return (
                                 <div>
-                                    <p>{welcome.greeting}</p>
-                                    <p class="mt-3">{welcome.explanation}</p>
+                                    <p>{messages.greeting}</p>
+                                    <p class="mt-3">{messages.arrows}</p>
                                     <div class="mt-6 flex w-max flex-col items-center gap-1">
                                         <kbd>{trig.Direction.Up}</kbd>
                                         <div class="flex gap-1">
@@ -195,10 +195,12 @@ export const Game = () => {
                                         </div>
                                     </div>
                                     <p class="mt-6">
-                                        If you feel lost and scared, press <kbd>R</kbd> to return
-                                        back here so you can try again.
+                                        {(() => {
+                                            const parts = messages.reset.split('{{key}}')
+                                            return [parts[0], <kbd>R</kbd>, parts[1]]
+                                        })()}
                                     </p>
-                                    <p class="mt-3">{welcome.farewell}</p>
+                                    <p class="mt-3">{messages.farewell}</p>
                                 </div>
                             )
                         })()}
