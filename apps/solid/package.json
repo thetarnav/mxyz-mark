@@ -10,13 +10,10 @@
     },
     "dependencies": {
         "@solid-primitives/event-listener": "^2.2.13",
-        "@solid-primitives/utils": "^6.2.0",
         "@unocss/reset": "^0.53.4",
-        "clsx": "^1.2.1",
         "solid-js": "^1.7.7"
     },
     "devDependencies": {
-        "solid-devtools": "^0.27.3",
         "vite-plugin-solid": "^2.7.0"
     },
     "engines": {
