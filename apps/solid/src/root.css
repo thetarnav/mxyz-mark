@@ -12,16 +12,11 @@ body {
     /* background-color: #111; */
     --at-apply: bg-dark;
     font-family: 'VT323', monospace;
-    animation: fade-in 0.5s ease-in-out;
+    opacity: 0;
 }
 
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+body.loaded {
+    --at-apply: 'animate-fade-in duration-600 animate-forwards';
 }
 
 button,
@@ -35,6 +30,10 @@ input {
 
 button {
     --at-apply: 'active:bg-blood active:focus:bg-blood active:text-dark active:border-blood';
+}
+
+kbd {
+    --at-apply: h-6 w-6 inline-flex items-center justify-center border-2 border-wall font-inherit;
 }
 
 /* Disable number input arrows */

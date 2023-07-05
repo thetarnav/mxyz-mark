@@ -7,10 +7,12 @@ import {
     WINDOW_RADIUS,
     WINDOW_SIZE,
     initGameState,
+    resetFloor,
     setUnknownPlayerPosition,
 } from './state'
 import { getWelcomeMessage } from './messages'
 import { movePlayerInDirection, updateState } from './state'
+import { createEventListenerMap } from '@solid-primitives/event-listener'
 
 export enum Tile_Display_As {
     Invisible,
@@ -180,24 +182,23 @@ export const Game = () => {
                     >
                         {(() => {
                             const welcome = getWelcomeMessage()
-                            const DirectionKey = (props: { direction: trig.Direction }) => (
-                                <div class="flex h-6 w-6 items-center justify-center border-2 border-wall">
-                                    {props.direction}
-                                </div>
-                            )
                             return (
                                 <div>
                                     <p>{welcome.greeting}</p>
                                     <p class="mt-3">{welcome.explanation}</p>
                                     <div class="mt-6 flex w-max flex-col items-center gap-1">
-                                        <DirectionKey direction={trig.Direction.Up} />
+                                        <kbd>{trig.Direction.Up}</kbd>
                                         <div class="flex gap-1">
-                                            <DirectionKey direction={trig.Direction.Left} />
-                                            <DirectionKey direction={trig.Direction.Down} />
-                                            <DirectionKey direction={trig.Direction.Right} />
+                                            <kbd>{trig.Direction.Left}</kbd>
+                                            <kbd>{trig.Direction.Down}</kbd>
+                                            <kbd>{trig.Direction.Right}</kbd>
                                         </div>
                                     </div>
-                                    <p class="mt-6">{welcome.farewell}</p>
+                                    <p class="mt-6">
+                                        If you feel lost and scared, press <kbd>R</kbd> to return
+                                        back here so you can try again.
+                                    </p>
+                                    <p class="mt-3">{welcome.farewell}</p>
                                 </div>
                             )
                         })()}
@@ -222,7 +223,52 @@ export const Game = () => {
                     </div>
                 </div>
             </main>
+            <ResetControl
+                onReset={() => {
+                    resetFloor(game_state)
+                    s.trigger(game_state.turn_signal)
+                }}
+            />
             {import.meta.env.DEV && <DevTools state={game_state_sig.value} />}
+        </>
+    )
+}
+
+const ResetControl = (props: { onReset: VoidFunction }) => {
+    const pressing_reset = s.signal(false)
+
+    s.effect(pressing_reset, v => {
+        if (!v) return
+        const timeout = setTimeout(() => {
+            props.onReset()
+            s.set(pressing_reset, false)
+        }, 1200)
+        return () => clearTimeout(timeout)
+    })
+
+    createEventListenerMap(window, {
+        keydown(e) {
+            if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return
+            e.key === 'r' && s.set(pressing_reset, true)
+        },
+        keyup(e) {
+            e.key === 'r' && s.set(pressing_reset, false)
+        },
+        blur() {
+            s.set(pressing_reset, false)
+        },
+        contextmenu() {
+            s.set(pressing_reset, false)
+        },
+    })
+
+    return (
+        <>
+            {pressing_reset.value && (
+                <div class="fixed top-6 left-6 text-xl text-blood animate-fade-in duration-600 animate-both">
+                    GIVING UP!
+                </div>
+            )}
         </>
     )
 }
@@ -265,6 +311,7 @@ const DevTools = (props: { state: Game_State }) => {
                 <button class="hidden" />
             </form>
             <p>turn: {props.state.turn}</p>
+            <p>floor: {props.state.floor}</p>
             <ToggleSetting setting="show_invisible" />
             <ToggleSetting setting="hide_easing" />
             <ToggleSetting setting="noclip" />

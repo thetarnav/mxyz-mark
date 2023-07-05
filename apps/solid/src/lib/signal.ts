@@ -71,10 +71,14 @@ export function join<const T extends readonly Reactive<unknown>[]>(
     return new Reactive(() => sources.map(source => source.value)) as any
 }
 
-export function effect<T>(source: Reactive<T>, fn: (value: T) => void): void {
+export function effect<T>(
+    source: Reactive<T>,
+    fn: (value: T) => void | undefined | VoidFunction,
+): void {
     solid.createEffect(() => {
         const value = source.value
-        solid.untrack(() => fn(value))
+        const cleanup = solid.untrack(() => fn(value))
+        if (cleanup) solid.onCleanup(cleanup)
     })
 }
 

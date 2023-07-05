@@ -6,3 +6,5 @@ import * as solid_web from 'solid-js/web'
 import { Game } from './game'
 
 solid_web.render(() => <Game />, document.getElementById('root')!)
+
+document.body.classList.add('loaded')

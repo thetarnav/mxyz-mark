@@ -25,10 +25,10 @@ export function createHeldDirection() {
     let lastDirection = trig.Direction.Up
     createEventListenerMap(window, {
         keydown(e) {
+            if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return
             const direction = KEY_TO_DIRECTION[e.key]
             if (direction) {
                 s.update(directions, p => ({ ...p, [(lastDirection = direction)]: true }))
-                e.preventDefault()
             }
         },
         keyup(e) {

@@ -26,7 +26,7 @@ export type Maze_Tile_State = {
 export type Maze_Matrix = trig.Matrix<Maze_Tile_State>
 
 export type Game_State = {
-    round: number
+    floor: number
     turn: number
     maze_config: Maze_Config
     maze: Maze_Matrix
@@ -74,8 +74,8 @@ export const SHRINE_RADIUS_TILES = 2
 export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 export const SHRINE_CENTER = trig.vector(Math.floor(SHRINE_SIZE / 2 - 1))
 
-export function initMazeConfig(round: number): Maze_Config {
-    const n_tiles = 24 + round * 2,
+export function initMazeConfig(floor: number): Maze_Config {
+    const n_tiles = 22 + floor * 2,
         size = n_tiles * GRID_SIZE + OUTER_WALL_SIZE, // +1 for first wall
         center = trig.vector(math.floor(size / 2)),
         center_origin = center.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
@@ -123,10 +123,20 @@ const getStartingPoints = function (
     return { start, finish, minimap_finish, flood_start }
 }
 
+const updateStartingPoints = function (state: Game_State) {
+    const starting_points = getStartingPoints(state.start_q, state.maze_config)
+
+    state.start = state.player = starting_points.start
+    state.finish = starting_points.finish
+    state.minimap_finish = starting_points.minimap_finish
+    state.shallow_flood.clear()
+    state.shallow_flood.add(starting_points.flood_start.toString())
+}
+
 export function initGameState(): Game_State {
     const state: Game_State = {
-        round: 0,
-        turn: 0,
+        floor: 1,
+        turn: 1,
         maze_config: initMazeConfig(0),
         maze: null!,
         player: null!,
@@ -147,12 +157,7 @@ export function initGameState(): Game_State {
         },
     }
 
-    const starting_points = getStartingPoints(state.start_q, state.maze_config)
-
-    state.start = state.player = starting_points.start
-    state.finish = starting_points.finish
-    state.minimap_finish = starting_points.minimap_finish
-    state.shallow_flood.add(starting_points.flood_start.toString())
+    updateStartingPoints(state)
 
     state.maze = generateMazeMatrix(state.maze_config)
 
@@ -161,22 +166,26 @@ export function initGameState(): Game_State {
     return state
 }
 
-export function updateRound(state: Game_State) {
-    state.round++
-    state.maze_config = initMazeConfig(state.round)
+export function updateFloor(state: Game_State) {
+    state.floor++
+    state.maze_config = initMazeConfig(state.floor)
     state.maze = generateMazeMatrix(state.maze_config)
     state.progress_to_flood_update = 0
-    state.turn = 0
+    state.turn = 1
 
     state.start_q = trig.OPPOSITE_QUADRANTS[state.start_q] // old finish quadrant
 
-    const starting_points = getStartingPoints(state.start_q, state.maze_config)
+    updateStartingPoints(state)
 
-    state.start = state.player = starting_points.start
-    state.finish = starting_points.finish
-    state.minimap_finish = starting_points.minimap_finish
-    state.shallow_flood.clear()
-    state.shallow_flood.add(starting_points.flood_start.toString())
+    updateState(state, state.player)
+}
+
+export const resetFloor = function (state: Game_State) {
+    state.maze = generateMazeMatrix(state.maze_config)
+    state.progress_to_flood_update = 0
+    state.turn = 1
+
+    updateStartingPoints(state)
 
     updateState(state, state.player)
 }
@@ -212,7 +221,7 @@ export function movePlayerInDirection(game_state: Game_State, direction: trig.Di
         round ended, make a new maze
     */
     if (vec.equals(game_state.finish)) {
-        updateRound(game_state)
+        updateFloor(game_state)
     } else {
         updateState(game_state, vec)
         expandFlood(game_state)
