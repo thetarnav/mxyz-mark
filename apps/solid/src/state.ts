@@ -6,6 +6,19 @@ import { MenuMessages, MenuMessagesNextFloor, MenuMessagesWelcome } from './mess
 
 export { COLORS }
 
+export const TILE_SIZE = 2
+export const GRID_SIZE = TILE_SIZE + 1
+export const OUTER_WALL_SIZE = 1
+
+export const WINDOW_SIZE = 19
+export const WINDOW_RADIUS = Math.floor(WINDOW_SIZE / 2)
+export const WINDOW_MATRIX = trig.windowedMatrix(WINDOW_SIZE, trig.ZERO_VEC)
+
+export const SHRINE_SIZE_TILES = 4
+export const SHRINE_RADIUS_TILES = 2
+export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
+export const SHRINE_CENTER = trig.vector(Math.floor(SHRINE_SIZE / 2 - 1))
+
 export const N_TINTS = 4
 
 export type Tint = t.Enumerate<typeof N_TINTS>
@@ -78,7 +91,6 @@ export class GameState {
     maze: MazeMatrix
     start_q = math.randomInt(4) as trig.Quadrand
     pos: MazePositions
-    window!: trig.Matrix<trig.Vector>
     visible = new Map<number, boolean>()
     progress_to_flood_update = 0
     in_shrine = false
@@ -112,17 +124,6 @@ export const isVisible = (maze_state: MazeMatrix, p: trig.Vector) => {
     const state = maze_state.get(p)
     return !!state && !state.wall
 }
-
-export const TILE_SIZE = 2
-export const GRID_SIZE = TILE_SIZE + 1
-export const OUTER_WALL_SIZE = 1
-export const WINDOW_SIZE = 19
-export const WINDOW_RADIUS = Math.floor(WINDOW_SIZE / 2)
-
-export const SHRINE_SIZE_TILES = 4
-export const SHRINE_RADIUS_TILES = 2
-export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
-export const SHRINE_CENTER = trig.vector(Math.floor(SHRINE_SIZE / 2 - 1))
 
 function getStartingPoints(
     start_q: trig.Quadrand,
@@ -171,8 +172,6 @@ export function resetFloor(state: GameState) {
 
 export function updateState(state: GameState) {
     const player = state.pos.player
-
-    state.window = trig.windowedMatrix(WINDOW_SIZE, player)
 
     updateVisiblePoints(state)
 

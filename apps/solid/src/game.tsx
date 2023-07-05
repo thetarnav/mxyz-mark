@@ -4,6 +4,7 @@ import {
     COLORS,
     GameState,
     Tint,
+    WINDOW_MATRIX,
     WINDOW_RADIUS,
     WINDOW_SIZE,
     resetFloor,
@@ -95,17 +96,19 @@ function getTileDisplayAs(
     return Tile_Display_As.Invisible
 }
 
-function getTileBgColor(game_state: GameState, vec: trig.Vector, fov_idx: number): string {
-    const display_as = getTileDisplayAs(game_state, vec, fov_idx),
+function getTileBgColor(game_state: GameState, fov_vec: trig.Vector, fov_idx: number): string {
+    const { pos, maze, dev } = game_state,
+        vec = pos.player.add(fov_vec),
+        display_as = getTileDisplayAs(game_state, vec, fov_idx),
         color = DISPLAY_TILE_TO_COLOR[display_as],
-        vec_state = game_state.maze.get(vec),
+        vec_state = maze.get(vec),
         tint = vec_state ? vec_state.tint : 0,
-        d = trig.distance(vec, game_state.pos.player),
+        d = trig.distance(vec, pos.player),
         easing = ease.inOutSine(math.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
         opacity = getDisplayAsOpacity(display_as, tint),
         p = Math.round(opacity * 100)
 
-    if (game_state.dev.hide_easing || display_as === Tile_Display_As.Minimap_Finish)
+    if (dev.hide_easing || display_as === Tile_Display_As.Minimap_Finish)
         return `color-mix(in hsl, ${color} ${p}%, transparent)`
 
     return `color-mix(in hsl, ${color} calc(${p}% * (${easing} -  (1 - ${easing}) * var(${FLICKER_VAR}))), transparent)`
@@ -183,15 +186,15 @@ export function Game() {
                     </div>
                     <div class="center-child">
                         <div class="w-full">
-                            <MatrixGrid matrix={game_state_sig.value.window}>
-                                {(vec, fovIndex) => (
+                            <MatrixGrid matrix={WINDOW_MATRIX}>
+                                {(fov_vec, fov_index) => (
                                     <div
                                         class="flex items-center justify-center"
                                         style={{
                                             'background-color': getTileBgColor(
                                                 game_state_sig.value,
-                                                vec(),
-                                                fovIndex,
+                                                fov_vec,
+                                                fov_index,
                                             ),
                                         }}
                                     />
@@ -342,7 +345,7 @@ const DevTools = (props: { state: GameState }) => {
 
 export const MatrixGrid = <T,>(props: {
     matrix: trig.Matrix<T>
-    children: (item: solid.Accessor<T>, index: number) => solid.JSX.Element
+    children: (item: T, index: number) => solid.JSX.Element
 }) => {
     const reordered = solid.createMemo(() => {
         const { matrix } = props,
@@ -368,7 +371,7 @@ export const MatrixGrid = <T,>(props: {
             `}
         >
             <solid.Index each={reordered()}>
-                {item => props.children(() => item().item, item().index)}
+                {item => props.children(item().item, item().index)}
             </solid.Index>
         </div>
     )

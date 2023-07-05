@@ -1,4 +1,4 @@
-import { GameState, WINDOW_RADIUS } from './state'
+import { GameState, WINDOW_MATRIX, WINDOW_RADIUS } from './state'
 import { trig } from './lib'
 import { isVisible } from './state'
 
@@ -77,7 +77,7 @@ function updatePoint(game_state: GameState, p: trig.Vector): boolean {
 }
 
 export function updateVisiblePoints(game_state: GameState): void {
-    const { maze, pos, window } = game_state,
+    const { maze, pos } = game_state,
         { player } = pos
 
     /*
@@ -94,5 +94,5 @@ export function updateVisiblePoints(game_state: GameState): void {
         if (isVisible(maze, p)) game_state.visible.set(maze.idx(p), true)
     }
 
-    for (const p of window) updatePoint(game_state, window.get(p)!)
+    for (const i of WINDOW_MATRIX) updatePoint(game_state, WINDOW_MATRIX.get(i)!.add(player))
 }
