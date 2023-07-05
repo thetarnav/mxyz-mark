@@ -42,5 +42,16 @@
         "May the winds of fate be in your favor.",
         "May your resolve endure.",
         "May hope guide your journey."
+    ],
+    "next_floor": [
+        "Is that really you? You've actually made it to the {{floor}} floor! Impressive. But your journey does not end here, I hope. Within these cold walls, you will only find despair and sorrow. You need to go deeper.",
+        "Ah, it's you. You've reached the {{floor}} floor. Remarkable. However, this is not the end of your journey, I fear. Within these chilling walls, despair and sorrow await. You must venture deeper.",
+        "Welcome, traveler. Have you truly made it to the {{floor}} floor? Impressive indeed. Yet, do not be deceived. Within these frigid walls, only despair and sorrow lie in wait. You must delve deeper.",
+        "Could it be? You've reached the {{floor}} floor! Astounding. But be wary, for your odyssey does not conclude here. From these icy walls, despair and sorrow permeate. Further down you must go.",
+        "Is it really you? You've made it to the {{floor}} floor! A remarkable achievement, but do not rest on your laurels. Behind these chilling walls, only despair and sorrow prevail. Deeper you must delve.",
+        "Impressive. It appears you've arrived at the {{floor}} floor. However, let not this milestone deceive you. Behind these cold walls, an abyss of despair and sorrow awaits. Descend further, if you dare.",
+        "My, my. Have you truly reached the {{floor}} floor? A feat worthy of admiration. Yet, take heed, for within these frostbitten walls, despair and sorrow reign supreme. To proceed, you must delve deeper.",
+        "Incredible! You've made it to the {{floor}} floor! But do not rejoice just yet. These bleak walls harbor naught but despair and sorrow. To continue your journey, you must descend further.",
+        "Is it really you? You've arrived at the {{floor}} floor! Such perseverance is commendable. Alas, beyond these icy confines, only despair and sorrow await. Descend deeper, if you dare to uncover the truth."
     ]
 }

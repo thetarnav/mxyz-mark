@@ -10,7 +10,7 @@ export class MenuMessagesWelcome {
 
 export class MenuMessagesNextFloor {
     new_floor: number
-    congratulations: string = "You've reached the {{floor}}. floor, fucking congratulations!!"
+    next_floor: string = math.pickRandom(messages_data.next_floor) ?? ''
     farewell: string = math.pickRandom(messages_data.farewell) ?? ''
 
     constructor(floor: number) {

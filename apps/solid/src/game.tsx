@@ -11,7 +11,7 @@ import {
 } from './state'
 import { movePlayerInDirection, updateState } from './state'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
-import { MenuMessages as MenuMessage, MenuMessagesNextFloor, MenuMessagesWelcome } from './messages'
+import { MenuMessages, MenuMessagesNextFloor, MenuMessagesWelcome } from './messages'
 
 export enum Tile_Display_As {
     Invisible,
@@ -207,7 +207,7 @@ export function Game() {
     )
 }
 
-function MenuView(props: { messages: MenuMessage }) {
+function MenuView(props: { messages: MenuMessages }) {
     return (
         <div>
             <solid.Switch>
@@ -225,7 +225,7 @@ function MenuView(props: { messages: MenuMessage }) {
                                 </div>
                             </div>
                             <p class="mt-6">
-                                {(() => {
+                                {((): solid.JSX.Element => {
                                     const parts = messages().reset.split('{{key}}')
                                     return [parts[0], <kbd>R</kbd>, parts[1]]
                                 })()}
@@ -238,9 +238,13 @@ function MenuView(props: { messages: MenuMessage }) {
                 >
                     {messages => (
                         <p>
-                            {(() => {
-                                const parts = messages().congratulations.split('{{floor}}')
-                                return [parts[0], <span>{messages().new_floor}</span>, parts[1]]
+                            {((): solid.JSX.Element => {
+                                const parts = messages().next_floor.split('{{floor}}')
+                                return [
+                                    parts[0],
+                                    <span class="text-wall">{messages().new_floor}.</span>,
+                                    parts[1],
+                                ]
                             })()}
                         </p>
                     )}
