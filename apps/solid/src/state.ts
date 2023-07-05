@@ -10,13 +10,41 @@ export const N_TINTS = 4
 
 export type Tint = t.Enumerate<typeof N_TINTS>
 
-export type MazeConfig = {
+export class MazeConfig {
     n_tiles: number
     size: number
     center: trig.Vector
     center_origin: trig.Vector
     shrine_corners: Record<trig.Quadrand, trig.Vector>
     shrine_centers: Record<trig.Quadrand, trig.Vector>
+
+    constructor(floor: number) {
+        const n_tiles = 22 + floor * 2,
+            size = n_tiles * GRID_SIZE + OUTER_WALL_SIZE, // +1 for first wall
+            center = trig.vector(math.floor(size / 2)),
+            center_origin = center.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
+
+        const shrine_corners = {} as Record<trig.Quadrand, trig.Vector>,
+            shrine_centers = {} as Record<trig.Quadrand, trig.Vector>
+
+        for (const q of trig.QUADRANTS) {
+            shrine_corners[q] = trig.quadrand_to_vec[q]
+                .multiply(n_tiles - SHRINE_SIZE_TILES)
+                .multiply(GRID_SIZE)
+                .add(1)
+        }
+
+        for (const q of trig.QUADRANTS) {
+            shrine_centers[q] = shrine_corners[q].add(SHRINE_CENTER)
+        }
+
+        this.n_tiles = n_tiles
+        this.size = size
+        this.center = center
+        this.center_origin = center_origin
+        this.shrine_corners = shrine_corners
+        this.shrine_centers = shrine_centers
+    }
 }
 
 export type MazeTileState = {
@@ -46,7 +74,7 @@ export class MazePositions {
 export class GameState {
     floor = 1
     turn = 1
-    maze_config = initMazeConfig(0)
+    maze_config = new MazeConfig(this.floor)
     maze: MazeMatrix
     start_q = math.randomInt(4) as trig.Quadrand
     pos: MazePositions
@@ -96,36 +124,6 @@ export const SHRINE_RADIUS_TILES = 2
 export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
 export const SHRINE_CENTER = trig.vector(Math.floor(SHRINE_SIZE / 2 - 1))
 
-export function initMazeConfig(floor: number): MazeConfig {
-    const n_tiles = 22 + floor * 2,
-        size = n_tiles * GRID_SIZE + OUTER_WALL_SIZE, // +1 for first wall
-        center = trig.vector(math.floor(size / 2)),
-        center_origin = center.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
-
-    const shrine_corners = {} as Record<trig.Quadrand, trig.Vector>,
-        shrine_centers = {} as Record<trig.Quadrand, trig.Vector>
-
-    for (const q of trig.QUADRANTS) {
-        shrine_corners[q] = trig.quadrand_to_vec[q]
-            .multiply(n_tiles - SHRINE_SIZE_TILES)
-            .multiply(GRID_SIZE)
-            .add(1)
-    }
-
-    for (const q of trig.QUADRANTS) {
-        shrine_centers[q] = shrine_corners[q].add(SHRINE_CENTER)
-    }
-
-    return {
-        n_tiles,
-        size,
-        center,
-        center_origin,
-        shrine_corners,
-        shrine_centers,
-    }
-}
-
 function getStartingPoints(
     start_q: trig.Quadrand,
     maze_config: MazeConfig,
@@ -147,7 +145,7 @@ function getStartingPoints(
 
 export function updateFloor(state: GameState) {
     state.floor++
-    state.maze_config = initMazeConfig(state.floor)
+    state.maze_config = new MazeConfig(state.floor)
     state.maze = generateMazeMatrix(state.maze_config)
     state.progress_to_flood_update = 0
     state.turn = 1
