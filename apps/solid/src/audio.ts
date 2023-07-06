@@ -2,22 +2,17 @@ import { STEP_INTERVAL } from './held_direction'
 import { math } from './lib'
 import SOUNDS from '../../../data/sounds.json'
 
-const step_ctx = new AudioContext()
+let step_ctx: AudioContext | undefined
 
 const step_audio_buffers: AudioBuffer[] = []
-
-SOUNDS.step.forEach(path =>
-    fetch(path)
-        .then(data => data.arrayBuffer())
-        .then(arrayBuffer => step_ctx.decodeAudioData(arrayBuffer))
-        .then(audioBuffer => step_audio_buffers.push(audioBuffer)),
-)
 
 function playStepAudio(
     buffer: AudioBuffer,
     last_playback_value?: number,
     last_gain_value?: number,
 ): void {
+    if (!step_ctx) return
+
     const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.1, 0.2)
 
     if (gain_value < 0.01) return
@@ -58,6 +53,15 @@ ambient.loop = true
 
 const onInteraction = () => {
     ambient.play()
+
+    step_ctx = new AudioContext()
+    SOUNDS.step.forEach(path =>
+        fetch(path)
+            .then(data => data.arrayBuffer())
+            .then(arrayBuffer => step_ctx!.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => step_audio_buffers.push(audioBuffer)),
+    )
+
     window.removeEventListener('keydown', onInteraction)
     window.removeEventListener('click', onInteraction)
 }
