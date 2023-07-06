@@ -87,7 +87,7 @@ export function createThrottledTrigger(delay: number) {
 export function createDirectionMovement(onMove: (direction: trig.Direction) => void) {
     const heldDirections = createHeldDirection()
 
-    const scheduled = createThrottledTrigger(1000 / 6)
+    const scheduled = createThrottledTrigger(1000 / 5)
 
     solid.createEffect(() => {
         const direction = heldDirections.current.value

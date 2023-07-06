@@ -13,6 +13,7 @@ import {
 import { movePlayerInDirection, updateState } from './state'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { MenuMessages, MenuMessagesNextFloor, MenuMessagesWelcome } from './messages'
+import { queueStepAudio } from './audio'
 
 export enum Tile_Display_As {
     Invisible,
@@ -339,6 +340,7 @@ const DevTools = (props: { state: GameState }) => {
             <ToggleSetting setting="show_invisible" />
             <ToggleSetting setting="hide_easing" />
             <ToggleSetting setting="noclip" />
+            <button onClick={queueStepAudio}>Play step audio</button>
         </div>
     )
 }

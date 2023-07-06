@@ -3,6 +3,7 @@ import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+    publicDir: '../../data',
     server: {
         port: 3000,
     },

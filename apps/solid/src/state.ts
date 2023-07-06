@@ -3,6 +3,7 @@ import COLORS from '../../../data/colors.json'
 import { generateMazeMatrix } from './generate_maze'
 import { updateVisiblePoints } from './fov'
 import { MenuMessages, MenuMessagesNextFloor, MenuMessagesWelcome } from './messages'
+import { queueStepAudio } from './audio'
 
 export { COLORS }
 
@@ -188,6 +189,8 @@ export function movePlayerInDirection(game_state: GameState, direction: trig.Dir
             updateState(game_state)
             expandFlood(game_state)
         }
+
+        queueStepAudio()
     })
 }
 

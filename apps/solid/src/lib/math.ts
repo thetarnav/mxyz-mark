@@ -4,6 +4,8 @@ export const { PI, cos, sin, atan2, sqrt, pow, abs, min, max, floor, ceil, round
 export const randomInt = (max: number) => floor(random() * max)
 export const randomIntFrom = (min: number, max: number) => floor(random() * (max - min)) + min
 
+export const randomFromTo = (min: number, max: number) => random() * (max - min) + min
+
 export const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max)
 
