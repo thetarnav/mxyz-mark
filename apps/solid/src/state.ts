@@ -67,6 +67,23 @@ export type MazeTileState = {
 }
 export type MazeMatrix = trig.Matrix<MazeTileState>
 
+const FLOOD_STARTING_POINTS: trig.Vector[] = [
+    trig.vector(0, 0),
+    trig.vector(1, 1),
+    trig.vector(1, 0),
+    trig.vector(0, 1),
+
+    trig.vector(10, 0),
+    trig.vector(10, 1),
+    trig.vector(9, 0),
+    trig.vector(9, 1),
+
+    trig.vector(0, 10),
+    trig.vector(1, 10),
+    trig.vector(0, 9),
+    trig.vector(1, 9),
+]
+
 export class MazePositions {
     player: trig.Vector
     start: trig.Vector
@@ -81,11 +98,18 @@ export class MazePositions {
             Math.round(math.mapRange(xy, 0, maze_config.size - 1, 0, WINDOW_SIZE - 1)),
         )
 
-        const flood_start =
-            maze_config.shrine_centers[math.pickRandom(trig.ADJACENT_QUADRANTS[start_q])]
-        this.shallow_flood.add(flood_start.toString())
+        const start_corner = maze_config.shrine_corners[start_q],
+            start_rotation = trig.quadrand_to_rotation[start_q]
+
+        for (let vec of FLOOD_STARTING_POINTS) {
+            vec = vec.rotate(start_rotation, SHRINE_CENTER).add(start_corner).round()
+            this.shallow_flood.add(vec.toString())
+        }
     }
 }
+
+export const FLOOD_PROGRESS_THRESHOLD = 1000
+export const FLOOD_INIT_PROGRESS = 600
 
 export class GameState {
     floor = 1
@@ -95,7 +119,7 @@ export class GameState {
     start_q = math.randomInt(4) as trig.Quadrand
     pos: MazePositions
     visible = new Map<number, boolean>()
-    progress_to_flood_update = 0
+    progress_to_flood_update = FLOOD_INIT_PROGRESS
     in_shrine = false
     menu_messages: MenuMessages = new MenuMessagesWelcome()
     turn_signal = s.signal()
@@ -132,7 +156,7 @@ export function updateFloor(state: GameState) {
     state.floor++
     state.maze_config = new MazeConfig(state.floor)
     state.maze = generateMazeMatrix(state.maze_config)
-    state.progress_to_flood_update = 0
+    state.progress_to_flood_update = FLOOD_INIT_PROGRESS
     state.turn = 1
 
     state.start_q = trig.OPPOSITE_QUADRANTS[state.start_q] // old finish quadrant
@@ -146,7 +170,7 @@ export function updateFloor(state: GameState) {
 
 export function resetFloor(state: GameState) {
     state.maze = generateMazeMatrix(state.maze_config)
-    state.progress_to_flood_update = 0
+    state.progress_to_flood_update = FLOOD_INIT_PROGRESS
     state.turn = 1
 
     state.pos = new MazePositions(state.start_q, state.maze_config)
@@ -211,7 +235,7 @@ export function expandFlood(game_state: GameState) {
     const { maze } = game_state
 
     game_state.turn++
-    game_state.progress_to_flood_update += game_state.turn / 1000
+    game_state.progress_to_flood_update += game_state.turn / FLOOD_PROGRESS_THRESHOLD
     const expand_times = Math.floor(game_state.progress_to_flood_update)
     game_state.progress_to_flood_update -= expand_times
 

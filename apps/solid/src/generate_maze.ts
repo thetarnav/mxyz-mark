@@ -101,52 +101,51 @@ export function generateMazeWalls(maze_state: MazeConfig) {
     return walls
 }
 
-export const shrine_structure_paths = {
-    Corner: [
-        trig.vector(0, 0),
-        trig.vector(10, 10),
-        trig.vector(0, 10),
-        trig.vector(10, 0),
+const CORNER_STRUCTURE_POINTS: trig.Vector[] = [
+    trig.vector(0, 0),
+    trig.vector(10, 10),
+    trig.vector(0, 10),
+    trig.vector(10, 0),
 
-        trig.vector(2, 2),
-        trig.vector(3, 2),
-        trig.vector(2, 3),
+    trig.vector(2, 2),
+    trig.vector(3, 2),
+    trig.vector(2, 3),
 
-        trig.vector(1, 5),
+    trig.vector(1, 5),
 
-        trig.vector(2, 8),
-        trig.vector(3, 8),
-        trig.vector(2, 7),
+    trig.vector(2, 8),
+    trig.vector(3, 8),
+    trig.vector(2, 7),
 
-        trig.vector(5, 1),
+    trig.vector(5, 1),
 
-        trig.vector(8, 2),
-        trig.vector(8, 3),
-        trig.vector(7, 2),
-    ],
-    Circle: [
-        trig.vector(0, 0),
-        trig.vector(10, 10),
-        trig.vector(0, 10),
-        trig.vector(10, 0),
+    trig.vector(8, 2),
+    trig.vector(8, 3),
+    trig.vector(7, 2),
+]
 
-        trig.vector(2, 2),
-        trig.vector(3, 2),
-        trig.vector(2, 3),
+const CENTER_STRUCTURE_POINTS: trig.Vector[] = [
+    trig.vector(0, 0),
+    trig.vector(10, 10),
+    trig.vector(0, 10),
+    trig.vector(10, 0),
 
-        trig.vector(2, 8),
-        trig.vector(3, 8),
-        trig.vector(2, 7),
+    trig.vector(2, 2),
+    trig.vector(3, 2),
+    trig.vector(2, 3),
 
-        trig.vector(8, 2),
-        trig.vector(8, 3),
-        trig.vector(7, 2),
+    trig.vector(2, 8),
+    trig.vector(3, 8),
+    trig.vector(2, 7),
 
-        trig.vector(8, 8),
-        trig.vector(7, 8),
-        trig.vector(8, 7),
-    ],
-} satisfies Record<string, trig.Pointable[]>
+    trig.vector(8, 2),
+    trig.vector(8, 3),
+    trig.vector(7, 2),
+
+    trig.vector(8, 8),
+    trig.vector(7, 8),
+    trig.vector(8, 7),
+]
 
 function isWallsPointWall(
     p: trig.Vector,
@@ -281,16 +280,15 @@ export function generateMazeMatrix(maze_config: MazeConfig): MazeMatrix {
     */
     for (const q of trig.QUADRANTS) {
         const corner = maze_config.shrine_corners[q],
-            wall_structure = shrine_structure_paths.Corner,
             rotation = trig.quadrand_to_rotation[q]
 
-        for (let vec of wall_structure) {
+        for (let vec of CORNER_STRUCTURE_POINTS) {
             vec = vec.rotate(rotation, SHRINE_CENTER).add(corner).round()
             state.get(vec)!.wall = true
         }
     }
 
-    for (const vec of shrine_structure_paths.Circle) {
+    for (const vec of CENTER_STRUCTURE_POINTS) {
         state.get(vec.add(maze_config.center_origin))!.wall = true
     }
 
