@@ -75,12 +75,15 @@ export class MazePositions {
     shallow_flood = new Set<trig.VecString>()
 
     constructor(start_q: trig.Quadrand, maze_config: MazeConfig) {
-        const starting_points = getStartingPoints(start_q, maze_config)
+        this.start = this.player = maze_config.shrine_centers[start_q]
+        this.finish = maze_config.shrine_centers[trig.OPPOSITE_QUADRANTS[start_q]]
+        this.minimap_finish = this.finish.map(xy =>
+            Math.round(math.mapRange(xy, 0, maze_config.size - 1, 0, WINDOW_SIZE - 1)),
+        )
 
-        this.start = this.player = starting_points.start
-        this.finish = starting_points.finish
-        this.minimap_finish = starting_points.minimap_finish
-        this.shallow_flood.add(starting_points.flood_start.toString())
+        const flood_start =
+            maze_config.shrine_centers[math.pickRandom(trig.ADJACENT_QUADRANTS[start_q])]
+        this.shallow_flood.add(flood_start.toString())
     }
 }
 
@@ -123,25 +126,6 @@ export const isFlooded = (maze_state: MazeMatrix, p: trig.Vector) => {
 export const isVisible = (maze_state: MazeMatrix, p: trig.Vector) => {
     const state = maze_state.get(p)
     return !!state && !state.wall
-}
-
-function getStartingPoints(
-    start_q: trig.Quadrand,
-    maze_config: MazeConfig,
-): {
-    start: trig.Vector
-    finish: trig.Vector
-    minimap_finish: trig.Vector
-    flood_start: trig.Vector
-} {
-    const start = maze_config.shrine_centers[start_q],
-        finish = maze_config.shrine_centers[trig.OPPOSITE_QUADRANTS[start_q]],
-        minimap_finish = finish.map(xy =>
-            Math.round(math.mapRange(xy, 0, maze_config.size - 1, 0, WINDOW_SIZE - 1)),
-        ),
-        flood_start = maze_config.shrine_centers[math.pickRandom(trig.ADJACENT_QUADRANTS[start_q])]
-
-    return { start, finish, minimap_finish, flood_start }
 }
 
 export function updateFloor(state: GameState) {
