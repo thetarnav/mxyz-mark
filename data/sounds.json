@@ -1,3 +1,4 @@
 {
-    "step": ["step_2.mp3", "step_3.mp3", "step_4.mp3", "step_5.mp3", "step_6.mp3"]
+    "step": ["step_2.mp3", "step_3.mp3", "step_4.mp3", "step_5.mp3", "step_6.mp3"],
+    "ambient": "ambient.mp3"
 }

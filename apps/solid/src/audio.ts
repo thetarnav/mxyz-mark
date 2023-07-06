@@ -30,3 +30,18 @@ function playEcho(audio: HTMLAudioElement) {
     echo.play()
     setTimeout(() => playEcho(echo), ECHO_INTERVAL)
 }
+
+const ambient = new Audio(SOUNDS.ambient)
+ambient.volume = 0.1
+
+const onInteraction = () => {
+    ambient.play()
+}
+
+window.addEventListener('keydown', onInteraction, { once: true })
+window.addEventListener('click', onInteraction, { once: true })
+
+ambient.addEventListener('ended', () => {
+    ambient.currentTime = 0
+    ambient.play()
+})

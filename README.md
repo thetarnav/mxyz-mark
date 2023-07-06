@@ -15,3 +15,4 @@ Credits to some of the technologies and resources used in this project:
     -   [Solid Primitives](https://primitives.solidjs.community/)
     -   [easing-utils](https://github.com/AndrewRayCode/easing-utils)
 -   [Footstep sound effect](https://pixabay.com/sound-effects/footsteps-hallway-6417/)
+-   [Ambient sound effect](https://pixabay.com/sound-effects/thriller-ambient-14563/)
