@@ -6,7 +6,9 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "test": "vitest"
+        "test": "vitest",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint --ext .js,.jsx,.ts,.tsx ./src"
     },
     "dependencies": {
         "@solid-primitives/event-listener": "^2.2.13",

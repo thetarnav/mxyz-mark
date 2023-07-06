@@ -18,6 +18,9 @@ export default defineConfig({
         UnoCSS(),
     ],
     test: {
+        watch: false,
+        environment: 'node',
+        isolate: false,
         setupFiles: 'vitest.setup.ts',
     },
 })

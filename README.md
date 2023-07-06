@@ -22,6 +22,7 @@ Credits to some of the technologies and resources used in this project:
     -   [Vite](https://vitejs.dev/)
     -   [Solid Primitives](https://primitives.solidjs.community/)
     -   [easing-utils](https://github.com/AndrewRayCode/easing-utils)
+-   [VT323 Font](https://fonts.google.com/specimen/VT323)
 -   [coolors.co](https://coolors.co/)
 -   [Footstep sound effect](https://pixabay.com/sound-effects/footsteps-hallway-6417/)
 -   [Ambient sound effect](https://pixabay.com/sound-effects/thriller-ambient-14563/)
