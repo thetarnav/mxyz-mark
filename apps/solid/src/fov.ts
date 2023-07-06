@@ -12,7 +12,7 @@ function updatePoint(game_state: GameState, p: trig.Vector): boolean {
         p_state = maze.get(p)!
 
     let is_visible = visible.get(i)
-    if (is_visible !== undefined) return !p_state.wall && is_visible
+    if (is_visible !== undefined) return !p_state.wall && !p_state.flooded && is_visible
     is_visible = false
 
     check: {
@@ -67,7 +67,7 @@ function updatePoint(game_state: GameState, p: trig.Vector): boolean {
         is_visible = true
     }
 
-    if (is_visible && p_state.wall) {
+    if (is_visible && (p_state.wall || p_state.flooded)) {
         visible.set(i, true)
         return false
     }
