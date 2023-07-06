@@ -4,6 +4,12 @@ html {
     color-scheme: dark;
 }
 
+@media screen and (max-width: 52rem) {
+    html {
+        font-size: 18px;
+    }
+}
+
 *::selection {
     --at-apply: bg-wall text-dark;
 }
@@ -46,4 +52,27 @@ input[type='number']::-webkit-outer-spin-button {
 input[type='number'] {
     -moz-appearance: textfield;
     appearance: textfield;
+}
+
+.container-split {
+    --width: min(85vw, 52rem);
+    --gap: 3rem;
+    display: grid;
+    overflow: hidden;
+    grid-gap: var(--gap);
+    width: var(--width);
+    grid-template: 1fr / 1fr 1fr;
+    translate: calc((1 - var(--show-menu-mod, 1)) * (-0.25 * var(--width) - var(--gap) / 2)) 0
+        0.001px;
+    transition: translate 600ms 200ms ease-in-out;
+}
+
+@media screen and (max-width: 52rem) {
+    .container-split {
+        --width: 100vw;
+        --gap: 1rem;
+        padding: 2rem;
+        grid-template: 1fr 1fr / 1fr;
+        translate: 0 calc((1 - var(--show-menu-mod, 1)) * -25vh) 0.001px;
+    }
 }

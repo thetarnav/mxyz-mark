@@ -13,7 +13,7 @@ function playStepAudio(
 ): void {
     if (!step_ctx) return
 
-    const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.1, 0.2)
+    const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.2, 0.3)
 
     if (gain_value < 0.01) return
 

@@ -71,10 +71,12 @@ export function createHeldDirection() {
             if (last_pointer_id !== undefined) return
             last_pointer_id = e.pointerId
             updatePointerDirections(e)
+            e.preventDefault()
         },
         pointermove(e) {
             if (last_pointer_id !== e.pointerId) return
             updatePointerDirections(e)
+            e.preventDefault()
         },
         pointerup(e) {
             if (last_pointer_id !== e.pointerId) return

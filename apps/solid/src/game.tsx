@@ -165,18 +165,8 @@ export function Game() {
             <main class="center-child h-screen w-screen">
                 <div
                     ref={container}
-                    class="grid delay-200"
-                    style={{
-                        '--width': 'min(85vw, 52rem)',
-                        '--gap': '3rem',
-                        'grid-gap': 'var(--gap)',
-                        width: 'var(--width)',
-                        'grid-template': '1fr / 1fr 1fr',
-                        translate: show_menu.value
-                            ? ''
-                            : 'calc(-0.25 * var(--width) - var(--gap) / 2) 0 0.001px',
-                        transition: 'translate 0.6s ease-in-out',
-                    }}
+                    class="container-split"
+                    style={{ '--show-menu-mod': show_menu.value ? 1 : 0 }}
                 >
                     <div
                         class="center-child transition-600 delay-200"
@@ -184,7 +174,7 @@ export function Game() {
                     >
                         <MenuView messages={game_state_sig.value.menu_messages} />
                     </div>
-                    <div class="center-child">
+                    <div class="center-child scale-120 sm:scale-100">
                         <div class="w-full">
                             <MatrixGrid matrix={WINDOW_MATRIX}>
                                 {(fov_vec, fov_index) => (
@@ -219,7 +209,7 @@ function MenuView(props: { messages: MenuMessages }) {
                         <>
                             <p>{messages().greeting}</p>
                             <p class="mt-3">{messages().arrows}</p>
-                            <div class="mt-6 flex w-max flex-col items-center gap-1">
+                            <div class="mt-6 w-max flex-col items-center gap-1 hidden sm:flex">
                                 <kbd>{trig.Direction.Up}</kbd>
                                 <div class="flex gap-1">
                                     <kbd>{trig.Direction.Left}</kbd>
