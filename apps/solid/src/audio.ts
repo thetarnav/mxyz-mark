@@ -2,8 +2,6 @@ import { STEP_INTERVAL } from './held_direction'
 import { math } from './lib'
 import SOUNDS from '../../../data/sounds.json'
 
-const ECHO_INTERVAL = 150
-
 const step_ctx = new AudioContext()
 
 const step_audio_buffers: AudioBuffer[] = []
@@ -37,7 +35,7 @@ function playStepAudio(
 
     audio_node.start()
 
-    setTimeout(() => playStepAudio(buffer, playback_value, gain_value), ECHO_INTERVAL)
+    setTimeout(() => playStepAudio(buffer, playback_value, gain_value), 150)
 }
 
 let step_playing = false
@@ -55,7 +53,7 @@ export function queueStepAudio() {
 }
 
 const ambient = new Audio(SOUNDS.ambient)
-ambient.volume = 0.1
+ambient.volume = 0.12
 ambient.loop = true
 
 const onInteraction = () => {
