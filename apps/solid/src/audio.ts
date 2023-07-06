@@ -58,7 +58,9 @@ ambient.loop = true
 
 const onInteraction = () => {
     ambient.play()
+    window.removeEventListener('keydown', onInteraction)
+    window.removeEventListener('click', onInteraction)
 }
 
-window.addEventListener('keydown', onInteraction, { once: true })
-window.addEventListener('click', onInteraction, { once: true })
+window.addEventListener('keydown', onInteraction)
+window.addEventListener('click', onInteraction)
