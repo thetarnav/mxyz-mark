@@ -2,6 +2,8 @@ import { math } from '.'
 
 export const toRadian = (degrees: number) => (degrees * math.PI) / 180
 
+export const toDegrees = (radians: number) => (radians * 180) / math.PI
+
 export const enum Direction {
     Up = '^',
     Down = 'v',
@@ -133,6 +135,10 @@ export const vec_equals = (a: Pointable, b: Pointable) =>
 
 export const vec_neighbors = (vec: Vector) => {
     return DIRECTIONS_H_V.map(d => vec.go(d))
+}
+
+export function angleBetween(a: Pointable, b: Pointable) {
+    return math.atan2(b.y - a.y, b.x - a.x)
 }
 
 /**

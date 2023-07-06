@@ -33,7 +33,7 @@ export function reactive<T>(get: solid.Accessor<T>): Reactive<T> {
     return new Reactive(get)
 }
 
-export function peak<T>(reactive: Reactive<T>): T {
+export function peek<T>(reactive: Reactive<T>): T {
     return solid.untrack(() => reactive.value)
 }
 
@@ -62,7 +62,7 @@ export function map_nested<T, K extends keyof T, U>(
 export function destructure<const T extends readonly unknown[]>(
     source: Reactive<T>,
 ): { [K in keyof T]: Reactive<T[K]> } {
-    return peak(source).map(value => new Reactive(() => value)) as any
+    return peek(source).map(value => new Reactive(() => value)) as any
 }
 
 export function join<const T extends readonly Reactive<unknown>[]>(
@@ -121,6 +121,17 @@ export function signal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T
 
 export function set<T>(signal: Signal<T>, value: T): void {
     signal.setter(() => value)
+}
+
+export function set_nested<T, K extends keyof T>(signal: Signal<T>, key: K, value: T[K]): void {
+    const obj = peek(signal)
+    if (!obj || typeof obj !== 'object') return
+    const old = obj[key]
+    if (old !== value) {
+        const copy: any = Array.isArray(obj) ? [...obj] : { ...obj }
+        copy[key] = value as any
+        signal.setter(copy)
+    }
 }
 
 export function update<T>(signal: Signal<T>, fn: (value: T) => T): void {

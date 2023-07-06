@@ -12,6 +12,7 @@ body {
     /* background-color: #111; */
     --at-apply: bg-dark;
     font-family: 'VT323', monospace;
+    overflow: hidden;
     opacity: 0;
 }
 

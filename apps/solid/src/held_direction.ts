@@ -24,23 +24,71 @@ export const KEY_TO_DIRECTION: { [K in string]?: trig.Direction } = {
 export function createHeldDirection() {
     const directions = s.signal(DEFAULT_HELD_DIRECTION_STATE)
 
-    let lastDirection = trig.Direction.Up
+    let last_direction = trig.Direction.Up
+    let last_pointer_id: number | undefined
+
+    function updatePointerDirections(e: PointerEvent): void {
+        const center = trig.vector(window.innerWidth / 2, window.innerHeight / 2)
+        const angle = trig.angleBetween(e, center)
+        const deg = trig.toDegrees(angle)
+        const new_directions = { ...DEFAULT_HELD_DIRECTION_STATE }
+
+        if (deg >= -45 && deg <= 45) {
+            last_direction = trig.Direction.Left
+        } else if (deg >= 45 && deg <= 135) {
+            last_direction = trig.Direction.Up
+        } else if (deg >= 135 || deg <= -135) {
+            last_direction = trig.Direction.Right
+        } else if (deg >= -135 && deg <= -45) {
+            last_direction = trig.Direction.Down
+        }
+
+        new_directions[last_direction] = true
+        s.set(directions, new_directions)
+    }
+
     createEventListenerMap(window, {
         keydown(e) {
             if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return
             const direction = KEY_TO_DIRECTION[e.key]
             if (direction) {
-                s.update(directions, p => ({ ...p, [(lastDirection = direction)]: true }))
+                s.set_nested(directions, (last_direction = direction), true)
             }
         },
         keyup(e) {
             const direction = KEY_TO_DIRECTION[e.key]
-            if (direction) s.update(directions, p => ({ ...p, [direction]: false }))
+            if (direction) s.set_nested(directions, direction, false)
         },
         blur() {
             s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
+            last_pointer_id = undefined
         },
         contextmenu() {
+            s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
+            last_pointer_id = undefined
+        },
+        pointerdown(e) {
+            if (last_pointer_id !== undefined) return
+            last_pointer_id = e.pointerId
+            updatePointerDirections(e)
+        },
+        pointermove(e) {
+            if (last_pointer_id !== e.pointerId) return
+            updatePointerDirections(e)
+        },
+        pointerup(e) {
+            if (last_pointer_id !== e.pointerId) return
+            last_pointer_id = undefined
+            s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
+        },
+        pointerleave(e) {
+            if (last_pointer_id !== e.pointerId) return
+            last_pointer_id = undefined
+            s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
+        },
+        pointercancel(e) {
+            if (last_pointer_id !== e.pointerId) return
+            last_pointer_id = undefined
             s.set(directions, DEFAULT_HELD_DIRECTION_STATE)
         },
     })
@@ -49,7 +97,7 @@ export function createHeldDirection() {
         s.map(directions, directions => {
             // prefer last direction
             const order =
-                lastDirection === trig.Direction.Up || lastDirection === trig.Direction.Down
+                last_direction === trig.Direction.Up || last_direction === trig.Direction.Down
                     ? trig.DIRECTIONS_V_H
                     : trig.DIRECTIONS_H_V
 
