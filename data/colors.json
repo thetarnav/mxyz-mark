@@ -1,11 +1,10 @@
 {
-    "blood": "#DE311B",
     "bone": "#DFDACF",
     "wall": "#C1AA8F",
     "floor": "#BCA277",
     "dark": "#131516",
     "start": "#7D8C63",
     "finish": "#F7B544",
-    "flood_shallow": "#F59A50",
-    "flood_deep": "#F15927"
+    "flood_shallow": "#E96F4F",
+    "blood": "#D52B30"
 }

@@ -35,7 +35,7 @@ export const DISPLAY_TILE_TO_COLOR: Record<Tile_Display_As, string> = {
     [Tile_Display_As.Finish]: COLORS.finish,
     [Tile_Display_As.Minimap_Finish]: COLORS.finish,
     [Tile_Display_As.Flood_Shallow]: COLORS.flood_shallow,
-    [Tile_Display_As.Flood_Deep]: COLORS.flood_deep,
+    [Tile_Display_As.Flood_Deep]: COLORS.blood,
 }
 
 export function getDisplayAsOpacity(tile: Tile_Display_As, tint: Tint): number {
