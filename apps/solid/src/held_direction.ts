@@ -1,6 +1,8 @@
 import { solid, s, trig } from 'src/lib'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 
+export const STEP_INTERVAL = 200
+
 export const DEFAULT_HELD_DIRECTION_STATE: Record<trig.Direction, boolean> = {
     [trig.Direction.Up]: false,
     [trig.Direction.Right]: false,
@@ -87,7 +89,7 @@ export function createThrottledTrigger(delay: number) {
 export function createDirectionMovement(onMove: (direction: trig.Direction) => void) {
     const heldDirections = createHeldDirection()
 
-    const scheduled = createThrottledTrigger(1000 / 5)
+    const scheduled = createThrottledTrigger(STEP_INTERVAL)
 
     solid.createEffect(() => {
         const direction = heldDirections.current.value

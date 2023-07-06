@@ -1,4 +1,7 @@
+import { STEP_INTERVAL } from './held_direction'
 import { math } from './lib'
+
+const ECHO_INTERVAL = 150
 
 const STEP_AUDIO_PATHS = [
     // 'hallway_step_1.mp3',
@@ -9,53 +12,29 @@ const STEP_AUDIO_PATHS = [
     'hallway_step_6.mp3',
 ]
 
-let step_in_queue = false
-let step_playing_since = 0
-let last_step_index = 0
+let step_playing = false
+let last_step_path: string
 
 export function queueStepAudio() {
-    if (step_in_queue) {
-        return
-    }
+    if (step_playing) return
 
-    if (step_playing_since) {
-        if (Date.now() - step_playing_since > 200) {
-            step_in_queue = true
-        }
-        return
-    }
-
-    let path_index = math.randomInt(STEP_AUDIO_PATHS.length)
-    if (path_index === last_step_index) {
-        path_index = (path_index + 1) % STEP_AUDIO_PATHS.length
-    }
-    last_step_index = path_index
-    const audio_path = STEP_AUDIO_PATHS[path_index]
-    const audio = new Audio(audio_path)
+    last_step_path = math.pickRandomExclidingOne(STEP_AUDIO_PATHS, last_step_path)
+    const audio = new Audio(last_step_path)
     audio.volume = math.randomFromTo(0.1, 0.2)
     audio.playbackRate = math.randomFromTo(0.9, 1.1)
     audio.play()
 
-    step_playing_since = Date.now()
+    step_playing = true
+    setTimeout(() => (step_playing = false), STEP_INTERVAL)
 
-    setTimeout(() => {
-        step_playing_since = 0
-        if (step_in_queue) {
-            step_in_queue = false
-            queueStepAudio()
-        }
-    }, 420)
-
-    setTimeout(() => playEcho(audio), 150)
+    setTimeout(() => playEcho(audio), ECHO_INTERVAL)
 }
 
 function playEcho(audio: HTMLAudioElement) {
-    if (audio.volume < 0.01) {
-        return
-    }
+    if (audio.volume < 0.01) return
+
     const echo = new Audio(audio.src)
     echo.volume = audio.volume * 0.4
-    echo.playbackRate = audio.playbackRate * 0.9
     echo.play()
-    setTimeout(() => playEcho(echo), 150)
+    setTimeout(() => playEcho(echo), ECHO_INTERVAL)
 }

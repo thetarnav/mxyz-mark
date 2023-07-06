@@ -11,6 +11,18 @@ export const clamp = (value: number, min: number, max: number) =>
 
 export const pickRandom = <T>(arr: readonly T[]) => arr[randomInt(arr.length)]
 
+export function pickRandomExclidingOne<T>(arr: readonly T[], excluding: T): T {
+    let pick_index = randomInt(arr.length),
+        pick = arr[pick_index]
+
+    if (pick === excluding) {
+        pick_index = (pick_index + 1) % arr.length
+        pick = arr[pick_index]
+    }
+
+    return pick
+}
+
 export const remainder = (a: number, b: number) => ((a % b) + b) % b
 
 export const wrap = (value: number, min: number, max: number) =>
