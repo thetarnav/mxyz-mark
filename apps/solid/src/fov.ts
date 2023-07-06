@@ -1,6 +1,5 @@
 import { GameState, WINDOW_MATRIX, WINDOW_RADIUS } from './state'
 import { trig } from './lib'
-import { isVisible } from './state'
 
 function updatePoint(game_state: GameState, p: trig.Vector): boolean {
     const { maze, pos, visible, dev } = game_state,
@@ -77,22 +76,12 @@ function updatePoint(game_state: GameState, p: trig.Vector): boolean {
 }
 
 export function updateVisiblePoints(game_state: GameState): void {
-    const { maze, pos } = game_state,
-        { player } = pos
+    const player_idx = game_state.maze.idx(game_state.pos.player)
 
-    /*
-        player and all wall-less tiles around him are visible
-    */
-    game_state.visible = new Map([[maze.idx(player), true]])
+    game_state.visible = new Map([[player_idx, true]])
 
-    for (let x = -1; x <= 1; x += 2) {
-        const p = player.add(x, 0)
-        if (isVisible(maze, p)) game_state.visible.set(maze.idx(p), true)
+    for (const i of WINDOW_MATRIX) {
+        const p = WINDOW_MATRIX.get(i)!.add(game_state.pos.player)
+        updatePoint(game_state, p)
     }
-    for (let y = -1; y <= 1; y += 2) {
-        const p = player.add(0, y)
-        if (isVisible(maze, p)) game_state.visible.set(maze.idx(p), true)
-    }
-
-    for (const i of WINDOW_MATRIX) updatePoint(game_state, WINDOW_MATRIX.get(i)!.add(player))
 }

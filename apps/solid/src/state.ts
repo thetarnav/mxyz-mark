@@ -11,13 +11,13 @@ export const GRID_SIZE = TILE_SIZE + 1
 export const OUTER_WALL_SIZE = 1
 
 export const WINDOW_SIZE = 19
-export const WINDOW_RADIUS = Math.floor(WINDOW_SIZE / 2)
+export const WINDOW_RADIUS = math.floor(WINDOW_SIZE / 2)
 export const WINDOW_MATRIX = trig.windowedMatrix(WINDOW_SIZE, trig.ZERO_VEC)
 
 export const SHRINE_SIZE_TILES = 4
 export const SHRINE_RADIUS_TILES = 2
 export const SHRINE_SIZE = SHRINE_SIZE_TILES * GRID_SIZE
-export const SHRINE_CENTER = trig.vector(Math.floor(SHRINE_SIZE / 2 - 1))
+export const SHRINE_CENTER = trig.vector(math.floor(SHRINE_SIZE / 2 - 1))
 
 export const N_TINTS = 4
 
@@ -28,35 +28,25 @@ export class MazeConfig {
     size: number
     center: trig.Vector
     center_origin: trig.Vector
-    shrine_corners: Record<trig.Quadrand, trig.Vector>
-    shrine_centers: Record<trig.Quadrand, trig.Vector>
+    shrine_corners = {} as Record<trig.Quadrand, trig.Vector>
+    shrine_centers = {} as Record<trig.Quadrand, trig.Vector>
 
     constructor(floor: number) {
-        const n_tiles = 22 + floor * 2,
-            size = n_tiles * GRID_SIZE + OUTER_WALL_SIZE, // +1 for first wall
-            center = trig.vector(math.floor(size / 2)),
-            center_origin = center.subtract(Math.floor(SHRINE_SIZE / 2 - 1))
-
-        const shrine_corners = {} as Record<trig.Quadrand, trig.Vector>,
-            shrine_centers = {} as Record<trig.Quadrand, trig.Vector>
+        this.n_tiles = 22 + floor * 2
+        this.size = this.n_tiles * GRID_SIZE + OUTER_WALL_SIZE
+        this.center = trig.vector(math.floor(this.size / 2))
+        this.center_origin = this.center.subtract(math.floor(SHRINE_SIZE / 2 - 1))
 
         for (const q of trig.QUADRANTS) {
-            shrine_corners[q] = trig.quadrand_to_vec[q]
-                .multiply(n_tiles - SHRINE_SIZE_TILES)
+            this.shrine_corners[q] = trig.quadrand_to_vec[q]
+                .multiply(this.n_tiles - SHRINE_SIZE_TILES)
                 .multiply(GRID_SIZE)
                 .add(1)
         }
 
         for (const q of trig.QUADRANTS) {
-            shrine_centers[q] = shrine_corners[q].add(SHRINE_CENTER)
+            this.shrine_centers[q] = this.shrine_corners[q].add(SHRINE_CENTER)
         }
-
-        this.n_tiles = n_tiles
-        this.size = size
-        this.center = center
-        this.center_origin = center_origin
-        this.shrine_corners = shrine_corners
-        this.shrine_centers = shrine_centers
     }
 }
 
@@ -115,9 +105,9 @@ export class GameState {
     floor = 1
     turn = 1
     maze_config = new MazeConfig(this.floor)
-    maze: MazeMatrix
+    maze = generateMazeMatrix(this.maze_config)
     start_q = math.randomInt(4) as trig.Quadrand
-    pos: MazePositions
+    pos = new MazePositions(this.start_q, this.maze_config)
     visible = new Map<number, boolean>()
     progress_to_flood_update = FLOOD_INIT_PROGRESS
     in_shrine = false
@@ -130,29 +120,11 @@ export class GameState {
     }
 
     constructor() {
-        this.pos = new MazePositions(this.start_q, this.maze_config)
-        this.maze = generateMazeMatrix(this.maze_config)
-
         updateState(this)
     }
 }
 
-export const isWall = (maze_state: MazeMatrix, p: trig.Vector) => {
-    const state = maze_state.get(p)
-    return !!(state && state.wall)
-}
-
-export const isFlooded = (maze_state: MazeMatrix, p: trig.Vector) => {
-    const state = maze_state.get(p)
-    return !!(state && state.flooded)
-}
-
-export const isVisible = (maze_state: MazeMatrix, p: trig.Vector) => {
-    const state = maze_state.get(p)
-    return !!state && !state.wall
-}
-
-export function updateFloor(state: GameState) {
+export function updateFloor(state: GameState): void {
     state.floor++
     state.maze_config = new MazeConfig(state.floor)
     state.maze = generateMazeMatrix(state.maze_config)
@@ -168,7 +140,7 @@ export function updateFloor(state: GameState) {
     updateState(state)
 }
 
-export function resetFloor(state: GameState) {
+export function resetFloor(state: GameState): void {
     state.maze = generateMazeMatrix(state.maze_config)
     state.progress_to_flood_update = FLOOD_INIT_PROGRESS
     state.turn = 1
@@ -178,7 +150,7 @@ export function resetFloor(state: GameState) {
     updateState(state)
 }
 
-export function updateState(state: GameState) {
+export function updateState(state: GameState): void {
     const player = state.pos.player
 
     updateVisiblePoints(state)
@@ -196,7 +168,7 @@ export function updateState(state: GameState) {
     s.trigger(state.turn_signal)
 }
 
-export function movePlayerInDirection(game_state: GameState, direction: trig.Direction) {
+export function movePlayerInDirection(game_state: GameState, direction: trig.Direction): void {
     solid.batch(() => {
         /*
             move player in direction if possible
@@ -219,7 +191,7 @@ export function movePlayerInDirection(game_state: GameState, direction: trig.Dir
     })
 }
 
-export function setUnknownPlayerPosition(game_state: GameState, x: unknown, y: unknown) {
+export function setUnknownPlayerPosition(game_state: GameState, x: unknown, y: unknown): void {
     if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
         throw new Error('invalid input')
     }
@@ -231,7 +203,7 @@ export function setUnknownPlayerPosition(game_state: GameState, x: unknown, y: u
     updateState(game_state)
 }
 
-export function expandFlood(game_state: GameState) {
+export function expandFlood(game_state: GameState): void {
     const { maze } = game_state
 
     game_state.turn++

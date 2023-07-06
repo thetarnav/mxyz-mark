@@ -12,10 +12,11 @@ import {
     Tint,
 } from './state'
 import { trig, math } from './lib'
-import { isWall } from './state'
 
-export function generateMazeWalls(maze_state: MazeConfig) {
-    const walls = new trig.Matrix(maze_state.n_tiles, maze_state.n_tiles, () => ({
+export type WallsMatrix = trig.Matrix<Record<trig.Direction.Right | trig.Direction.Down, boolean>>
+
+export function generateMazeWalls(maze_state: MazeConfig): WallsMatrix {
+    const walls: WallsMatrix = new trig.Matrix(maze_state.n_tiles, maze_state.n_tiles, () => ({
         [trig.Direction.Right]: true,
         [trig.Direction.Down]: true,
     }))
@@ -147,14 +148,7 @@ const CENTER_STRUCTURE_POINTS: trig.Vector[] = [
     trig.vector(8, 7),
 ]
 
-function isWallsPointWall(
-    p: trig.Vector,
-    walls: trig.Matrix<{
-        [trig.Direction.Right]: boolean
-        [trig.Direction.Down]: boolean
-    }>,
-    maze_config: MazeConfig,
-): boolean {
+function isWallsPointWall(p: trig.Vector, walls: WallsMatrix, maze_config: MazeConfig): boolean {
     if (p.x === 0 || p.y === 0 || p.x === maze_config.size - 1 || p.y === maze_config.size - 1)
         return true
 
@@ -174,6 +168,11 @@ function isWallsPointWall(
     // horizontal walls
     const walls_p = trig.vector((x - tile_p.x) / GRID_SIZE, (y - TILE_SIZE) / GRID_SIZE + 1)
     return walls.get(walls_p)![trig.Direction.Down]
+}
+
+export const isWall = (maze_state: MazeMatrix, p: trig.Vector) => {
+    const state = maze_state.get(p)
+    return !!(state && state.wall)
 }
 
 export function generateMazeMatrix(maze_config: MazeConfig): MazeMatrix {
