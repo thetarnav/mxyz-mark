@@ -174,7 +174,7 @@ export function Game() {
                     >
                         <MenuView messages={game_state_sig.value.menu_messages} />
                     </div>
-                    <div class="center-child scale-120 sm:scale-100">
+                    <div class="center-child scale-120 sm:scale-100 select-none">
                         <div class="w-full">
                             <MatrixGrid matrix={WINDOW_MATRIX}>
                                 {(fov_vec, fov_index) => (
