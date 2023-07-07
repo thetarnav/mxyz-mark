@@ -2,7 +2,13 @@ import { STEP_INTERVAL } from './held_direction'
 import { math } from './lib'
 import SOUNDS from '../../../data/sounds.json'
 
-let step_ctx: AudioContext | undefined
+let audio_ctx: AudioContext | undefined
+
+/*
+    Prefetch audio files
+*/
+const step_array_buffers = SOUNDS.step.map(path => fetch(path).then(data => data.arrayBuffer()))
+const ambient_array_buffer = fetch(SOUNDS.ambient).then(data => data.arrayBuffer())
 
 const step_audio_buffers: AudioBuffer[] = []
 
@@ -11,19 +17,19 @@ function playStepAudio(
     last_playback_value?: number,
     last_gain_value?: number,
 ): void {
-    if (!step_ctx) return
+    if (!audio_ctx) return
 
     const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.24, 0.35)
 
     if (gain_value < 0.01) return
 
-    const audio_node = step_ctx.createBufferSource()
+    const audio_node = audio_ctx.createBufferSource()
     audio_node.buffer = buffer
     const playback_value = (audio_node.playbackRate.value =
         last_playback_value ?? math.randomFromTo(0.9, 1.1))
 
-    const gain_node = step_ctx.createGain()
-    gain_node.connect(step_ctx.destination)
+    const gain_node = audio_ctx.createGain()
+    gain_node.connect(audio_ctx.destination)
     gain_node.gain.value = gain_value
 
     audio_node.connect(gain_node)
@@ -47,20 +53,35 @@ export function queueStepAudio() {
     setTimeout(() => (step_playing = false), STEP_INTERVAL)
 }
 
-const ambient = new Audio(SOUNDS.ambient)
-ambient.volume = 0.22
-ambient.loop = true
+const onInteraction = (e: KeyboardEvent | MouseEvent) => {
+    if (
+        e instanceof KeyboardEvent &&
+        (e.key === 'Alt' || e.key === 'Control' || e.key === 'Shift' || e.key === 'Meta')
+    )
+        return
 
-const onInteraction = () => {
-    ambient.play()
+    const ctx = (audio_ctx = new AudioContext())
 
-    step_ctx = new AudioContext()
-    SOUNDS.step.forEach(path =>
-        fetch(path)
-            .then(data => data.arrayBuffer())
-            .then(arrayBuffer => step_ctx!.decodeAudioData(arrayBuffer))
+    step_array_buffers.forEach(arrayBuffer =>
+        arrayBuffer
+            .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
             .then(audioBuffer => step_audio_buffers.push(audioBuffer)),
     )
+
+    ambient_array_buffer
+        .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+        .then(audioBuffer => {
+            const audio_node = ctx.createBufferSource()
+            audio_node.buffer = audioBuffer
+            audio_node.loop = true
+
+            const gain_node = ctx.createGain()
+            audio_node.connect(gain_node)
+            gain_node.connect(ctx.destination)
+            gain_node.gain.value = 0.22
+
+            audio_node.start()
+        })
 
     window.removeEventListener('keydown', onInteraction)
     window.removeEventListener('click', onInteraction)

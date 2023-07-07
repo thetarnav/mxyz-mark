@@ -1,8 +1,8 @@
 {
-    "bone": "#D3C4B0",
-    "wall": "#B49D80",
-    "floor": "#A07D5C",
-    "dark": "#131516",
+    "bone": "#D7C3B0",
+    "wall": "#BB9A7F",
+    "floor": "#A87A59",
+    "dark": "#191417",
     "start": "#7D8C63",
     "finish": "#F7B544",
     "flood_shallow": "#E96F4F",
