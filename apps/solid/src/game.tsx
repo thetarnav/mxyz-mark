@@ -96,7 +96,7 @@ function getTileDisplayAs(
     return Tile_Display_As.Invisible
 }
 
-function getTileBgColor(game_state: GameState, fov_vec: trig.Vector, fov_idx: number): string {
+function getTileStyles(game_state: GameState, fov_vec: trig.Vector, fov_idx: number): string {
     const { pos, maze, dev } = game_state,
         vec = pos.player.add(fov_vec),
         display_as = getTileDisplayAs(game_state, vec, fov_idx),
@@ -106,12 +106,12 @@ function getTileBgColor(game_state: GameState, fov_vec: trig.Vector, fov_idx: nu
         d = trig.distance(vec, pos.player),
         easing = ease.inOutSine(math.clamp(1 - d / (WINDOW_RADIUS + 1), 0, 1)),
         opacity = getDisplayAsOpacity(display_as, tint),
-        p = Math.round(opacity * 100)
+        opacity_style =
+            dev.hide_easing || display_as === Tile_Display_As.Minimap_Finish
+                ? opacity
+                : `calc(${opacity} * (${easing} - (1 - ${easing}) * var(${FLICKER_VAR})))`
 
-    if (dev.hide_easing || display_as === Tile_Display_As.Minimap_Finish)
-        return `color-mix(in hsl, ${color} ${p}%, transparent)`
-
-    return `color-mix(in hsl, ${color} calc(${p}% * (${easing} -  (1 - ${easing}) * var(${FLICKER_VAR}))), transparent)`
+    return `background-color: ${color}; opacity: ${opacity_style};`
 }
 
 const FLICKER_TICK_AMOUNT = 0.018
@@ -162,7 +162,7 @@ export function Game() {
 
     return (
         <>
-            <main class="center-child h-screen w-screen">
+            <main class="center-child h-screen w-screen select-none">
                 <div
                     ref={container}
                     class="container-split"
@@ -174,19 +174,17 @@ export function Game() {
                     >
                         <MenuView messages={game_state_sig.value.menu_messages} />
                     </div>
-                    <div class="center-child scale-120 sm:scale-100 select-none">
+                    <div class="center-child scale-120 sm:scale-100">
                         <div class="w-full">
                             <MatrixGrid matrix={WINDOW_MATRIX}>
                                 {(fov_vec, fov_index) => (
                                     <div
                                         class="flex items-center justify-center"
-                                        style={{
-                                            'background-color': getTileBgColor(
-                                                game_state_sig.value,
-                                                fov_vec,
-                                                fov_index,
-                                            ),
-                                        }}
+                                        style={getTileStyles(
+                                            game_state_sig.value,
+                                            fov_vec,
+                                            fov_index,
+                                        )}
                                     />
                                 )}
                             </MatrixGrid>

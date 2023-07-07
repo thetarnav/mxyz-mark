@@ -27,7 +27,7 @@ export function createHeldDirection() {
     let last_direction = trig.Direction.Up
     let last_pointer_id: number | undefined
 
-    function updatePointerDirections(e: PointerEvent): void {
+    function updatePointerDirections(e: trig.Pointable): void {
         const center = trig.vector(window.innerWidth / 2, window.innerHeight / 2)
         const angle = trig.angleBetween(e, center)
         const deg = trig.toDegrees(angle)
@@ -69,6 +69,7 @@ export function createHeldDirection() {
         },
         pointerdown(e) {
             if (last_pointer_id !== undefined) return
+
             let el = e.target as HTMLElement | null
             while (el) {
                 if (
@@ -80,6 +81,7 @@ export function createHeldDirection() {
                 }
                 el = el.parentElement
             }
+
             last_pointer_id = e.pointerId
             updatePointerDirections(e)
         },
