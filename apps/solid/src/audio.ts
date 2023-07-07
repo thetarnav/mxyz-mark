@@ -20,23 +20,23 @@ function playStepAudio(
     if (!audio_ctx) return
 
     const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.24, 0.35)
+    const playback_value = last_playback_value ?? math.randomFromTo(0.9, 1.1)
 
     if (gain_value < 0.01) return
-
-    const audio_node = audio_ctx.createBufferSource()
-    audio_node.buffer = buffer
-    const playback_value = (audio_node.playbackRate.value =
-        last_playback_value ?? math.randomFromTo(0.9, 1.1))
 
     const gain_node = audio_ctx.createGain()
     gain_node.connect(audio_ctx.destination)
     gain_node.gain.value = gain_value
 
+    const audio_node = audio_ctx.createBufferSource()
+    audio_node.buffer = buffer
+    audio_node.playbackRate.value = playback_value
     audio_node.connect(gain_node)
-
     audio_node.start()
 
-    setTimeout(() => playStepAudio(buffer, playback_value, gain_value), 150)
+    setTimeout(() => {
+        playStepAudio(buffer, playback_value, gain_value)
+    }, 150)
 }
 
 let step_playing = false
@@ -71,15 +71,14 @@ const onInteraction = (e: KeyboardEvent | MouseEvent) => {
     ambient_array_buffer
         .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
         .then(audioBuffer => {
-            const audio_node = ctx.createBufferSource()
-            audio_node.buffer = audioBuffer
-            audio_node.loop = true
-
             const gain_node = ctx.createGain()
-            audio_node.connect(gain_node)
             gain_node.connect(ctx.destination)
             gain_node.gain.value = 0.22
 
+            const audio_node = ctx.createBufferSource()
+            audio_node.buffer = audioBuffer
+            audio_node.loop = true
+            audio_node.connect(gain_node)
             audio_node.start()
         })
 

@@ -259,19 +259,19 @@ export function generateMazeMatrix(maze_config: MazeConfig): MazeMatrix {
     /*
         Clear walls inside the center shrine
     */
-    const bottomLeft = maze_config.center.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
-    const topRight = maze_config.center.add(SHRINE_RADIUS_TILES * GRID_SIZE)
-    for (const vec of trig.segment(bottomLeft.add(1), topRight.subtract(1)).points()) {
+    const bottom_left = maze_config.center.subtract(SHRINE_RADIUS_TILES * GRID_SIZE)
+    const top_right = maze_config.center.add(SHRINE_RADIUS_TILES * GRID_SIZE)
+    for (const vec of trig.segment(bottom_left.add(1), top_right.subtract(1)).points()) {
         state.get(vec)!.wall = false
     }
-    const exitTiles = Array.from({ length: 4 }, () => (1 + math.randomInt(2)) * GRID_SIZE)
+    const exit_tiles = Array.from({ length: 4 }, () => (1 + math.randomInt(2)) * GRID_SIZE)
     for (let x = 0; x < TILE_SIZE; x++) {
-        state.get({ x: bottomLeft.x + exitTiles[0] + x + 1, y: bottomLeft.y })!.wall = false
-        state.get({ x: bottomLeft.x + exitTiles[1] + x + 1, y: topRight.y })!.wall = false
+        state.get({ x: bottom_left.x + exit_tiles[0] + x + 1, y: bottom_left.y })!.wall = false
+        state.get({ x: bottom_left.x + exit_tiles[1] + x + 1, y: top_right.y })!.wall = false
     }
     for (let y = 0; y < TILE_SIZE; y++) {
-        state.get({ x: bottomLeft.x, y: bottomLeft.y + exitTiles[2] + y + 1 })!.wall = false
-        state.get({ x: topRight.x, y: bottomLeft.y + exitTiles[3] + y + 1 })!.wall = false
+        state.get({ x: bottom_left.x, y: bottom_left.y + exit_tiles[2] + y + 1 })!.wall = false
+        state.get({ x: top_right.x, y: bottom_left.y + exit_tiles[3] + y + 1 })!.wall = false
     }
 
     /*
