@@ -69,6 +69,17 @@ export function createHeldDirection() {
         },
         pointerdown(e) {
             if (last_pointer_id !== undefined) return
+            let el = e.target as HTMLElement | null
+            while (el) {
+                if (
+                    el instanceof HTMLButtonElement ||
+                    el instanceof HTMLAnchorElement ||
+                    el instanceof HTMLInputElement
+                ) {
+                    return
+                }
+                el = el.parentElement
+            }
             last_pointer_id = e.pointerId
             updatePointerDirections(e)
         },

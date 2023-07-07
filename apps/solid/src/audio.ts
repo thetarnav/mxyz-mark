@@ -13,7 +13,7 @@ function playStepAudio(
 ): void {
     if (!step_ctx) return
 
-    const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.22, 0.32)
+    const gain_value = last_gain_value ? last_gain_value * 0.4 : math.randomFromTo(0.24, 0.35)
 
     if (gain_value < 0.01) return
 
@@ -48,7 +48,7 @@ export function queueStepAudio() {
 }
 
 const ambient = new Audio(SOUNDS.ambient)
-ambient.volume = 0.2
+ambient.volume = 0.22
 ambient.loop = true
 
 const onInteraction = () => {
